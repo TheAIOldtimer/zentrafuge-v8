@@ -1,0 +1,64 @@
+{
+  "welcomeTitle": "Welkom bij Zentrafuge",
+  "caelIntro": "Hallo, ik ben Cael. Ik ben hier om je metgezel te zijn op deze reis – wat dat ook voor jou betekent. Ik geloof erin om in jouw tempo te gaan, je grenzen te respecteren en samen iets betekenisvols op te bouwen door de tijd heen.",
+  "welcomeDescription": "Ik zou je graag leren kennen door middel van een paar zachte vragen. Dit helpt me begrijpen hoe ik je het beste kan ondersteunen, maar je kunt alles overslaan wat niet goed voelt of er later op terugkomen.",
+  "beginButton": "Laten we beginnen",
+  
+  "safetyHeader": "Veiligheid en grenzen vaststellen",
+  "communicationQuestion": "Hoe ziet het eruit voor jou om gehoord en begrepen te worden?",
+  "communicationContext": "Ik wil ervoor zorgen dat onze gesprekken vanaf het begin comfortabel en veilig voor je aanvoelen.",
+  "directLabel": "Directe feedback en duidelijke begeleiding",
+  "gentleLabel": "Zachte verkenning en vragen",
+  "witnessLabel": "Gewoon getuige zijn van mijn gedachten zonder te herstellen",
+  "mixLabel": "Het hangt af van het onderwerp",
+  
+  "processingQuestion": "Hoe verwerk je moeilijke dingen gewoonlijk?",
+  "processingContext": "Iedereen verwerkt emoties en levensveranderingen in zijn eigen tempo, en ik zou het jouwe willen respecteren.",
+  "deepLabel": "Ik neig ertoe er snel diep in te duiken",
+  "gradualLabel": "Ik benader het liever geleidelijk",
+  "variesLabel": "Het varieert per situatie",
+  "unsureLabel": "Ik weet het nog niet zeker",
+  
+  "backButton": "Terug",
+  "continueButton": "Doorgaan",
+  
+  "identityHeader": "Identiteit en doel begrijpen",
+  "lifeChapterQuestion": "Hoe zou je dit huidige hoofdstuk van je leven beschrijven?",
+  "lifeChapterContext": "Ik ben benieuwd waar je je bevindt in het verhaal van je leven op dit moment.",
+  "lifeChapterPlaceholder": "bijv. 'herbouwen', 'zoeken', 'transformeren', 'uitgeput', of iets anders...",
+  
+  "meaningQuestion": "Wat laat je je het meest jezelf voelen?",
+  "meaningContext": "Wat je leven betekenis geeft kan een kompas zijn voor onze gesprekken samen.",
+  "creativeLabel": "Creatief werk of expressie",
+  "helpingLabel": "Anderen helpen of ondersteunen",
+  "natureLabel": "In de natuur zijn",
+  "learningLabel": "Leren en groeien",
+  "connectionLabel": "Diepe verbindingen met anderen",
+  "otherLabel": "Iets heel anders",
+  
+  "supportHeader": "Ondersteuningsstijl en relatiepatronen",
+  "supportQuestion": "Denk aan een moment waarop iemand je echt hielp door iets moeilijks heen. Wat maakte het verschil?",
+  "supportContext": "Je eerdere ervaringen met ondersteuning kunnen leiden hoe we samenwerken.",
+  "listeningLabel": "Diep, geduldig luisteren",
+  "practicalLabel": "Praktische hulp en oplossingen",
+  "challengeLabel": "Zachte uitdagingen om te groeien",
+  "presenceLabel": "Gewoon aanwezig zijn zonder te proberen te repareren",
+  
+  "finalHeader": "Laatste vragen",
+  "nameQuestion": "Hoe zou je me willen noemen?",
+  "nameContext": "Je kunt bij Cael blijven, of iets kiezen wat goed voor je voelt.",
+  "completeButton": "Begin onze reis",
+  
+  "skipNote": "Je kunt elke vraag overslaan of terugkomen om je voorkeuren bij te werken wanneer je maar wilt.",
+  "footerText": "© 2025 Zentrafuge. Alle rechten voorbehouden.",
+  
+  "authNotice": "Log in om door te gaan met onboarding.",
+  "loginLink": "Klik hier om in te loggen",
+  "offlineMode": "Je kunt doorgaan zonder in te loggen, maar je voorkeuren worden niet opgeslagen in de cloud.",
+  "authSuccess": "Authenticatie geslaagd! Welkom terug.",
+  "offlineWarning": "Doorgaan in offline modus. Log in om op te slaan in de cloud.",
+  
+  "savingMessage": "Je voorkeuren opslaan...",
+  "errorSaving": "Fout bij het opslaan van voorkeuren. Doorgaan met lokale opslag.",
+  "successSaving": "Voorkeuren succesvol opgeslagen!"
+}
