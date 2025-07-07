@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Email Verified – Zentrafuge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <!-- Firebase v8 scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="firebases-init.js" defer></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f7faff 0%, #eef2ff 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .verification-container {
+      background: white;
+      padding: 3rem 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 500px;
+      margin: 2rem;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      max-width: 200px;
+      margin-bottom: 2rem;
+    }
+
+    .success-icon {
+      font-size: 4rem;
+      color: #28a745;
+      margin-bottom: 1rem;
+      animation: bounce 1s ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+
+    .success-title {
+      font-size: 1.8rem;
+      color: #003366;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .success-message {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .cael-welcome {
+      background: linear-gradient(135deg, #eef2ff 0%, #e6f3ff 100%);
+      border-left: 4px solid #0055aa;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      border-radius: 8px;
+      font-style: italic;
+      color: #333;
+      text-align: left;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 85, 170, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 85, 170, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #666;
+      border: 2px solid #e9ecef;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+      color: #333;
+      transform: translateY(-1px);
+    }
+
+    .loading {
+      display: none;
+      color: #0055aa;
+      margin-top: 1rem;
+    }
+
+    .loading::after {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #0055aa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 0.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-state {
+      display: none;
+      color: #dc3545;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .language-selector {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+
+    .language-dropdown-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .language-dropdown {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 120px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .language-dropdown:hover {
+      background: rgba(255, 255, 255, 1);
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .language-dropdown-arrow {
+      margin-left: auto;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease;
+    }
+
+    .language-dropdown.open .language-dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .language-options-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+      min-width: 140px;
+    }
+
+    .language-options-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    .language-option-dropdown {
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #333;
+      font-size: 0.85rem;
+    }
+
+    .language-option-dropdown:last-child {
+      border-bottom: none;
+    }
+
+    .language-option-dropdown:hover {
+      background: #f8f9ff;
+    }
+
+    .language-option-dropdown.selected {
+      background: #eef2ff;
+      color: #0055aa;
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      .verification-container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .success-title {
+        font-size: 1.5rem;
+      }
+
+      .success-message {
+        font-size: 1rem;
+      }
+
+      .language-selector {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 2rem;
+        display: inline-block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="language-selector">
+    <div class="language-dropdown-container">
+      <div class="language-dropdown" onclick="toggleLanguageDropdown()">
+        <span class="language-flag" id="selected-flag">🇬🇧</span>
+        <span class="language-name" id="selected-language">English</span>
+        <span class="language-dropdown-arrow">▼</span>
+      </div>
+      <div class="language-options-dropdown" id="language-dropdown">
+        <!-- Language options will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <div class="verification-container">
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
+    
+    <div class="success-icon">✅</div>
+    
+    <h1 class="success-title" id="success-title">Email Verified Successfully!</h1>
+    
+    <p class="success-message" id="success-message">
+      Welcome to Zentrafuge! Your email has been verified and your account is now active. 
+      You're just one step away from meeting Cael, your AI companion.
+    </p>
+
+    <div class="cael-welcome" id="cael-welcome">
+      Hi! I'm Cael, and I'm excited to meet you. Before we start our journey together, 
+      I'd love to learn a bit about you through a gentle onboarding process. 
+      This will help me understand how to support you best. Ready to begin?
+    </div>
+
+    <div class="action-buttons">
+      <a href="onboarding.html" class="btn btn-primary" id="start-onboarding">
+        Start My Journey with Cael
+      </a>
+      <a href="index.html" class="btn btn-secondary" id="login-instead">
+        Go to Login Instead
+      </a>
+    </div>
+
+    <div class="loading" id="loading">
+      <span id="loading-text">Setting up your account...</span>
+    </div>
+
+    <div class="error-state" id="error-state">
+      <strong id="error-title">Verification Error</strong>
+      <p id="error-message">There was an issue verifying your email. Please try logging in or contact support.</p>
+    </div>
+  </div>
+
+  <script>
+    class EmailVerificationPage {
+        constructor() {
+            this.supportedLanguages = {
+                'en': { name: 'English', flag: '🇬🇧' },
+                'de': { name: 'Deutsch', flag: '🇩🇪' },
+                'fr': { name: 'Français', flag: '🇫🇷' },
+                'es': { name: 'Español', flag: '🇪🇸' },
+                'it': { name: 'Italiano', flag: '🇮🇹' },
+                'nl': { name: 'Nederlands', flag: '🇳🇱' },
+                'pt': { name: 'Português', flag: '🇵🇹' }
+            };
+            
+            this.selectedLanguage = this.detectLanguage();
+            this.translations = this.getTranslations();
+            
+            this.updateContent();
+            this.handleEmailVerification();
+        }
+
+        detectLanguage() {
+            // Enhanced language detection - prioritize our stored preferences over Firebase's lang param
+            try {
+                // First: Our stored preferences (highest priority)
+                const storedLang = localStorage.getItem('zentrafuge_language');
+                if (storedLang && this.supportedLanguages[storedLang]) {
+                    console.log('Using stored language:', storedLang);
+                    // Refresh session storage
+                    sessionStorage.setItem('zentrafuge_selected_language', storedLang);
+                    return storedLang;
+                }
+
+                const sessionLang = sessionStorage.getItem('zentrafuge_selected_language');
+                if (sessionLang && this.supportedLanguages[sessionLang]) {
+                    console.log('Using session language:', sessionLang);
+                    // Save to localStorage for persistence
+                    localStorage.setItem('zentrafuge_language', sessionLang);
+                    return sessionLang;
+                }
+
+                // Second: URL parameter (but only if it's not Firebase's default 'en')
+                const urlParams = new URLSearchParams(window.location.search);
+                const langParam = urlParams.get('lang') || urlParams.get('language') || urlParams.get('locale');
+                if (langParam && langParam !== 'en' && this.supportedLanguages[langParam]) {
+                    console.log('Using URL language:', langParam);
+                    // Save this preference
+                    localStorage.setItem('zentrafuge_language', langParam);
+                    sessionStorage.setItem('zentrafuge_selected_language', langParam);
+                    return langParam;
+                }
+
+                // Third: Check if we can get it from document referrer (previous page)
+                const referrer = document.referrer;
+                if (referrer.includes('register.html') || referrer.includes('index.html')) {
+                    // Try to extract language from referrer URL
+                    try {
+                        const referrerUrl = new URL(referrer);
+                        const referrerLang = referrerUrl.searchParams.get('lang');
+                        if (referrerLang && this.supportedLanguages[referrerLang]) {
+                            console.log('Using referrer language:', referrerLang);
+                            localStorage.setItem('zentrafuge_language', referrerLang);
+                            sessionStorage.setItem('zentrafuge_selected_language', referrerLang);
+                            return referrerLang;
+                        }
+                    } catch (e) {}
+                }
+            } catch (e) {
+                console.log('Language detection error:', e);
+            }
+
+            // Fallback: Browser language (but avoid Firebase's forced 'en')
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langCode = browserLang.split('-')[0];
+            const detectedLang = this.supportedLanguages[langCode] ? langCode : 'en';
+            
+            console.log('Using fallback language:', detectedLang);
+            
+            // Save the detected language for consistency
+            try {
+                localStorage.setItem('zentrafuge_language', detectedLang);
+                sessionStorage.setItem('zentrafuge_selected_language', detectedLang);
+            } catch (e) {}
+            
+            return detectedLang;
+        }
+
+        getTranslations() {
+            return {
+                'en': {
+                    currentLanguage: '🇬🇧 English',
+                    successTitle: 'Email Verified Successfully!',
+                    successMessage: 'Welcome to Zentrafuge! Your email has been verified and your account is now active. You\'re just one step away from meeting Cael, your AI companion.',
+                    caelWelcome: 'Hi! I\'m Cael, and I\'m excited to meet you. Before we start our journey together, I\'d love to learn a bit about you through a gentle onboarding process. This will help me understand how to support you best. Ready to begin?',
+                    startOnboarding: 'Start My Journey with Cael',
+                    loginInstead: 'Go to Login Instead',
+                    loadingText: 'Setting up your account...',
+                    errorTitle: 'Verification Error',
+                    errorMessage: 'There was an issue verifying your email. Please try logging in or contact support.'
+                },
+                'de': {
+                    currentLanguage: '🇩🇪 Deutsch',
+                    successTitle: 'E-Mail erfolgreich verifiziert!',
+                    successMessage: 'Willkommen bei Zentrafuge! Deine E-Mail wurde verifiziert und dein Konto ist jetzt aktiv. Du bist nur noch einen Schritt davon entfernt, Cael, deinen KI-Begleiter, kennenzulernen.',
+                    caelWelcome: 'Hallo! Ich bin Cael und freue mich darauf, dich kennenzulernen. Bevor wir unsere Reise zusammen beginnen, würde ich dich gerne durch einen sanften Onboarding-Prozess etwas kennenlernen. Das hilft mir zu verstehen, wie ich dich am besten unterstützen kann. Bereit anzufangen?',
+                    startOnboarding: 'Meine Reise mit Cael beginnen',
+                    loginInstead: 'Stattdessen zur Anmeldung',
+                    loadingText: 'Richte dein Konto ein...',
+                    errorTitle: 'Verifizierungsfehler',
+                    errorMessage: 'Es gab ein Problem bei der Verifizierung deiner E-Mail. Bitte versuche dich anzumelden oder kontaktiere den Support.'
+                },
+                'fr': {
+                    currentLanguage: '🇫🇷 Français',
+                    successTitle: 'E-mail vérifié avec succès!',
+                    successMessage: 'Bienvenue chez Zentrafuge! Votre e-mail a été vérifié et votre compte est maintenant actif. Vous n\'êtes qu\'à un pas de rencontrer Cael, votre compagnon IA.',
+                    caelWelcome: 'Salut! Je suis Cael et je suis ravi de vous rencontrer. Avant de commencer notre voyage ensemble, j\'aimerais apprendre à vous connaître grâce à un processus d\'intégration en douceur. Cela m\'aidera à comprendre comment vous soutenir au mieux. Prêt à commencer?',
+                    startOnboarding: 'Commencer mon voyage avec Cael',
+                    loginInstead: 'Aller à la connexion à la place',
+                    loadingText: 'Configuration de votre compte...',
+                    errorTitle: 'Erreur de vérification',
+                    errorMessage: 'Il y a eu un problème lors de la vérification de votre e-mail. Veuillez essayer de vous connecter ou contacter le support.'
+                },
+                'es': {
+                    currentLanguage: '🇪🇸 Español',
+                    successTitle: '¡Email verificado exitosamente!',
+                    successMessage: '¡Bienvenido a Zentrafuge! Tu email ha sido verificado y tu cuenta está ahora activa. Estás a solo un paso de conocer a Cael, tu compañero IA.',
+                    caelWelcome: '¡Hola! Soy Cael y estoy emocionado de conocerte. Antes de comenzar nuestro viaje juntos, me encantaría conocerte un poco a través de un proceso de incorporación suave. Esto me ayudará a entender cómo apoyarte mejor. ¿Listo para empezar?',
+                    startOnboarding: 'Comenzar mi viaje con Cael',
+                    loginInstead: 'Ir al login en su lugar',
+                    loadingText: 'Configurando tu cuenta...',
+                    errorTitle: 'Error de verificación',
+                    errorMessage: 'Hubo un problema verificando tu email. Por favor intenta iniciar sesión o contacta soporte.'
+                },
+                'it': {
+                    currentLanguage: '🇮🇹 Italiano',
+                    successTitle: 'Email verificata con successo!',
+                    successMessage: 'Benvenuto in Zentrafuge! La tua email è stata verificata e il tuo account è ora attivo. Sei a solo un passo dall\'incontrare Cael, il tuo compagno IA.',
+                    caelWelcome: 'Ciao! Sono Cael e sono entusiasta di conoscerti. Prima di iniziare il nostro viaggio insieme, mi piacerebbe conoscerti un po\' attraverso un processo di onboarding gentile. Questo mi aiuterà a capire come supportarti meglio. Pronto per iniziare?',
+                    startOnboarding: 'Inizia il mio viaggio con Cael',
+                    loginInstead: 'Vai al login invece',
+                    loadingText: 'Configurando il tuo account...',
+                    errorTitle: 'Errore di verifica',
+                    errorMessage: 'C\'è stato un problema nella verifica della tua email. Prova ad accedere o contatta il supporto.'
+                },
+                'nl': {
+                    currentLanguage: '🇳🇱 Nederlands',
+                    successTitle: 'E-mail succesvol geverifieerd!',
+                    successMessage: 'Welkom bij Zentrafuge! Je e-mail is geverifieerd en je account is nu actief. Je bent nog maar één stap verwijderd van het ontmoeten van Cael, je AI-metgezel.',
+                    caelWelcome: 'Hoi! Ik ben Cael en ik ben opgewonden om je te ontmoeten. Voordat we onze reis samen beginnen, zou ik je graag een beetje leren kennen door een zachte onboarding proces. Dit zal me helpen begrijpen hoe ik je het beste kan ondersteunen. Klaar om te beginnen?',
+                    startOnboarding: 'Begin mijn reis met Cael',
+                    loginInstead: 'Ga in plaats daarvan naar login',
+                    loadingText: 'Je account instellen...',
+                    errorTitle: 'Verificatiefout',
+                    errorMessage: 'Er was een probleem bij het verifiëren van je e-mail. Probeer in te loggen of neem contact op met ondersteuning.'
+                },
+                'pt': {
+                    currentLanguage: '🇵🇹 Português',
+                    successTitle: 'Email verificado com sucesso!',
+                    successMessage: 'Bem-vindo ao Zentrafuge! O teu email foi verificado e a tua conta está agora ativa. Estás apenas a um passo de conhecer o Cael, o teu companheiro IA.',
+                    caelWelcome: 'Olá! Sou o Cael e estou entusiasmado por te conhecer. Antes de começarmos a nossa jornada juntos, gostaria de te conhecer um pouco através de um processo de integração suave. Isto vai ajudar-me a entender como te apoiar melhor. Pronto para começar?',
+                    startOnboarding: 'Começar a minha jornada com o Cael',
+                    loginInstead: 'Ir para o login em vez disso',
+                    loadingText: 'A configurar a tua conta...',
+                    errorTitle: 'Erro de verificação',
+                    errorMessage: 'Houve um problema ao verificar o teu email. Por favor tenta fazer login ou contacta o suporte.'
+                }
+            };
+        }
+
+        updateContent() {
+            const t = this.translations[this.selectedLanguage];
+            
+            // Update language selector
+            this.updateLanguageSelector();
+            
+            // Update content
+            document.getElementById('success-title').textContent = t.successTitle;
+            document.getElementById('success-message').textContent = t.successMessage;
+            document.getElementById('cael-welcome').textContent = t.caelWelcome;
+            document.getElementById('start-onboarding').textContent = t.startOnboarding;
+            document.getElementById('login-instead').textContent = t.loginInstead;
+            document.getElementById('loading-text').textContent = t.loadingText;
+            document.getElementById('error-title').textContent = t.errorTitle;
+            document.getElementById('error-message').textContent = t.errorMessage;
+            
+            // Update page language
+            document.documentElement.lang = this.selectedLanguage;
+            
+            // Update onboarding link to include language parameter
+            const onboardingLink = document.getElementById('start-onboarding');
+            onboardingLink.href = `onboarding.html?lang=${this.selectedLanguage}`;
+            
+            // Update login link to include language parameter  
+            const loginLink = document.getElementById('login-instead');
+            loginLink.href = `index.html?lang=${this.selectedLanguage}`;
+            
+            // Save language preference for future pages
+            try {
+                sessionStorage.setItem('zentrafuge_selected_language', this.selectedLanguage);
+                localStorage.setItem('zentrafuge_language', this.selectedLanguage);
+            } catch (e) {}
+        }
+
+        updateLanguageSelector() {
+            // Update selected language display
+            const selectedLang = this.supportedLanguages[this.selectedLanguage];
+            document.getElementById('selected-flag').textContent = selectedLang.flag;
+            document.getElementById('selected-language').textContent = selectedLang.name;
+
+            // Populate dropdown options
+            const dropdown = document.getElementById('language-dropdown');
+            dropdown.innerHTML = Object.entries(this.supportedLanguages).map(([code, lang]) => `
+                <div class="language-option-dropdown ${code === this.selectedLanguage ? 'selected' : ''}" 
+                     onclick="window.emailVerificationPage.setLanguage('${code}')">
+                    <span class="language-flag">${lang.flag}</span>
+                    <span class="language-name">${lang.name}</span>
+                </div>
+            `).join('');
+        }
+
+        setLanguage(langCode) {
+            this.selectedLanguage = langCode;
+            this.updateContent();
+            this.closeLanguageDropdown();
+        }
+
+        closeLanguageDropdown() {
+            document.getElementById('language-dropdown').classList.remove('open');
+            document.querySelector('.language-dropdown').classList.remove('open');
+        }
+
+        async handleEmailVerification() {
+            try {
+                // Show loading state
+                document.getElementById('loading').style.display = 'block';
+                
+                // Wait for Firebase to initialize
+                await new Promise(resolve => {
+                    const checkAuth = () => {
+                        if (firebase.auth) {
+                            resolve();
+                        } else {
+                            setTimeout(checkAuth, 100);
+                        }
+                    };
+                    checkAuth();
+                });
+
+                // Handle email verification action
+                const urlParams = new URLSearchParams(window.location.search);
+                const mode = urlParams.get('mode');
+                const actionCode = urlParams.get('oobCode');
+
+                if (mode === 'verifyEmail' && actionCode) {
+                    // Apply the email verification code
+                    await firebase.auth().applyActionCode(actionCode);
+                    
+                    // Email verified successfully
+                    console.log('Email verified successfully');
+                    
+                    // Hide loading, show success
+                    document.getElementById('loading').style.display = 'none';
+                    
+                } else {
+                    // No verification action, just show the success page
+                    document.getElementById('loading').style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Email verification error:', error);
+                
+                // Hide loading, show error
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-state').style.display = 'block';
+                
+                // Update error message based on error type
+                const errorEl = document.getElementById('error-message');
+                if (error.code === 'auth/invalid-action-code') {
+                    errorEl.textContent = this.translations[this.selectedLanguage].errorMessage + ' (Invalid or expired verification link)';
+                } else if (error.code === 'auth/user-disabled') {
+                    errorEl.textContent = 'This account has been disabled. Please contact support.';
+                } else {
+                    errorEl.textContent = this.translations[this.selectedLanguage].errorMessage;
+                }
+            }
+        }
+    }
+
+    function toggleLanguageDropdown() {
+        const dropdown = document.getElementById('language-dropdown');
+        const button = document.querySelector('.language-dropdown');
+        
+        dropdown.classList.toggle('open');
+        button.classList.toggle('open');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const container = document.querySelector('.language-dropdown-container');
+        if (!container.contains(e.target)) {
+            document.getElementById('language-dropdown').classList.remove('open');
+            document.querySelector('.language-dropdown').classList.remove('open');
+        }
+    });
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        window.emailVerificationPage = new EmailVerificationPage();
+    });
+  </script>
+</body>
+</html>
