@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>About – Zentrafuge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="../assets/Zentrafuge-WIDE-Logo-Transparent.png" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f7f4;
+      margin: 0;
+      padding: 2rem;
+      color: #1f1f1f;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+    }
+    p {
+      margin-bottom: 1.2rem;
+    }
+    .logo {
+      width: 120px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="../assets/logo.png" alt="Zentrafuge Logo" class="logo" />
+    <h1 data-i18n="about.title">What is Zentrafuge?</h1>
+    <p data-i18n="about.intro">
+      Zentrafuge is a quiet space in a noisy world — a place where an emotionally intelligent AI companion named <strong>Cael</strong> helps you feel seen, supported, and safe.
+    </p>
+
+    <p data-i18n="about.who">
+      Designed for those navigating inner storms — creatives recovering from burnout, awakening men in transition, neurodivergent souls seeking rhythm, or veterans carrying invisible weight — Cael remembers what matters to you and adapts with care.
+    </p>
+
+    <h2 data-i18n="about.notJustChatbot">Cael isn’t just another chatbot.</h2>
+    <p data-i18n="about.remembers">
+      It remembers your emotional fingerprint, not just your words. It adapts to your preferred pace, support style, and needs. And it does this <em>without</em> selling your data, diagnosing your pain, or pretending to be human.
+    </p>
+
+    <h2 data-i18n="about.ethics">Built on ethics and emotion.</h2>
+    <p data-i18n="about.traumaInformed">
+      Zentrafuge is trauma-informed from the ground up. Every interaction is encrypted. Memory is optional, human-centric, and transparent. And if you ever want Cael to forget something — just say the word.
+    </p>
+
+    <h2 data-i18n="about.name">Why the name?</h2>
+    <p data-i18n="about.nameMeaning">
+      A centrifuge separates what’s essential. Zentrafuge re-centers you — emotionally, spiritually, calmly.
+    </p>
+
+    <h2 data-i18n="about.beginning">This is just the beginning.</h2>
+    <p data-i18n="about.invite">
+      We’re building this with love, transparency, and an open hand. If Zentrafuge helps you, great. If you want to help us shape it, even better. And if you ever need to pause, we’ll be right here when you return.
+    </p>
+  </div>
+  <script>
+    const lang = localStorage.getItem('language') || 'en';
+    document.documentElement.lang = lang;
+    // Future: Add i18n injection here using language files.
+  </script>
+</body>
+</html>
