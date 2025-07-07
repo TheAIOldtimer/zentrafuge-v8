@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Support – Zentrafuge</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7faff;
+      color: #333;
+      margin: 0;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      max-width: 720px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h1 {
+      color: #003366;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .intro {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      color: #444;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1rem;
+      color: #0055aa;
+      margin-bottom: 0.5rem;
+    }
+    .helpline {
+      margin-bottom: 0.8rem;
+      line-height: 1.4;
+    }
+    .helpline strong {
+      color: #d9534f;
+    }
+    .helpline a {
+      color: #0055aa;
+      text-decoration: none;
+    }
+    .helpline a:hover {
+      text-decoration: underline;
+    }
+    .return-link {
+      display: inline-block;
+      margin: 1.5rem auto 0;
+      padding: 0.8rem 1.4rem;
+      background: #003366;
+      color: white;
+      border-radius: 24px;
+      text-decoration: none;
+      transition: background 0.2s ease;
+    }
+    .return-link:hover {
+      background: #0055aa;
+    }
+    .link-container {
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>You're Not Alone</h1>
+    <p class="intro">If you're feeling overwhelmed or in distress, please reach out. These resources can offer you support right now:</p>
+
+    <div id="helpline-content"></div>
+
+    <div class="link-container">
+      <a class="return-link" href="/chat.html">Return to Cael</a>
+    </div>
+  </div>
+
+  <script>
+    const language = localStorage.getItem('zentrafuge_language') || 'en';
+
+    const helplines = {
+      en: {
+        title: "🇬🇧 English (UK)",
+        emergency: "Emergency: 999",
+        lines: [
+          "Samaritans – 116 123 (Free, 24/7)",
+          "Shout Crisis Text – Text SHOUT to 85258"
+        ]
+      },
+      'en-us': {
+        title: "🇺🇸 English (US)",
+        emergency: "Emergency: 911",
+        lines: [
+          "988 Suicide & Crisis Lifeline – 988 (24/7)",
+          "Crisis Text Line – Text HOME to 741741",
+          "National Suicide Prevention Lifeline – <a href=\"https://suicidepreventionlifeline.org/chat/\" target=\"_blank\">Online Chat</a>"
+        ]
+      },
+      'en-ca': {
+        title: "🇨🇦 English (Canada)",
+        emergency: "Emergency: 911",
+        lines: [
+          "Talk Suicide Canada – 1-833-456-4566 (24/7)",
+          "Crisis Text Line – Text HOME to 686868",
+          "Kids Help Phone – 1-800-668-6868 (Youth)"
+        ]
+      },
+      de: {
+        title: "🇩🇪 Deutsch (Germany)",
+        emergency: "Emergency: 112",
+        lines: [
+          "Telefonseelsorge – 0800 111 0 111 or 0800 111 0 222 (Free, 24/7)",
+          "Nummer gegen Kummer – 116 111 (Children/Youth)",
+          "Online-Beratung – <a href=\"https://www.telefonseelsorge.de/\" target=\"_blank\">www.telefonseelsorge.de</a>"
+        ]
+      },
+      fr: {
+        title: "🇫🇷 Français (France)",
+        emergency: "Emergency: 15 (SAMU) or 112",
+        lines: [
+          "SOS Amitié – 09 72 39 40 50 (24/7)",
+          "Suicide Écoute – 01 45 39 40 00 (24/7)",
+          "Chat en ligne – <a href=\"https://www.sos-amitie.com/\" target=\"_blank\">www.sos-amitie.com</a>"
+        ]
+      },
+      es: {
+        title: "🇪🇸 Español (Spain)",
+        emergency: "Emergency: 112",
+        lines: [
+          "Teléfono de la Esperanza – 717 003 717 (24/7)",
+          "ANAR – 900 20 20 10 (Children/Youth)",
+          "Chat online – <a href=\"https://www.telefonodelaesperanza.org/\" target=\"_blank\">www.telefonodelaesperanza.org</a>"
+        ]
+      },
+      it: {
+        title: "🇮🇹 Italiano (Italy)",
+        emergency: "Emergency: 112",
+        lines: [
+          "Telefono Amico – 02 2327 2327 (10:00–24:00)",
+          "Samaritans Onlus – 800 86 00 22 (13:00–22:00)",
+          "Chat online – <a href=\"https://www.telefonoamico.it/\" target=\"_blank\">www.telefonoamico.it</a>"
+        ]
+      },
+      nl: {
+        title: "🇳🇱 Nederlands (Netherlands)",
+        emergency: "Emergency: 112",
+        lines: [
+          "113 Zelfmoordpreventie – 113 or 0800-0113 (Free, 24/7)",
+          "Kindertelefoon – 0800-0432 (Children)",
+          "Online chat – <a href=\"https://www.113.nl/\" target=\"_blank\">www.113.nl</a>"
+        ]
+      },
+      pt: {
+        title: "🇵🇹 Português (Portugal)",
+        emergency: "Emergency: 112",
+        lines: [
+          "SOS Voz Amiga – 213 544 545 (16:00–24:00)",
+          "Linha Vida – 1414 (24/7)",
+          "Chat online – <a href=\"https://www.sosvozamiga.org/\" target=\"_blank\">www.sosvozamiga.org</a>"
+        ]
+      }
+    };
+
+    const global = {
+      title: "🌍 Global Resources",
+      lines: [
+        `Crisis Text Line – Text HOME to 741741 (US/UK/Canada)`,
+        `Befrienders Worldwide – <a href="https://www.befrienders.org/" target="_blank">www.befrienders.org</a>`,
+        `International Association for Suicide Prevention – <a href="https://www.iasp.info/resources/Crisis_Centres" target="_blank">www.iasp.info</a>`,
+        `OpenCounseling Crisis Directory – <a href="https://www.opencounseling.com/suicide-hotlines" target="_blank">Crisis Helplines Worldwide</a>`
+      ]
+    };
+
+    // Detect user's likely region for English speakers
+    function getLocalizedLanguage() {
+      const storedLang = localStorage.getItem('zentrafuge_language') || 'en';
+      
+      // If not English, return as-is
+      if (storedLang !== 'en') {
+        return storedLang;
+      }
+      
+      // For English speakers, try to detect region
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const locale = navigator.language || navigator.userLanguage;
+      
+      if (timezone.includes('America') || locale.includes('US')) {
+        return 'en-us';
+      } else if (timezone.includes('Toronto') || timezone.includes('Vancouver') || locale.includes('CA')) {
+        return 'en-ca';
+      } else {
+        return 'en'; // Default to UK
+      }
+    }
+
+    const content = document.getElementById("helpline-content");
+    const detectedLang = getLocalizedLanguage();
+    const data = helplines[detectedLang] || helplines.en;
+
+    content.innerHTML = `
+      <div class="section">
+        <h2>${data.title}</h2>
+        <div class="helpline"><strong>${data.emergency}</strong></div>
+        ${data.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
+      </div>
+      <div class="section">
+        <h2>${global.title}</h2>
+        ${global.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
+      </div>
+    `;
+  </script>
+</body>
+</html>
