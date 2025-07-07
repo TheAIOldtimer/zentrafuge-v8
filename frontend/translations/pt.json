@@ -1,0 +1,64 @@
+{
+  "welcomeTitle": "Bem-vindo ao Zentrafuge",
+  "caelIntro": "Olá, eu sou Cael. Estou aqui para ser seu companheiro nesta jornada – seja lá o que isso signifique para você. Acredito em ir no seu ritmo, honrar seus limites e construir algo significativo juntos ao longo do tempo.",
+  "welcomeDescription": "Gostaria de conhecê-lo através de algumas perguntas gentis. Isso me ajuda a entender como melhor apoiá-lo, mas você pode pular qualquer coisa que não pareça certa ou voltar a ela mais tarde.",
+  "beginButton": "Vamos começar",
+  
+  "safetyHeader": "Estabelecendo segurança e limites",
+  "communicationQuestion": "Como é para você se sentir ouvido e compreendido?",
+  "communicationContext": "Quero ter certeza de que nossas conversas sejam confortáveis e seguras para você desde o início.",
+  "directLabel": "Feedback direto e orientação clara",
+  "gentleLabel": "Exploração gentil e perguntas",
+  "witnessLabel": "Apenas testemunhar meus pensamentos sem tentar consertar",
+  "mixLabel": "Depende do tópico",
+  
+  "processingQuestion": "Como você normalmente processa coisas difíceis?",
+  "processingContext": "Cada pessoa processa emoções e mudanças de vida no seu próprio ritmo, e gostaria de honrar o seu.",
+  "deepLabel": "Tendo a mergulhar fundo rapidamente",
+  "gradualLabel": "Prefiro abordar gradualmente",
+  "variesLabel": "Varia dependendo da situação",
+  "unsureLabel": "Ainda não tenho certeza",
+  
+  "backButton": "Voltar",
+  "continueButton": "Continuar",
+  
+  "identityHeader": "Compreendendo identidade e propósito",
+  "lifeChapterQuestion": "Como você descreveria este capítulo atual da sua vida?",
+  "lifeChapterContext": "Estou curioso sobre onde você se encontra na história da sua vida neste momento.",
+  "lifeChapterPlaceholder": "ex. 'reconstruindo', 'buscando', 'transformando', 'exausto', ou algo completamente diferente...",
+  
+  "meaningQuestion": "O que faz você se sentir mais você mesmo?",
+  "meaningContext": "O que dá significado à sua vida pode ser uma bússola para nossas conversas juntos.",
+  "creativeLabel": "Trabalho criativo ou expressão",
+  "helpingLabel": "Ajudar ou apoiar outros",
+  "natureLabel": "Estar na natureza",
+  "learningLabel": "Aprender e crescer",
+  "connectionLabel": "Conexões profundas com outros",
+  "otherLabel": "Algo completamente diferente",
+  
+  "supportHeader": "Estilo de apoio e padrões relacionais",
+  "supportQuestion": "Pense em um momento em que alguém realmente o ajudou a atravessar algo difícil. O que fez a diferença?",
+  "supportContext": "Suas experiências passadas com apoio podem guiar como trabalhamos juntos.",
+  "listeningLabel": "Escuta profunda e paciente",
+  "practicalLabel": "Ajuda prática e soluções",
+  "challengeLabel": "Desafios gentis para crescer",
+  "presenceLabel": "Apenas estar presente sem tentar consertar",
+  
+  "finalHeader": "Perguntas finais",
+  "nameQuestion": "Como gostaria de me chamar?",
+  "nameContext": "Você pode ficar com Cael, ou escolher algo que pareça certo para você.",
+  "completeButton": "Iniciar nossa jornada",
+  
+  "skipNote": "Você pode pular qualquer pergunta ou voltar para atualizar suas preferências a qualquer momento.",
+  "footerText": "© 2025 Zentrafuge. Todos os direitos reservados.",
+  
+  "authNotice": "Por favor, faça login para continuar com a integração.",
+  "loginLink": "Clique aqui para fazer login",
+  "offlineMode": "Você pode continuar sem fazer login, mas suas preferências não serão salvas na nuvem.",
+  "authSuccess": "Autenticação bem-sucedida! Bem-vindo de volta.",
+  "offlineWarning": "Continuando no modo offline. Faça login para salvar na nuvem.",
+  
+  "savingMessage": "Salvando suas preferências...",
+  "errorSaving": "Erro ao salvar preferências. Continuando com armazenamento local.",
+  "successSaving": "Preferências salvas com sucesso!"
+}
