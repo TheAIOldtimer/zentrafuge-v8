@@ -1,0 +1,24 @@
+# Python
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+
+# IDE configs
+.vscode/
+.idea/
+
+# Environment variables
+.env
+service-account.json
+
+# Logs
+*.log
+
+# macOS cruft
+.DS_Store
+
+# Frontend
+node_modules/
+dist/
