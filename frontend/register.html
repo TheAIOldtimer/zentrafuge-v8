@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register – Zentrafuge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+<!-- Firebase v8 scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebases-init.js" defer></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7faff;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Language Selector at Top */
+    .top-language-bar {
+      width: 100%;
+      background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
+      color: white;
+      padding: 0.8rem 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .language-dropdown-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .language-dropdown-label {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .language-dropdown {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 140px;
+    }
+
+    .language-dropdown:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .language-dropdown-arrow {
+      margin-left: auto;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease;
+    }
+
+    .language-dropdown.open .language-dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .language-options-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+    }
+
+    .language-options-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    .language-option-dropdown {
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: #333;
+    }
+
+    .language-option-dropdown:last-child {
+      border-bottom: none;
+    }
+
+    .language-option-dropdown:hover {
+      background: #f8f9ff;
+    }
+
+    .language-option-dropdown.selected {
+      background: #eef2ff;
+      color: #0055aa;
+      font-weight: 500;
+    }
+
+    .language-flag {
+      font-size: 1.1rem;
+    }
+
+    .language-name {
+      flex: 1;
+    }
+
+    .language-detected {
+      font-size: 0.75rem;
+      color: #0055aa;
+      font-style: italic;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+    
+    header img {
+      max-width: 260px;
+    }
+    
+    .form-box {
+      background: white;
+      padding: 2rem;
+      margin-top: 1rem;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.3rem;
+      color: #003366;
+      font-weight: 600;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #0055aa;
+      box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
+    }
+    
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      background-color: #003366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      font-weight: 500;
+    }
+    
+    button:hover {
+      background-color: #0055aa;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .donate {
+      text-align: center;
+      margin: 1rem;
+    }
+    
+    .donate a {
+      padding: 0.5rem 1rem;
+      background: green;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+    }
+
+    .donate a:hover {
+      background: darkgreen;
+    }
+    
+    .checkbox {
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .checkbox input {
+      margin-top: 0.2rem;
+      flex-shrink: 0;
+    }
+    
+    .checkbox a {
+      color: #003366;
+      text-decoration: none;
+    }
+
+    .checkbox a:hover {
+      text-decoration: underline;
+    }
+    
+    .message {
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .message.error {
+      background: #ffe6e6;
+      color: #d00;
+      border: 1px solid #ffcccc;
+    }
+
+    .message.success {
+      background: #e6ffe6;
+      color: #0a5d0a;
+      border: 1px solid #ccffcc;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .login-link a {
+      color: #003366;
+      text-decoration: none;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    .privacy-notice {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: #f0f8ff;
+      border-radius: 6px;
+      text-align: center;
+      color: #0055aa;
+      font-size: 0.85rem;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .loading::after {
+      content: "";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #0055aa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: auto;
+    }
+
+    @media (max-width: 600px) {
+      .top-language-bar {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .language-dropdown-label {
+        font-size: 0.8rem;
+      }
+
+      .form-box {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Language Selector Bar -->
+  <div class="top-language-bar">
+    <div class="language-dropdown-container">
+      <div class="language-dropdown-label">
+        <span>🌍</span>
+        <span id="language-label">Language / Langue / Sprache</span>
+      </div>
+      <div class="language-dropdown" onclick="toggleLanguageDropdown()">
+        <span class="language-flag" id="selected-flag">🇬🇧</span>
+        <span class="language-name" id="selected-language">English</span>
+        <span class="language-dropdown-arrow">▼</span>
+      </div>
+      <div class="language-options-dropdown" id="language-dropdown">
+        <!-- Language options will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
+  </header>
+  
+  <div class="form-box">
+    <h2 class="form-title" id="form-title">Create Your Account</h2>
+    <form id="register-form">
+      <input type="text" id="name" required />
+      <input type="email" id="email" required />
+      <input type="password" id="password" required />
+      <div class="checkbox">
+        <input type="checkbox" id="terms" required />
+        <label for="terms" id="terms-label">
+          I agree to the <a href="terms.html" target="_blank" id="terms-link">Terms & Conditions</a>
+        </label>
+      </div>
+      <button type="submit" id="register-button">Register</button>
+      <div class="loading" id="loading"></div>
+      <div class="message" id="message"></div>
+    </form>
+    <div class="login-link">
+      <span id="login-text">Already have an account?</span> <a href="index.html" id="login-link">Login here</a>
+    </div>
+  </div>
+  
+  <div class="donate">
+    <a href="https://www.paypal.com/paypalme/zentrafuge" target="_blank" id="donate-button">Donate</a>
+  </div>
+  
+  <footer id="footer-text">
+    &copy; 2025 Zentrafuge. All rights reserved.
+  </footer>
+
+  <script>
+    // Enhanced International System for Registration Page
+    class ZentrafugeInternational {
+        constructor() {
+            this.supportedLanguages = {
+                'en': { name: 'English', flag: '🇬🇧' },
+                'de': { name: 'Deutsch', flag: '🇩🇪' },
+                'fr': { name: 'Français', flag: '🇫🇷' },
+                'es': { name: 'Español', flag: '🇪🇸' },
+                'it': { name: 'Italiano', flag: '🇮🇹' },
+                'nl': { name: 'Nederlands', flag: '🇳🇱' },
+                'pt': { name: 'Português', flag: '🇵🇹' }
+            };
+            
+            this.selectedLanguage = this.loadLanguagePreference();
+            this.translations = this.getTranslations();
+            
+            this.initializeLanguageSelector();
+            this.updatePageContent();
+        }
+
+        loadLanguagePreference() {
+            // First try to get from session (set by index page)
+            try {
+                const sessionLang = sessionStorage.getItem('zentrafuge_selected_language');
+                if (sessionLang && this.supportedLanguages[sessionLang]) {
+                    return sessionLang;
+                }
+            } catch (e) {}
+            
+            // Fallback to localStorage
+            try {
+                const storedLang = localStorage.getItem('zentrafuge_language');
+                if (storedLang && this.supportedLanguages[storedLang]) {
+                    return storedLang;
+                }
+            } catch (e) {}
+            
+            // Final fallback to browser detection
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langCode = browserLang.split('-')[0];
+            return this.supportedLanguages[langCode] ? langCode : 'en';
+        }
+
+        saveLanguage(langCode) {
+            try {
+                localStorage.setItem('zentrafuge_language', langCode);
+                sessionStorage.setItem('zentrafuge_selected_language', langCode);
+            } catch (e) {
+                console.log('Could not save language preference');
+            }
+        }
+
+        getTranslations() {
+            return {
+                'en': {
+                    languageLabel: 'Language / Langue / Sprache',
+                    formTitle: 'Create Your Account',
+                    namePlaceholder: 'Name',
+                    emailPlaceholder: 'Email',
+                    passwordPlaceholder: 'Password',
+                    termsLabel: 'I agree to the',
+                    termsLink: 'Terms & Conditions',
+                    registerButton: 'Register',
+                    loginText: 'Already have an account?',
+                    loginLink: 'Login here',
+                    donateButton: 'Donate',
+                    footerText: '© 2025 Zentrafuge. All rights reserved.',
+                    privacyNote: 'Your privacy is protected under GDPR and UK data protection laws.',
+                    registrationSuccess: 'Registered successfully! Please check your email to verify before logging in.',
+                    registrationError: 'Registration failed',
+                    emailSentSuccess: 'Verification email sent! Please check your inbox.',
+                    pleaseWait: 'Please wait...'
+                },
+                'de': {
+                    languageLabel: 'Sprache / Language / Langue',
+                    formTitle: 'Erstelle dein Konto',
+                    namePlaceholder: 'Name',
+                    emailPlaceholder: 'E-Mail',
+                    passwordPlaceholder: 'Passwort',
+                    termsLabel: 'Ich stimme den',
+                    termsLink: 'Allgemeinen Geschäftsbedingungen',
+                    registerButton: 'Registrieren',
+                    loginText: 'Bereits ein Konto?',
+                    loginLink: 'Hier anmelden',
+                    donateButton: 'Spenden',
+                    footerText: '© 2025 Zentrafuge. Alle Rechte vorbehalten.',
+                    privacyNote: 'Deine Privatsphäre ist durch die DSGVO und deutsche Datenschutzgesetze geschützt.',
+                    registrationSuccess: 'Erfolgreich registriert! Bitte überprüfe deine E-Mail zur Verifizierung vor der Anmeldung.',
+                    registrationError: 'Registrierung fehlgeschlagen',
+                    emailSentSuccess: 'Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.',
+                    pleaseWait: 'Bitte warten...'
+                },
+                'fr': {
+                    languageLabel: 'Langue / Language / Sprache',
+                    formTitle: 'Créez votre compte',
+                    namePlaceholder: 'Nom',
+                    emailPlaceholder: 'E-mail',
+                    passwordPlaceholder: 'Mot de passe',
+                    termsLabel: 'J\'accepte les',
+                    termsLink: 'Conditions générales',
+                    registerButton: 'S\'inscrire',
+                    loginText: 'Déjà un compte?',
+                    loginLink: 'Se connecter ici',
+                    donateButton: 'Faire un don',
+                    footerText: '© 2025 Zentrafuge. Tous droits réservés.',
+                    privacyNote: 'Votre vie privée est protégée par le RGPD et les lois françaises sur la protection des données.',
+                    registrationSuccess: 'Inscription réussie! Veuillez vérifier votre e-mail avant de vous connecter.',
+                    registrationError: 'Échec de l\'inscription',
+                    emailSentSuccess: 'E-mail de vérification envoyé! Veuillez vérifier votre boîte de réception.',
+                    pleaseWait: 'Veuillez patienter...'
+                },
+                'es': {
+                    languageLabel: 'Idioma / Language / Langue',
+                    formTitle: 'Crea tu cuenta',
+                    namePlaceholder: 'Nombre',
+                    emailPlaceholder: 'Correo electrónico',
+                    passwordPlaceholder: 'Contraseña',
+                    termsLabel: 'Acepto los',
+                    termsLink: 'Términos y Condiciones',
+                    registerButton: 'Registrarse',
+                    loginText: '¿Ya tienes cuenta?',
+                    loginLink: 'Iniciar sesión aquí',
+                    donateButton: 'Donar',
+                    footerText: '© 2025 Zentrafuge. Todos los derechos reservados.',
+                    privacyNote: 'Tu privacidad está protegida bajo GDPR y las leyes españolas de protección de datos.',
+                    registrationSuccess: '¡Registro exitoso! Por favor verifica tu correo electrónico antes de iniciar sesión.',
+                    registrationError: 'Error en el registro',
+                    emailSentSuccess: '¡Correo de verificación enviado! Por favor revisa tu bandeja de entrada.',
+                    pleaseWait: 'Por favor espera...'
+                },
+                'it': {
+                    languageLabel: 'Lingua / Language / Langue',
+                    formTitle: 'Crea il tuo account',
+                    namePlaceholder: 'Nome',
+                    emailPlaceholder: 'Email',
+                    passwordPlaceholder: 'Password',
+                    termsLabel: 'Accetto i',
+                    termsLink: 'Termini e Condizioni',
+                    registerButton: 'Registrati',
+                    loginText: 'Hai già un account?',
+                    loginLink: 'Accedi qui',
+                    donateButton: 'Dona',
+                    footerText: '© 2025 Zentrafuge. Tutti i diritti riservati.',
+                    privacyNote: 'La tua privacy è protetta dal GDPR e dalle leggi italiane sulla protezione dei dati.',
+                    registrationSuccess: 'Registrazione riuscita! Verifica la tua email prima di accedere.',
+                    registrationError: 'Registrazione fallita',
+                    emailSentSuccess: 'Email di verifica inviata! Controlla la tua casella di posta.',
+                    pleaseWait: 'Attendere prego...'
+                },
+                'nl': {
+                    languageLabel: 'Taal / Language / Langue',
+                    formTitle: 'Maak je account aan',
+                    namePlaceholder: 'Naam',
+                    emailPlaceholder: 'E-mail',
+                    passwordPlaceholder: 'Wachtwoord',
+                    termsLabel: 'Ik ga akkoord met de',
+                    termsLink: 'Algemene Voorwaarden',
+                    registerButton: 'Registreren',
+                    loginText: 'Al een account?',
+                    loginLink: 'Hier inloggen',
+                    donateButton: 'Doneren',
+                    footerText: '© 2025 Zentrafuge. Alle rechten voorbehouden.',
+                    privacyNote: 'Je privacy wordt beschermd onder AVG en Nederlandse privacywetten.',
+                    registrationSuccess: 'Succesvol geregistreerd! Controleer je e-mail om te verifiëren voordat je inlogt.',
+                    registrationError: 'Registratie mislukt',
+                    emailSentSuccess: 'Verificatie-e-mail verzonden! Controleer je inbox.',
+                    pleaseWait: 'Even geduld...'
+                },
+                'pt': {
+                    languageLabel: 'Idioma / Language / Langue',
+                    formTitle: 'Cria a tua conta',
+                    namePlaceholder: 'Nome',
+                    emailPlaceholder: 'Email',
+                    passwordPlaceholder: 'Palavra-passe',
+                    termsLabel: 'Concordo com os',
+                    termsLink: 'Termos e Condições',
+                    registerButton: 'Registar',
+                    loginText: 'Já tens conta?',
+                    loginLink: 'Entrar aqui',
+                    donateButton: 'Doar',
+                    footerText: '© 2025 Zentrafuge. Todos os direitos reservados.',
+                    privacyNote: 'A tua privacidade está protegida pelo RGPD e pelas leis portuguesas de proteção de dados.',
+                    registrationSuccess: 'Registo bem-sucedido! Por favor verifica o teu email antes de fazer login.',
+                    registrationError: 'Falha no registo',
+                    emailSentSuccess: 'Email de verificação enviado! Verifica a tua caixa de entrada.',
+                    pleaseWait: 'Por favor aguarda...'
+                }
+            };
+        }
+
+        initializeLanguageSelector() {
+            const dropdown = document.getElementById('language-dropdown');
+            dropdown.innerHTML = Object.entries(this.supportedLanguages).map(([code, lang]) => `
+                <div class="language-option-dropdown ${code === this.selectedLanguage ? 'selected' : ''}" 
+                     onclick="window.zentrafugeIntl.setLanguage('${code}')">
+                    <span class="language-flag">${lang.flag}</span>
+                    <span class="language-name">${lang.name}</span>
+                </div>
+            `).join('');
+
+            // Update selected language display
+            const selectedLang = this.supportedLanguages[this.selectedLanguage];
+            document.getElementById('selected-flag').textContent = selectedLang.flag;
+            document.getElementById('selected-language').textContent = selectedLang.name;
+        }
+
+        setLanguage(langCode) {
+            this.selectedLanguage = langCode;
+            this.saveLanguage(langCode);
+            this.updatePageContent();
+            this.initializeLanguageSelector();
+            this.closeLanguageDropdown();
+        }
+
+        updatePageContent() {
+            const t = this.translations[this.selectedLanguage];
+            
+            // Update all translatable elements
+            document.getElementById('language-label').textContent = t.languageLabel;
+            document.getElementById('form-title').textContent = t.formTitle;
+            document.getElementById('name').placeholder = t.namePlaceholder;
+            document.getElementById('email').placeholder = t.emailPlaceholder;
+            document.getElementById('password').placeholder = t.passwordPlaceholder;
+            
+            // Update terms label (more complex because of the link)
+            const termsLabel = document.getElementById('terms-label');
+            termsLabel.innerHTML = `${t.termsLabel} <a href="terms.html?lang=${this.selectedLanguage}" target="_blank" id="terms-link">${t.termsLink}</a>`;
+            
+            document.getElementById('register-button').textContent = t.registerButton;
+            document.getElementById('login-text').textContent = t.loginText;
+            document.getElementById('login-link').textContent = t.loginLink;
+            document.getElementById('donate-button').textContent = t.donateButton;
+            document.getElementById('footer-text').textContent = t.footerText;
+            
+            // Add privacy notice if it doesn't exist
+            let privacyNotice = document.querySelector('.privacy-notice');
+            if (!privacyNotice) {
+                privacyNotice = document.createElement('div');
+                privacyNotice.className = 'privacy-notice';
+                document.querySelector('.form-box').appendChild(privacyNotice);
+            }
+            privacyNotice.innerHTML = `<small>🔒 ${t.privacyNote}</small>`;
+            
+            // Update page language attribute
+            document.documentElement.lang = this.selectedLanguage;
+        }
+
+        closeLanguageDropdown() {
+            document.getElementById('language-dropdown').classList.remove('open');
+            document.querySelector('.language-dropdown').classList.remove('open');
+        }
+
+        getSelectedLanguage() {
+            return this.selectedLanguage;
+        }
+
+        getTranslation(key) {
+            return this.translations[this.selectedLanguage][key] || this.translations['en'][key] || key;
+        }
+    }
+
+    function toggleLanguageDropdown() {
+        const dropdown = document.getElementById('language-dropdown');
+        const button = document.querySelector('.language-dropdown');
+        
+        dropdown.classList.toggle('open');
+        button.classList.toggle('open');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const container = document.querySelector('.language-dropdown-container');
+        if (!container.contains(e.target)) {
+            document.getElementById('language-dropdown').classList.remove('open');
+            document.querySelector('.language-dropdown').classList.remove('open');
+        }
+    });
+
+    // Initialize international system
+    window.zentrafugeIntl = new ZentrafugeInternational();
+
+    // Enhanced registration form with Firestore profile storage
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const name = document.getElementById('name').value;
+      const messageEl = document.getElementById('message');
+      const loadingEl = document.getElementById('loading');
+      const submitButton = document.getElementById('register-button');
+      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+      
+      // Show loading state
+      loadingEl.style.display = 'block';
+      submitButton.disabled = true;
+      submitButton.textContent = t.pleaseWait;
+      messageEl.style.display = 'none';
+      
+      try {
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Update Firebase Auth profile with name
+        await user.updateProfile({ displayName: name });
+        
+        // Save profile to Firestore (THIS IS THE KEY FIX!)
+        await firebase.firestore().collection("users").doc(user.uid).set({
+          name: name,
+          email: user.email,
+          language: window.zentrafugeIntl.getSelectedLanguage(),
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Store user's language preference in session (for fallback use)
+        try {
+          sessionStorage.setItem('zentrafuge_user_language', window.zentrafugeIntl.getSelectedLanguage());
+        } catch (e) {
+          console.log('Could not store user language preference');
+        }
+        
+        // Send verification email
+        await user.sendEmailVerification();
+        
+        // Show success message
+        messageEl.className = 'message success';
+        messageEl.textContent = t.registrationSuccess;
+        messageEl.style.display = 'block';
+        
+        // Clear form
+        document.getElementById('register-form').reset();
+        
+        // Redirect to login page after 3 seconds
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
+        
+      } catch (error) {
+        // Show error message
+        messageEl.className = 'message error';
+        messageEl.textContent = t.registrationError + ': ' + error.message;
+        messageEl.style.display = 'block';
+      } finally {
+        // Hide loading state
+        loadingEl.style.display = 'none';
+        submitButton.disabled = false;
+        submitButton.textContent = t.registerButton;
+      }
+    });
+
+    // Handle Enter key for better UX
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('register-form').dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+    });
+  </script>
+</body>
+</html>
