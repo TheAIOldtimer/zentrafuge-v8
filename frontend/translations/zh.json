@@ -1,0 +1,64 @@
+{
+  "welcomeTitle": "欢迎来到Zentrafuge",
+  "caelIntro": "你好，我是Cael。我在这里陪伴你踏上这段旅程——无论这对你意味着什么。我相信按照你的节奏前进，尊重你的界限，并随着时间一起建立有意义的东西。",
+  "welcomeDescription": "我想通过一些温和的问题来了解你。这有助于我理解如何最好地支持你，但你可以跳过任何感觉不对的问题，或稍后再回来。",
+  "beginButton": "让我们开始",
+  
+  "safetyHeader": "建立安全感和界限",
+  "communicationQuestion": "对你来说，被倾听和理解是什么样的？",
+  "communicationContext": "我想确保我们的对话从一开始就让你感到舒适和安全。",
+  "directLabel": "直接的反馈和明确的指导",
+  "gentleLabel": "温和的探索和提问",
+  "witnessLabel": "只是见证我的想法而不试图修复",
+  "mixLabel": "取决于话题",
+  
+  "processingQuestion": "你通常如何处理困难的事情？",
+  "processingContext": "每个人都以自己的节奏处理情感和生活变化，我想尊重你的节奏。",
+  "deepLabel": "我倾向于快速深入",
+  "gradualLabel": "我更喜欢逐渐接近",
+  "variesLabel": "因情况而异",
+  "unsureLabel": "我还不确定",
+  
+  "backButton": "返回",
+  "continueButton": "继续",
+  
+  "identityHeader": "理解身份和目标",
+  "lifeChapterQuestion": "你如何描述你人生的当前章节？",
+  "lifeChapterContext": "我很好奇你现在在人生故事中的位置。",
+  "lifeChapterPlaceholder": "例如：'重建'、'寻找'、'转变'、'疲惫'，或完全不同的东西...",
+  
+  "meaningQuestion": "什么让你最有自己的感觉？",
+  "meaningContext": "赋予你生活意义的东西可以成为我们共同对话的指南针。",
+  "creativeLabel": "创意工作或表达",
+  "helpingLabel": "帮助或支持他人",
+  "natureLabel": "身处自然中",
+  "learningLabel": "学习和成长",
+  "connectionLabel": "与他人的深度连接",
+  "otherLabel": "完全不同的东西",
+  
+  "supportHeader": "支持风格和关系模式",
+  "supportQuestion": "想想有人真正帮助你度过困难时期的经历。是什么起了作用？",
+  "supportContext": "你过去的支持经历可以指导我们如何合作。",
+  "listeningLabel": "深度、耐心的倾听",
+  "practicalLabel": "实用的帮助和解决方案",
+  "challengeLabel": "温和的成长挑战",
+  "presenceLabel": "只是陪伴而不试图修复",
+  
+  "finalHeader": "最后的问题",
+  "nameQuestion": "你想怎么称呼我？",
+  "nameContext": "你可以继续叫我Cael，或选择对你来说合适的名字。",
+  "completeButton": "开始我们的旅程",
+  
+  "skipNote": "你可以跳过任何问题或随时回来更新你的偏好。",
+  "footerText": "© 2025 Zentrafuge。保留所有权利。",
+  
+  "authNotice": "请登录以继续入门流程。",
+  "loginLink": "点击这里登录",
+  "offlineMode": "你可以不登录继续，但你的偏好不会保存到云端。",
+  "authSuccess": "认证成功！欢迎回来。",
+  "offlineWarning": "继续离线模式。登录以保存到云端。",
+  
+  "savingMessage": "正在保存你的偏好...",
+  "errorSaving": "保存偏好时出错。继续使用本地存储。",
+  "successSaving": "偏好保存成功！"
+}
