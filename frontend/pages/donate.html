@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Support Zentrafuge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="../assets/Zentrafuge-WIDE-Logo-Transparent.png" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f7f4;
+      margin: 0;
+      padding: 2rem;
+      color: #1f1f1f;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      margin-bottom: 1.2rem;
+    }
+    .donate-button {
+      background-color: #00aa5e;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+    }
+    .donate-button:hover {
+      background-color: #008a4e;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 data-i18n="donate.title">Support Zentrafuge</h1>
+    <p data-i18n="donate.message1">
+      If Zentrafuge helps you breathe easier, sleep deeper, or feel more seen — you can help it keep growing.
+    </p>
+
+    <p data-i18n="donate.message2">
+      Your donations go directly toward building safer emotional AI, supporting vulnerable users (like veterans and survivors), and keeping memory and care free for all.
+    </p>
+
+    <a href="https://www.paypal.com/paypalme/zentrafuge" class="donate-button" target="_blank" data-i18n="donate.button">
+      Donate via PayPal
+    </a>
+
+    <p data-i18n="donate.altWays">
+      Prefer to sponsor a soul or donate another way? Reach out at <a href="mailto:hello@zentrafuge.com">hello@zentrafuge.com</a>
+    </p>
+  </div>
+  <script>
+    const lang = localStorage.getItem('language') || 'en';
+    document.documentElement.lang = lang;
+    // Future: Add i18n injection here using language files.
+  </script>
+</body>
+</html>
