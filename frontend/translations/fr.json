@@ -1,0 +1,64 @@
+{
+  "welcomeTitle": "Bienvenue chez Zentrafuge",
+  "caelIntro": "Bonjour, je suis Cael. Je suis là pour être votre compagnon dans ce voyage – quoi qu'il représente pour vous. Je crois qu'il faut avancer à votre rythme, respecter vos limites et construire quelque chose de significatif ensemble au fil du temps.",
+  "welcomeDescription": "J'aimerais apprendre à vous connaître à travers quelques questions douces. Cela m'aide à comprendre comment vous soutenir au mieux, mais vous pouvez ignorer tout ce qui ne vous semble pas juste ou y revenir plus tard.",
+  "beginButton": "Commençons",
+  
+  "safetyHeader": "Établir la sécurité et les limites",
+  "communicationQuestion": "Qu'est-ce que cela signifie pour vous de vous sentir écouté et compris ?",
+  "communicationContext": "Je veux m'assurer que nos conversations vous semblent confortables et sûres dès le début.",
+  "directLabel": "Retour direct et conseils clairs",
+  "gentleLabel": "Exploration douce et questions",
+  "witnessLabel": "Juste être témoin de mes pensées sans chercher à réparer",
+  "mixLabel": "Cela dépend du sujet",
+  
+  "processingQuestion": "Comment traitez-vous généralement les choses difficiles ?",
+  "processingContext": "Chacun traite les émotions et les changements de vie à son propre rythme, et j'aimerais respecter le vôtre.",
+  "deepLabel": "J'ai tendance à plonger rapidement",
+  "gradualLabel": "Je préfère tourner autour progressivement",
+  "variesLabel": "Cela varie selon la situation",
+  "unsureLabel": "Je ne suis pas encore sûr",
+  
+  "backButton": "Retour",
+  "continueButton": "Continuer",
+  
+  "identityHeader": "Comprendre l'identité et le but",
+  "lifeChapterQuestion": "Comment décririez-vous ce chapitre actuel de votre vie ?",
+  "lifeChapterContext": "Je suis curieux de savoir où vous vous situez dans l'histoire de votre vie en ce moment.",
+  "lifeChapterPlaceholder": "par ex. 'reconstruction', 'recherche', 'transformation', 'épuisé', ou quelque chose d'autre entièrement...",
+  
+  "meaningQuestion": "Qu'est-ce qui vous fait vous sentir le plus vous-même ?",
+  "meaningContext": "Ce qui donne un sens à votre vie peut être une boussole pour nos conversations ensemble.",
+  "creativeLabel": "Travail créatif ou expression",
+  "helpingLabel": "Aider ou soutenir les autres",
+  "natureLabel": "Être dans la nature",
+  "learningLabel": "Apprendre et grandir",
+  "connectionLabel": "Connexions profondes avec les autres",
+  "otherLabel": "Quelque chose d'autre entièrement",
+  
+  "supportHeader": "Style de soutien et schémas relationnels",
+  "supportQuestion": "Pensez à un moment où quelqu'un vous a vraiment aidé à traverser une période difficile. Qu'est-ce qui a fait la différence ?",
+  "supportContext": "Vos expériences passées avec le soutien peuvent guider la façon dont nous travaillons ensemble.",
+  "listeningLabel": "Écoute profonde et patiente",
+  "practicalLabel": "Aide pratique et solutions",
+  "challengeLabel": "Défis doux pour grandir",
+  "presenceLabel": "Juste être présent sans essayer de réparer",
+  
+  "finalHeader": "Questions finales",
+  "nameQuestion": "Comment aimeriez-vous m'appeler ?",
+  "nameContext": "Vous pouvez rester avec Cael, ou choisir quelque chose qui vous convient.",
+  "completeButton": "Commencer notre voyage",
+  
+  "skipNote": "Vous pouvez ignorer toute question ou revenir pour mettre à jour vos préférences à tout moment.",
+  "footerText": "© 2025 Zentrafuge. Tous les droits réservés.",
+  
+  "authNotice": "Veuillez vous connecter pour continuer l'intégration.",
+  "loginLink": "Cliquez ici pour vous connecter",
+  "offlineMode": "Vous pouvez continuer sans vous connecter, mais vos préférences ne seront pas sauvegardées dans le cloud.",
+  "authSuccess": "Authentification réussie ! Bon retour.",
+  "offlineWarning": "Continuer en mode hors ligne. Connectez-vous pour sauvegarder dans le cloud.",
+  
+  "savingMessage": "Enregistrement de vos préférences...",
+  "errorSaving": "Erreur lors de l'enregistrement des préférences. Continuation avec le stockage local.",
+  "successSaving": "Préférences enregistrées avec succès !"
+}
