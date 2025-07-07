@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zentrafuge × Cael</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <!-- Firebase v8 scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="firebases-init.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7faff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Loading overlay for auth check */
+    .auth-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(247, 250, 255, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ddd;
+      border-top: 4px solid #0055aa;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .auth-message {
+      color: #0055aa;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    header {
+      background: linear-gradient(135deg, #eef2ff 0%, #e6f3ff 100%);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-bottom: 1px solid rgba(0, 85, 170, 0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header img {
+      max-height: 40px;
+    }
+
+    .user-info {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logout-btn {
+      background-color: #dc3545;
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
+
+    .donate-button {
+      background-color: #28a745;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .donate-button:hover {
+      background-color: #218838;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 1rem;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .message {
+      display: inline-block;
+      padding: 0.8rem 1.2rem;
+      border-radius: 18px;
+      max-width: 75%;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      font-size: 0.95rem;
+      word-break: break-word;
+      word-wrap: break-word;
+      margin-bottom: 0.5rem;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #dcf8c6 0%, #c8f2c8 100%);
+      color: #000;
+      text-align: right;
+      border: 1px solid rgba(40, 167, 69, 0.2);
+      border-right: 4px solid #28a745;
+    }
+
+    .cael {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #eef2ff 0%, #e6f3ff 100%);
+      color: #333;
+      border: 1px solid rgba(0, 85, 170, 0.2);
+      text-align: left;
+      border-left: 4px solid #0055aa;
+    }
+
+    /* Typing indicator styles */
+    .typing-indicator {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #eef2ff 0%, #e6f3ff 100%);
+      border: 1px solid rgba(0, 85, 170, 0.2);
+      border-left: 4px solid #0055aa;
+      padding: 0.8rem 1.2rem;
+      border-radius: 18px;
+      max-width: 75%;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 0.2rem;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #0055aa;
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: typingAnimation 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) {
+      animation-delay: 0ms;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 200ms;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 400ms;
+    }
+
+    @keyframes typingAnimation {
+      0%, 60%, 100% {
+        opacity: 0.4;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-8px);
+      }
+    }
+
+    form {
+      display: flex;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      border-top: 1px solid rgba(0, 85, 170, 0.1);
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    input[type="text"] {
+      flex: 2;
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #0055aa;
+      box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
+    }
+
+    button {
+      margin-left: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background: #0055aa;
+      transform: translateY(-1px);
+    }
+
+    /* Welcome message styling */
+    .welcome-message {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #eef2ff 0%, #e6f3ff 100%);
+      color: #333;
+      border: 1px solid rgba(0, 85, 170, 0.2);
+      border-left: 4px solid #0055aa;
+      padding: 1.2rem 1.5rem;
+      border-radius: 12px;
+      max-width: 85%;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    @media screen and (max-width: 600px) {
+      header {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 0.5rem;
+      }
+
+      .header-left,
+      .header-right {
+        width: 100%;
+        justify-content: center;
+      }
+
+      form {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+
+      input[type="text"],
+      button {
+        width: 100%;
+        margin: 0;
+      }
+
+      #chat {
+        padding: 0.5rem;
+      }
+
+      .message {
+        font-size: 1rem;
+        max-width: 85%;
+      }
+
+      .typing-indicator {
+        max-width: 85%;
+      }
+
+      .welcome-message {
+        max-width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth Loading Overlay -->
+  <div class="auth-loading" id="auth-loading">
+    <div class="loading-spinner"></div>
+    <div class="auth-message">Verifying access...</div>
+  </div>
+
+  <header style="display: none;" id="main-header">
+    <div class="header-left">
+      <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
+      <div class="user-info" id="user-info">Loading...</div>
+    </div>
+    <div class="header-right">
+      <a class="donate-button" href="https://www.paypal.com/paypalme/zentrafuge" target="_blank">Donate</a>
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </header>
+
+  <main id="chat" role="log" aria-live="polite" style="display: none;"></main>
+
+  <form id="chat-form" aria-label="Ask Cael something" style="display: none;">
+    <input type="text" id="message" placeholder="Ask Cael something..." autocomplete="off" required />
+    <button type="submit" id="send-button">Send</button>
+  </form>
+
+  <script>
+    const BACKEND_URL = "https://zentrafuge-v7.onrender.com";
+    let isTyping = false;
+    let currentUser = null;
+    let isAuthorized = false;
+
+    // Auth Guard - Check user authorization
+    async function checkUserAuthorization(user) {
+      try {
+        // Check email verification
+        if (!user.emailVerified) {
+          throw new Error('Email not verified');
+        }
+
+        // Check onboarding completion
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+          throw new Error('User document not found');
+        }
+
+        const userData = userDoc.data();
+        if (!userData.onboardingComplete) {
+          throw new Error('Onboarding not completed');
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Authorization check failed:', error);
+        return false;
+      }
+    }
+
+    // Redirect to appropriate page based on auth state
+    function redirectToAuth(reason = 'unauthorized') {
+      console.log('Redirecting to auth:', reason);
+      
+      // Add reason as URL parameter for better UX
+      const params = new URLSearchParams({ reason });
+      window.location.href = `index.html?${params}`;
+    }
+
+    // Initialize app only after auth verification
+    async function initializeApp(user) {
+      currentUser = user;
+      
+      // Update user info in header
+      document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
+      
+      // Hide loading overlay and show main app
+      document.getElementById('auth-loading').style.display = 'none';
+      document.getElementById('main-header').style.display = 'flex';
+      document.getElementById('chat').style.display = 'flex';
+      document.getElementById('chat-form').style.display = 'flex';
+      
+      // Load chat functionality
+      await loadPreviousMessages();
+      document.getElementById("message").focus();
+    }
+
+    // Firebase Auth State Observer
+    firebase.auth().onAuthStateChanged(async function(user) {
+      if (user && !user.isAnonymous) {
+        console.log('User authenticated:', user.email);
+        
+        // Check full authorization
+        const authorized = await checkUserAuthorization(user);
+        
+        if (authorized) {
+          isAuthorized = true;
+          await initializeApp(user);
+        } else {
+          // User exists but not fully authorized
+          if (!user.emailVerified) {
+            redirectToAuth('email_verification');
+          } else {
+            redirectToAuth('onboarding_incomplete');
+          }
+        }
+      } else {
+        // No user signed in
+        redirectToAuth('not_signed_in');
+      }
+    });
+
+    // Logout handler
+    async function handleLogout() {
+      try {
+        await firebase.auth().signOut();
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Error signing out. Please try again.');
+      }
+    }
+
+    function generateUniqueUserId() {
+      // Use Firebase UID if available, otherwise generate fallback
+      return currentUser ? currentUser.uid : `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    function getUserId() {
+      // Always use current user's UID for chat
+      return generateUniqueUserId();
+    }
+
+    function showTypingIndicator() {
+      if (isTyping) return;
+      
+      isTyping = true;
+      const chat = document.getElementById("chat");
+      const typingDiv = document.createElement("div");
+      typingDiv.className = "typing-indicator";
+      typingDiv.id = "typing-indicator";
+      typingDiv.innerHTML = `
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      `;
+      chat.appendChild(typingDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      isTyping = false;
+      const typingIndicator = document.getElementById("typing-indicator");
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+
+    // Dynamic Welcome System Functions
+    function getTimeOfDay() {
+      const hour = new Date().getHours();
+      if (hour < 6) return 'late night';
+      if (hour < 12) return 'morning';
+      if (hour < 17) return 'afternoon';
+      if (hour < 21) return 'evening';
+      return 'night';
+    }
+
+    function getSeasonalContext() {
+      const month = new Date().getMonth(); // 0-11
+      if (month >= 2 && month <= 4) return 'spring';
+      if (month >= 5 && month <= 7) return 'summer';
+      if (month >= 8 && month <= 10) return 'autumn';
+      return 'winter';
+    }
+
+    function generateDynamicWelcome(userName = null, isReturning = false) {
+      const timeOfDay = getTimeOfDay();
+      const season = getSeasonalContext();
+      
+      // Contextual greetings based on time
+      const timeGreetings = {
+        'morning': [
+          "Morning! Hope you're starting your day gently.",
+          "Good morning. How did you sleep?",
+          "Morning - I hope today feels manageable for you.",
+          "Hey there. How's this morning treating you?"
+        ],
+        'afternoon': [
+          "Afternoon. How's your day unfolding?",
+          "Hey! Hope your day's been kind to you so far.",
+          "Good afternoon. What's on your mind today?",
+          "Afternoon - how are you holding up today?"
+        ],
+        'evening': [
+          "Evening. How was your day?",
+          "Hey there. How are you winding down tonight?",
+          "Good evening. What's sitting with you today?",
+          "Evening - hope you can breathe a little easier now."
+        ],
+        'night': [
+          "Hey. Still up? How are you doing tonight?",
+          "Evening, night owl. What's keeping you up?",
+          "Hey there. Late night thoughts?",
+          "Hi. Sometimes the quiet hours are when we need to talk most."
+        ],
+        'late night': [
+          "Hey. Really late night - you okay?",
+          "Hi there. Can't sleep either?",
+          "Hey. Sometimes 3am is when we need a friend most.",
+          "Hi. The world's quiet right now - what's on your mind?"
+        ]
+      };
+      
+      // Returning user greetings (when they have chat history)
+      const returningGreetings = [
+        "Welcome back. I've been here, just thinking.",
+        "Hey again. Good to see you.",
+        "You're back - how have you been since we last talked?",
+        "Hi there. I was wondering how you were doing.",
+        "Welcome back. What's been with you lately?",
+        "Hey - I'm glad you came back to talk.",
+        "Hi again. How's life been treating you?"
+      ];
+      
+      // New user greetings (first time or no history)
+      const newUserGreetings = [
+        "Hi there. I'm Cael - I'm here if you need someone to talk to.",
+        "Hey. I'm Cael. I hope this space can feel safe for you.",
+        "Hi - I'm Cael. I'm here to listen, whatever's going on.",
+        "Hey there. I'm Cael, and I'm genuinely glad you're here.",
+        "Hi. I'm Cael - think of me as a friend who's always here.",
+        "Hey. I'm Cael. This can be whatever kind of conversation you need."
+      ];
+      
+      // Follow-up questions that feel natural and open
+      const followUps = [
+        "What's on your heart today?",
+        "How are you, really?",
+        "What's sitting with you right now?",
+        "How has your inner weather been lately?",
+        "What do you need to share today?",
+        "How are you holding up?",
+        "What's been heavy on your mind?",
+        "How's your spirit doing today?",
+        "What would feel good to talk about?",
+        "How are you taking care of yourself lately?",
+        "What's your heart telling you today?",
+        "How has this week been for your soul?"
+      ];
+      
+      let greeting;
+      
+      if (isReturning) {
+        // Mix of time-aware and returning greetings
+        const useTimeGreeting = Math.random() < 0.6;
+        if (useTimeGreeting && timeGreetings[timeOfDay]) {
+          greeting = timeGreetings[timeOfDay][Math.floor(Math.random() * timeGreetings[timeOfDay].length)];
+        } else {
+          greeting = returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
+        }
+      } else {
+        // New user gets introductory greeting
+        greeting = newUserGreetings[Math.floor(Math.random() * newUserGreetings.length)];
+      }
+      
+      // Add name if we have it
+      if (userName && isReturning) {
+        greeting = greeting.replace(/^(Hey|Hi|Good|Morning|Afternoon|Evening)/i, `$1, ${userName}`);
+      }
+      
+      // Pick a follow-up question
+      const followUp = followUps[Math.floor(Math.random() * followUps.length)];
+      
+      return `${greeting} ${followUp}`;
+    }
+
+    function showWelcomeMessage(isReturning = false, userName = null) {
+      const chat = document.getElementById("chat");
+      
+      // Clear any existing content to prevent blank bubbles
+      chat.innerHTML = '';
+      
+      const welcomeDiv = document.createElement("div");
+      welcomeDiv.className = "message welcome-message";
+      
+      // Generate dynamic welcome message
+      welcomeDiv.textContent = generateDynamicWelcome(userName, isReturning);
+      
+      chat.appendChild(welcomeDiv);
+      chat.scrollTop = chat.scrollHeight;
+      
+      console.log('✨ Dynamic welcome message displayed');
+    }
+
+    async function loadPreviousMessages() {
+      if (!isAuthorized) return;
+      
+      console.log('🔍 Loading previous messages...');
+      
+      try {
+        const res = await fetch(`${BACKEND_URL}/history`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: getUserId() }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        console.log('📦 History data received:', data);
+        
+        // Clear chat first to prevent blank bubbles
+        const chat = document.getElementById("chat");
+        chat.innerHTML = '';
+        
+        // Check if we have valid history
+        if (Array.isArray(data.history) && data.history.length > 0) {
+          let validMessagesLoaded = 0;
+          let userName = null;
+          
+          // First pass: look for user's name in recent messages
+          data.history.slice(0, 5).forEach((entry) => {
+            if (entry && entry.user) {
+              const message = entry.user.toLowerCase();
+              if ((message.includes('my name is') || message.includes("i'm ") || message.includes('call me')) && 
+                  (message.includes('anthony') || message.includes('ant'))) {
+                userName = message.includes('anthony') ? 'Anthony' : 'Ant';
+              }
+            }
+          });
+          
+          // Second pass: load messages
+          data.history.forEach((entry, index) => {
+            // Validate each message entry
+            if (entry && 
+                typeof entry.user === 'string' && 
+                typeof entry.cael === 'string' && 
+                entry.user.trim() && 
+                entry.cael.trim()) {
+              
+              appendMessage("user", entry.user.trim());
+              appendMessage("cael", entry.cael.trim());
+              validMessagesLoaded++;
+            } else {
+              console.warn(`⚠️ Skipping invalid history entry ${index}:`, entry);
+            }
+          });
+          
+          console.log(`✅ Loaded ${validMessagesLoaded} valid messages from history`);
+          
+          // If no valid messages were loaded, show welcome
+          if (validMessagesLoaded === 0) {
+            showWelcomeMessage(false); // New user experience
+          } else {
+            // Show returning user welcome at the top
+            const welcomeDiv = document.createElement("div");
+            welcomeDiv.className = "message welcome-message";
+            welcomeDiv.style.order = "-1"; // Put it at the top
+            welcomeDiv.textContent = generateDynamicWelcome(userName, true);
+            chat.insertBefore(welcomeDiv, chat.firstChild);
+            console.log(`👋 Added returning user welcome${userName ? ` for ${userName}` : ''}`);
+          }
+        } else {
+          console.log('📭 No chat history found, showing welcome message');
+          showWelcomeMessage(false); // New user experience
+        }
+      } catch (err) {
+        console.error("❌ Error loading chat history:", err);
+        showWelcomeMessage(false); // Fallback to new user experience
+      }
+    }
+
+    function appendMessage(role, text) {
+      // Validate message content
+      if (!text || typeof text !== 'string' || !text.trim()) {
+        console.warn('⚠️ Attempted to append empty/invalid message:', { role, text });
+        return;
+      }
+      
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      div.textContent = text.trim();
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setFormEnabled(enabled) {
+      const input = document.getElementById("message");
+      const button = document.getElementById("send-button");
+      
+      input.disabled = !enabled;
+      button.disabled = !enabled;
+      
+      if (!enabled) {
+        input.placeholder = "Cael is thinking...";
+      } else {
+        input.placeholder = "Ask Cael something...";
+      }
+    }
+
+    // Chat form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById("chat-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        if (!isAuthorized) {
+          alert('You are not authorized to chat. Please sign in and complete onboarding.');
+          return;
+        }
+        
+        const input = document.getElementById("message");
+        const message = input.value.trim();
+        if (!message || isTyping) return;
+
+        appendMessage("user", message);
+        input.value = "";
+        
+        setFormEnabled(false);
+        showTypingIndicator();
+
+        try {
+          const res = await fetch(`${BACKEND_URL}/index`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              user_id: getUserId(),
+            }),
+          });
+
+          const data = await res.json();
+          
+          // CRISIS REDIRECT CHECK - Must be first
+          if (data.redirect_url) {
+            console.log('Crisis detected - redirecting to support');
+            
+            hideTypingIndicator();
+            
+            // Show the crisis message briefly
+            if (data.response && data.response.trim()) {
+              appendMessage("cael", data.response);
+            }
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+              window.location.href = data.redirect_url;
+            }, 2000);
+            
+            return; // Stop further processing
+          }
+          
+          // Normal response processing
+          hideTypingIndicator();
+          
+          // Validate response before appending
+          if (data.response && data.response.trim()) {
+            appendMessage("cael", data.response);
+          } else {
+            console.error('❌ Empty response from server:', data);
+            appendMessage("cael", "I'm having trouble formulating a response right now. Could you try asking again?");
+          }
+          
+        } catch (err) {
+          hideTypingIndicator();
+          appendMessage("cael", "⚠️ Sorry, I'm having trouble connecting right now. Please try again in a moment.");
+          console.error("❌ Chat error:", err);
+        } finally {
+          setFormEnabled(true);
+          document.getElementById("message").focus();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
