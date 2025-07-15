@@ -1,8 +1,5 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+// Firebase v8 Configuration for Zentrafuge
+// This file uses the v8 syntax to match the script imports
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,21 +12,29 @@ const firebaseConfig = {
   measurementId: "G-WZNXDGR0BN"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase Authentication and get a reference to the service
-const auth = getAuth(app);
-
-// Initialize Cloud Firestore and get a reference to the service
-const db = getFirestore(app);
-
-// Initialize Analytics (optional)
-let analytics = null;
-if (typeof window !== 'undefined') {
-  analytics = getAnalytics(app);
+// Initialize Firebase using v8 syntax
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+} else {
+  firebase.app(); // Use existing app
 }
 
-// Export for use in other files
-export { auth, db, analytics };
-export default app;
+// Initialize Analytics (optional, for v8)
+if (typeof firebase.analytics === 'function') {
+  try {
+    firebase.analytics();
+    console.log('✅ Firebase Analytics initialized');
+  } catch (e) {
+    console.log('Analytics not available:', e.message);
+  }
+}
+
+// Test Firebase connection
+console.log('🔥 Firebase initialized successfully');
+console.log('📧 Auth SDK loaded:', typeof firebase.auth);
+console.log('📊 Firestore SDK loaded:', typeof firebase.firestore);
+
+// Export references for debugging (v8 style)
+window.firebaseApp = firebase.app();
+window.firebaseAuth = firebase.auth();
+window.firebaseDb = firebase.firestore();
