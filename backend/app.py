@@ -25,7 +25,7 @@ except ImportError:
         def decrypt_message(text): return text
 
 app = Flask(__name__)
-CORS(app, origins=["https://zentrafuge-v7.netlify.app"])  # Your frontend
+CORS(app, origins=["https://zentrafuge-v8.netlify.app"])  # Your frontend
 
 @app.route('/index', methods=['POST'])
 def chat():
