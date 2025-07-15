@@ -19,7 +19,7 @@ MODULES_AVAILABLE = {
     "memory_engine": True,
     "nlp_analyzer": False,  # Not yet implemented
     "eastern_brain": False,  # Not yet implemented
-    "crypto_handler": False  # Not yet implemented
+    "crypto_handler": True  # Not yet implemented
 }
 
 def get_module_status():
