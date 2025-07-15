@@ -13,7 +13,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client (v1.3.0 compatible)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    logger.warning("OPENAI_API_KEY not found in environment variables")
+    client = None
+else:
+    client = OpenAI(api_key=api_key)
 
 def build_poa_prompt(user_input, memory_recall="", emotional_context=""):
     """
@@ -66,6 +71,11 @@ def orchestrate_response(user_id, user_input, firestore_client=None):
         except ImportError:
             logger.warning("Emotion parser not available - proceeding without emotional analysis")
             emotional_context = "Emotional analysis unavailable"
+        
+        # Check if OpenAI client is available
+        if not client:
+            logger.error("OpenAI client not initialized - API key missing")
+            return "I'm experiencing a configuration issue. Please check back in a moment while we resolve this."
         
         # Build the POA prompt
         prompt = build_poa_prompt(user_input, memory_recall, emotional_context)
@@ -143,6 +153,9 @@ def simple_response_fallback(user_input):
     prompt = f"""You are Cael, a gentle AI companion. Respond warmly to: {user_input}"""
     
     try:
+        if not client:
+            return "Configuration issue - OpenAI client unavailable"
+        
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "system", "content": prompt}],
