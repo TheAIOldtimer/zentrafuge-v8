@@ -442,23 +442,53 @@
     let lastKeystroke = Date.now();
     let sessionStart = Date.now();
 
-    // Initialize Firebase
-    try {
-      const firebaseConfig = {
-        apiKey: "your-api-key",
-        authDomain: "your-project.firebaseapp.com",
-        projectId: "your-project",
-        storageBucket: "your-project.appspot.com",
-        messagingSenderId: "your-messaging-sender-id",
-        appId: "your-app-id"
-      };
-      firebase.initializeApp(firebaseConfig);
-      console.log('Firebase initialized successfully');
-    } catch (error) {
-      console.error('Firebase initialization failed:', error);
-      document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error initializing app. Please try again later.</div>';
-    }
+// Replace the entire Firebase initialization section in chat.html with this:
 
+// Initialize Firebase with actual Zentrafuge v8 config
+try {
+  const firebaseConfig = {
+    apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
+    authDomain: "zentrafuge-v8.firebaseapp.com",
+    projectId: "zentrafuge-v8",
+    storageBucket: "zentrafuge-v8.appspot.com",
+    messagingSenderId: "1035979155498",
+    appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
+    measurementId: "G-WZNXDGR0BN"
+  };
+
+  // Initialize Firebase if not already initialized
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log('🔥 Firebase initialized successfully');
+  } else {
+    firebase.app(); // Use existing instance
+    console.log('🔥 Firebase already initialized');
+  }
+
+  // Optional: Initialize Analytics
+  try {
+    if (typeof firebase.analytics === 'function') {
+      firebase.analytics();
+      console.log('📊 Firebase Analytics initialized');
+    }
+  } catch (err) {
+    console.log('Analytics skipped:', err.message);
+  }
+
+  // Debug logs to confirm SDKs are loaded
+  console.log('📧 Auth SDK loaded:', typeof firebase.auth);
+  console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
+
+  // Export global references for debugging (optional)
+  window.firebaseApp = firebase.app();
+  window.firebaseAuth = firebase.auth();
+  window.firebaseDb = firebase.firestore();
+
+} catch (error) {
+  console.error('🚨 Firebase initialization failed:', error);
+  document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error connecting to Zentrafuge. Please refresh and try again.</div>';
+}
+    
     // Get AI name from Firestore
     async function getAiName(userId) {
       try {
