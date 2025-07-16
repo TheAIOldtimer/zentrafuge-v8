@@ -762,8 +762,16 @@
           console.log('Could not store user language preference');
         }
         
-        // Send verification email
+        
+        // Send verification email with debugging
+          console.log("🔥 About to send verification email...");
+        try {
         await user.sendEmailVerification();
+          console.log("✅ Verification email sent successfully!");
+        } catch (emailError) {
+          console.error("❌ Email verification failed:", emailError);
+        // Don't block registration, just log the issue
+        }
         
         // Show success message
         messageEl.className = 'message success';
