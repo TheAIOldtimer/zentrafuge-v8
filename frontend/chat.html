@@ -799,16 +799,16 @@ try {
       return `${greeting} ${followUp}`;
     }
 
-    function showWelcomeMessage(isReturning = false, userName = null) {
-      const chat = document.getElementById("chat");
-      chat.innerHTML = '';
-      const welcomeDiv = document.createElement("div");
-      welcomeDiv.className = "message welcome-message";
-      welcomeDiv.textContent = generateDynamicWelcome(userName, isReturning);
-      chat.appendChild(welcomeDiv);
-      chat.scrollTop = chat.scrollHeight;
-      console.log('✨ Dynamic welcome message displayed');
-    }
+    async function showWelcomeMessage(isReturning = false, userName = null) {
+  const chat = document.getElementById("chat");
+  chat.innerHTML = '';
+  const welcomeDiv = document.createElement("div");
+  welcomeDiv.className = "message welcome-message";
+  welcomeDiv.textContent = await generateDynamicWelcome(userName, isReturning); // ✅ Added await
+  chat.appendChild(welcomeDiv);
+  chat.scrollTop = chat.scrollHeight;
+  console.log('✨ Dynamic welcome message displayed');
+}
 
     async function loadPreviousMessages() {
       if (!isAuthorized) return;
