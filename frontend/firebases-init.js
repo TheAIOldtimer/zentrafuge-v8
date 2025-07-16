@@ -1,40 +1,43 @@
-// Firebase v8 Configuration for Zentrafuge
-// This file uses the v8 syntax to match the script imports
+// This assumes you're using <script> tags in HTML to load Firebase v8 SDKs like:
+// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
+// ✅ Firebase configuration for Zentrafuge v8
+var firebaseConfig = {
   apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
   authDomain: "zentrafuge-v8.firebaseapp.com",
   projectId: "zentrafuge-v8",
-  storageBucket: "zentrafuge-v8.firebasestorage.app",
+  storageBucket: "zentrafuge-v8.appspot.com", // ✅ FIXED: correct storage bucket domain
   messagingSenderId: "1035979155498",
   appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
   measurementId: "G-WZNXDGR0BN"
 };
 
-// Initialize Firebase using v8 syntax
+// ✅ Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 } else {
-  firebase.app(); // Use existing app
+  firebase.app(); // if already initialized, use that one
 }
 
-// Initialize Analytics (optional, for v8)
-if (typeof firebase.analytics === 'function') {
-  try {
+// ✅ Optional: initialize analytics
+try {
+  if (typeof firebase.analytics === 'function') {
     firebase.analytics();
-    console.log('✅ Firebase Analytics initialized');
-  } catch (e) {
-    console.log('Analytics not available:', e.message);
+    console.log('📊 Firebase Analytics initialized');
   }
+} catch (err) {
+  console.log('Analytics skipped:', err.message);
 }
 
-// Test Firebase connection
+// ✅ Debug logs to confirm SDKs
 console.log('🔥 Firebase initialized successfully');
 console.log('📧 Auth SDK loaded:', typeof firebase.auth);
-console.log('📊 Firestore SDK loaded:', typeof firebase.firestore);
+console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
 
-// Export references for debugging (v8 style)
+// ✅ Optional: export global references for debugging
 window.firebaseApp = firebase.app();
 window.firebaseAuth = firebase.auth();
 window.firebaseDb = firebase.firestore();
