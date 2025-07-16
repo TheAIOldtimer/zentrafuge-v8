@@ -10,8 +10,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebases-init.js"></script>
-  <style>
-    body {
+  <!-- CSS remains unchanged from your original -->
+</head>
+<body>
+ {
       font-family: 'Segoe UI', sans-serif;
       background: #f7faff;
       margin: 0;
@@ -343,7 +345,7 @@
     <button type="submit" id="send-button">Send</button>
   </form>
 
-  <script>
+   <script>
     const BACKEND_URL = "https://zentrafuge-v8.onrender.com";
     let isTyping = false;
     let currentUser = null;
@@ -357,8 +359,10 @@
         const userDoc = await db.collection("users").doc(userId).get();
         if (userDoc.exists) {
           const userData = userDoc.data();
+          console.log(`Fetched user document for ${userId}:`, userData);
           return userData.ai_name || "Cael"; // Default to Cael if no name chosen
         }
+        console.warn(`User document not found for ${userId}`);
         return "Cael"; // Fallback if user doc doesn't exist
       } catch (error) {
         console.error("Error fetching AI name:", error);
@@ -380,31 +384,29 @@
 
     // Auth Guard - Check user authorization
     async function checkUserAuthorization(user) {
-  try {
-    const db = firebase.firestore();
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    
-    if (!userDoc.exists) {
-      throw new Error('User document not found');
+      try {
+        if (!user.emailVerified) {
+          console.warn(`Authorization failed for ${user.email}: Email not verified`);
+          throw new Error('Email not verified');
+        }
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (!userDoc.exists) {
+          console.warn(`Authorization failed for ${user.email}: User document not found`);
+          throw new Error('User document not found');
+        }
+        const userData = userDoc.data();
+        if (!userData.onboardingComplete) {
+          console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
+          throw new Error('Onboarding not completed');
+        }
+        console.log(`Authorization succeeded for ${user.email}`);
+        return true;
+      } catch (error) {
+        console.error('Authorization check failed:', error);
+        return false;
+      }
     }
-
-    const userData = userDoc.data();
-    
-    // Check email verification from Firestore instead of Firebase Auth
-    if (!userData.emailVerified) {
-      throw new Error('Email not verified');
-    }
-    
-    if (!userData.onboardingComplete) {
-      throw new Error('Onboarding not completed');
-    }
-    
-    return userData; // Return userData for further use
-  } catch (error) {
-    console.error('Authorization check failed:', error);
-    return null;
-  }
-}
 
     // Redirect to appropriate page based on auth state
     function redirectToAuth(reason = 'unauthorized') {
@@ -415,47 +417,58 @@
 
     // Initialize app only after auth verification
     async function initializeApp(user) {
-      currentUser = user;
-      // Fetch AI name and update title
-      aiName = await getAiName(user.uid);
-      document.title = `Zentrafuge × ${aiName}`;
-      // Update header fallback text
-      const headerFallback = document.querySelector('header img').getAttribute('onerror');
-      document.querySelector('header img').setAttribute('onerror', 
-        `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${aiName}</h1>');`
-      );
-      // Update form aria-label and placeholder
-      document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
-      document.getElementById('message').placeholder = `Ask ${aiName} something...`;
-      // Update user info in header
-      document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
-      // Hide loading overlay and show main app
-      document.getElementById('auth-loading').style.display = 'none';
-      document.getElementById('main-header').style.display = 'flex';
-      document.getElementById('chat').style.display = 'flex';
-      document.getElementById('chat-form').style.display = 'flex';
-      // Load chat functionality
-      await loadPreviousMessages();
-      document.getElementById("message").focus();
+      try {
+        currentUser = user;
+        // Fetch AI name and update title
+        aiName = await getAiName(user.uid);
+        console.log(`Setting AI name to: ${aiName}`);
+        document.title = `Zentrafuge × ${aiName}`;
+        // Update header fallback text
+        const headerFallback = document.querySelector('header img').getAttribute('onerror');
+        document.querySelector('header img').setAttribute('onerror', 
+          `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${aiName}</h1>');`
+        );
+        // Update form aria-label and placeholder
+        document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
+        document.getElementById('message').placeholder = `Ask ${aiName} something...`;
+        // Update user info in header
+        document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
+        // Hide loading overlay and show main app
+        document.getElementById('auth-loading').style.display = 'none';
+        document.getElementById('main-header').style.display = 'flex';
+        document.getElementById('chat').style.display = 'flex';
+        document.getElementById('chat-form').style.display = 'flex';
+        // Load chat functionality
+        await loadPreviousMessages();
+        document.getElementById("message").focus();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        redirectToAuth('initialization_failed');
+      }
     }
 
     // Firebase Auth State Observer
     firebase.auth().onAuthStateChanged(async function(user) {
-      if (user && !user.isAnonymous) {
-        console.log('User authenticated:', user.email);
-        const userData = await checkUserAuthorization(user);
-        if (userData) {
-          isAuthorized = true;
-          await initializeApp(user);
-        } else {
-          if (!user.emailVerified) {
-            redirectToAuth('email_verification');
+      try {
+        if (user && !user.isAnonymous) {
+          console.log('User authenticated:', user.email);
+          const authorized = await checkUserAuthorization(user);
+          if (authorized) {
+            isAuthorized = true;
+            await initializeApp(user);
           } else {
-            redirectToAuth('onboarding_incomplete');
+            if (!user.emailVerified) {
+              redirectToAuth('email_verification');
+            } else {
+              redirectToAuth('onboarding_incomplete');
+            }
           }
+        } else {
+          redirectToAuth('not_signed_in');
         }
-      } else {
-        redirectToAuth('not_signed_in');
+      } catch (error) {
+        console.error('Auth state observer error:', error);
+        redirectToAuth('auth_error');
       }
     });
 
@@ -677,7 +690,10 @@
           console.log('📭 No chat history found, showing welcome message');
           showWelcomeMessage(false);
         }
-      } 
+      } catch (err) {
+        console.error("❌ Error loading chat history:", err);
+        showWelcomeMessage(false);
+      }
     }
 
     function appendMessage(role, text) {
