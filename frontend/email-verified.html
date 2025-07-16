@@ -1,3 +1,6 @@
+You're absolutely right! The artifact viewer isn't showing the full code. Let me provide it directly in a code block so you can copy it:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -348,7 +351,10 @@
                 'es': { name: 'Español', flag: '🇪🇸' },
                 'it': { name: 'Italiano', flag: '🇮🇹' },
                 'nl': { name: 'Nederlands', flag: '🇳🇱' },
-                'pt': { name: 'Português', flag: '🇵🇹' }
+                'pt': { name: 'Português', flag: '🇵🇹' },
+                'ru': { name: 'Русский', flag: '🇷🇺' },
+                'zh': { name: '中文', flag: '🇨🇳' },
+                'ja': { name: '日本語', flag: '🇯🇵' }
             };
             
             this.selectedLanguage = this.detectLanguage();
@@ -502,6 +508,39 @@
                     loadingText: 'A configurar a tua conta...',
                     errorTitle: 'Erro de verificação',
                     errorMessage: 'Houve um problema ao verificar o teu email. Por favor tenta fazer login ou contacta o suporte.'
+                },
+                'ru': {
+                    currentLanguage: '🇷🇺 Русский',
+                    successTitle: 'Email успешно подтвержден!',
+                    successMessage: 'Добро пожаловать в Zentrafuge! Ваш email подтвержден и ваш аккаунт теперь активен. Вы всего в одном шаге от встречи с Cael, вашим ИИ-компаньоном.',
+                    caelWelcome: 'Привет! Я Cael, и я рад встрече с вами. Прежде чем мы начнем наше путешествие вместе, я хотел бы немного узнать о вас через мягкий процесс адаптации. Это поможет мне понять, как лучше вас поддержать. Готовы начать?',
+                    startOnboarding: 'Начать мое путешествие с Cael',
+                    loginInstead: 'Перейти к входу вместо этого',
+                    loadingText: 'Настройка вашего аккаунта...',
+                    errorTitle: 'Ошибка подтверждения',
+                    errorMessage: 'Возникла проблема при подтверждении вашего email. Пожалуйста, попробуйте войти или обратитесь в поддержку.'
+                },
+                'zh': {
+                    currentLanguage: '🇨🇳 中文',
+                    successTitle: '邮箱验证成功！',
+                    successMessage: '欢迎来到Zentrafuge！您的邮箱已验证，账户现已激活。您距离遇见您的AI伙伴Cael只有一步之遥。',
+                    caelWelcome: '您好！我是Cael，很高兴见到您。在我们开始共同旅程之前，我希望通过温和的入门过程了解一下您。这将帮助我了解如何最好地支持您。准备好开始了吗？',
+                    startOnboarding: '开始我与Cael的旅程',
+                    loginInstead: '转到登录页面',
+                    loadingText: '正在设置您的账户...',
+                    errorTitle: '验证错误',
+                    errorMessage: '验证您的邮箱时出现问题。请尝试登录或联系支持。'
+                },
+                'ja': {
+                    currentLanguage: '🇯🇵 日本語',
+                    successTitle: 'メール認証が完了しました！',
+                    successMessage: 'Zentrafigeへようこそ！メールが認証され、アカウントがアクティブになりました。AIコンパニオンのCaelとの出会いまであと一歩です。',
+                    caelWelcome: 'こんにちは！私はCaelです。お会いできて嬉しく思います。一緒に旅を始める前に、穏やかなオンボーディングプロセスを通してあなたのことを少し知りたいと思います。これにより、どのようにあなたを最良にサポートできるかを理解できます。始める準備はできていますか？',
+                    startOnboarding: 'Caelとの旅を始める',
+                    loginInstead: '代わりにログインへ',
+                    loadingText: 'アカウントを設定中...',
+                    errorTitle: '認証エラー',
+                    errorMessage: 'メールの認証に問題がありました。ログインを試すかサポートにお問い合わせください。'
                 }
             };
         }
@@ -598,54 +637,54 @@
                     console.log('Email verified successfully');
                     
                     // Hide loading, show success
-                    document.getElementById('loading').style.display = 'none';
-                    
-                } else {
-                    // No verification action, just show the success page
-                    document.getElementById('loading').style.display = 'none';
-                }
+                   document.getElementById('loading').style.display = 'none';
+                   
+               } else {
+                   // No verification action, just show the success page
+                   document.getElementById('loading').style.display = 'none';
+               }
 
-            } catch (error) {
-                console.error('Email verification error:', error);
-                
-                // Hide loading, show error
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error-state').style.display = 'block';
-                
-                // Update error message based on error type
-                const errorEl = document.getElementById('error-message');
-                if (error.code === 'auth/invalid-action-code') {
-                    errorEl.textContent = this.translations[this.selectedLanguage].errorMessage + ' (Invalid or expired verification link)';
-                } else if (error.code === 'auth/user-disabled') {
-                    errorEl.textContent = 'This account has been disabled. Please contact support.';
-                } else {
-                    errorEl.textContent = this.translations[this.selectedLanguage].errorMessage;
-                }
-            }
-        }
-    }
+           } catch (error) {
+               console.error('Email verification error:', error);
+               
+               // Hide loading, show error
+               document.getElementById('loading').style.display = 'none';
+               document.getElementById('error-state').style.display = 'block';
+               
+               // Update error message based on error type
+               const errorEl = document.getElementById('error-message');
+               if (error.code === 'auth/invalid-action-code') {
+                   errorEl.textContent = this.translations[this.selectedLanguage].errorMessage + ' (Invalid or expired verification link)';
+               } else if (error.code === 'auth/user-disabled') {
+                   errorEl.textContent = 'This account has been disabled. Please contact support.';
+               } else {
+                   errorEl.textContent = this.translations[this.selectedLanguage].errorMessage;
+               }
+           }
+       }
+   }
 
-    function toggleLanguageDropdown() {
-        const dropdown = document.getElementById('language-dropdown');
-        const button = document.querySelector('.language-dropdown');
-        
-        dropdown.classList.toggle('open');
-        button.classList.toggle('open');
-    }
+   function toggleLanguageDropdown() {
+       const dropdown = document.getElementById('language-dropdown');
+       const button = document.querySelector('.language-dropdown');
+       
+       dropdown.classList.toggle('open');
+       button.classList.toggle('open');
+   }
 
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        const container = document.querySelector('.language-dropdown-container');
-        if (!container.contains(e.target)) {
-            document.getElementById('language-dropdown').classList.remove('open');
-            document.querySelector('.language-dropdown').classList.remove('open');
-        }
-    });
+   // Close dropdown when clicking outside
+   document.addEventListener('click', function(e) {
+       const container = document.querySelector('.language-dropdown-container');
+       if (!container.contains(e.target)) {
+           document.getElementById('language-dropdown').classList.remove('open');
+           document.querySelector('.language-dropdown').classList.remove('open');
+       }
+   });
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        window.emailVerificationPage = new EmailVerificationPage();
-    });
-  </script>
+   // Initialize when page loads
+   document.addEventListener('DOMContentLoaded', function() {
+       window.emailVerificationPage = new EmailVerificationPage();
+   });
+ </script>
 </body>
 </html>
