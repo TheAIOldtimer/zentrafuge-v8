@@ -9,10 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="firebases-init.js"></script>
-  <!-- CSS remains unchanged from your original -->
-</head>
-<body>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -218,6 +214,20 @@
       }
     }
 
+    /* Gentle encouragement message */
+    .encouragement-message {
+      align-self: flex-start;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
+      color: #333;
+      border: 1px solid rgba(0, 85, 170, 0.2);
+      border-left: 4px solid #4a90e2;
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      max-width: 75%;
+      font-style: italic;
+      margin-bottom: 0.5rem;
+    }
+
     form {
       display: flex;
       padding: 0.75rem 1rem;
@@ -276,6 +286,83 @@
       margin-bottom: 1rem;
     }
 
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+
+      .cael {
+        background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+        color: #e0e0e0;
+        border-left-color: #4a90e2;
+      }
+
+      .user {
+        background: linear-gradient(135deg, #2e4a2e 0%, #3b5c3b 100%);
+        color: #e0e0e0;
+        border-right-color: #28a745;
+      }
+
+      header {
+        background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+        border-bottom-color: rgba(74, 144, 226, 0.2);
+      }
+
+      form {
+        background: #222;
+        border-top-color: rgba(74, 144, 226, 0.2);
+      }
+
+      input[type="text"] {
+        background: #333;
+        color: #e0e0e0;
+        border-color: #444;
+      }
+
+      input[type="text"]:focus {
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+      }
+
+      button {
+        background: #1c2526;
+      }
+
+      button:hover {
+        background: #4a90e2;
+      }
+
+      .auth-loading {
+        background: rgba(26, 26, 26, 0.95);
+      }
+
+      .auth-message {
+        color: #4a90e2;
+      }
+
+      .loading-spinner {
+        border-color: #444;
+        border-top-color: #4a90e2;
+      }
+
+      .welcome-message, .encouragement-message {
+        background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+        color: #e0e0e0;
+        border-left-color: #4a90e2;
+      }
+
+      .typing-indicator {
+        background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+        border-left-color: #4a90e2;
+      }
+
+      .typing-dot {
+        background-color: #4a90e2;
+      }
+    }
+
     @media screen and (max-width: 600px) {
       header {
         flex-direction: column;
@@ -314,7 +401,7 @@
         max-width: 85%;
       }
 
-      .welcome-message {
+      .welcome-message, .encouragement-message {
         max-width: 95%;
       }
     }
@@ -346,12 +433,31 @@
     <button type="submit" id="send-button">Send</button>
   </form>
 
-   <script>
+  <script>
     const BACKEND_URL = "https://zentrafuge-v8.onrender.com";
     let isTyping = false;
     let currentUser = null;
     let isAuthorized = false;
     let aiName = "Cael"; // Default AI name
+    let lastKeystroke = Date.now();
+    let sessionStart = Date.now();
+
+    // Initialize Firebase
+    try {
+      const firebaseConfig = {
+        apiKey: "your-api-key",
+        authDomain: "your-project.firebaseapp.com",
+        projectId: "your-project",
+        storageBucket: "your-project.appspot.com",
+        messagingSenderId: "your-messaging-sender-id",
+        appId: "your-app-id"
+      };
+      firebase.initializeApp(firebaseConfig);
+      console.log('Firebase initialized successfully');
+    } catch (error) {
+      console.error('Firebase initialization failed:', error);
+      document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error initializing app. Please try again later.</div>';
+    }
 
     // Get AI name from Firestore
     async function getAiName(userId) {
@@ -371,6 +477,26 @@
       }
     }
 
+    // Fetch last session context from backend
+    async function getLastSessionContext(userId) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/context`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId }),
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        const data = await res.json();
+        console.log('Last session context:', data);
+        return data.context || { mood: null, theme: null };
+      } catch (error) {
+        console.error("Error fetching session context:", error);
+        return { mood: null, theme: null };
+      }
+    }
+
     // Dynamic user greetings based on chosen AI name
     async function getNewUserGreetings() {
       return [
@@ -384,36 +510,29 @@
     }
 
     // Auth Guard - Check user authorization
-   async function checkUserAuthorization(user) {
-  try {
-    const db = firebase.firestore();
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    
-    if (!userDoc.exists) {
-      console.warn(`Authorization failed for ${user.email}: User document not found`);
-      throw new Error('User document not found');
-    }
-    
-    const userData = userDoc.data();
-    
-    // Check email verification from Firestore instead of Firebase Auth
-    if (!userData.emailVerified) {
-      console.warn(`Authorization failed for ${user.email}: Email not verified in Firestore`);
-      throw new Error('Email not verified');
-    }
-    
-    if (!userData.onboardingComplete) {
-      console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
-      throw new Error('Onboarding not completed');
-    }
-    
-    console.log(`Authorization succeeded for ${user.email}`);
-    return true;
-  } catch (error) {
-    console.error('Authorization check failed:', error);
-    return false;
-  }
-}
+    async function checkUserAuthorization(user) {
+      try {
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (!userDoc.exists) {
+          console.warn(`Authorization failed for ${user.email}: User document not found`);
+          throw new Error('User document not found');
+        }
+        const userData = userDoc.data();
+        if (!userData.emailVerified) {
+          console.warn(`Authorization failed for ${user.email}: Email not verified in Firestore`);
+          throw new Error('Email not verified');
+        }
+        if (!userData.onboardingComplete) {
+          console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
+          throw new Error('Onboarding not completed');
+        }
+        console.log(`Authorization succeeded for ${user.email}`);
+        return true;
+      } catch (error) {
+        console.error('Authorization check failed:', error);
+        return false;
+      }
     }
 
     // Redirect to appropriate page based on auth state
@@ -432,7 +551,6 @@
         console.log(`Setting AI name to: ${aiName}`);
         document.title = `Zentrafuge × ${aiName}`;
         // Update header fallback text
-        const headerFallback = document.querySelector('header img').getAttribute('onerror');
         document.querySelector('header img').setAttribute('onerror', 
           `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${aiName}</h1>');`
         );
@@ -449,6 +567,9 @@
         // Load chat functionality
         await loadPreviousMessages();
         document.getElementById("message").focus();
+        // Start session duration check
+        sessionStorage.setItem('session_start', Date.now());
+        setInterval(checkSessionDuration, 60000); // Check every minute
       } catch (error) {
         console.error('Error initializing app:', error);
         redirectToAuth('initialization_failed');
@@ -465,7 +586,8 @@
             isAuthorized = true;
             await initializeApp(user);
           } else {
-            if (!user.emailVerified) {
+            const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+            if (!userDoc.exists || !userDoc.data().emailVerified) {
               redirectToAuth('email_verification');
             } else {
               redirectToAuth('onboarding_incomplete');
@@ -523,6 +645,15 @@
       if (typingIndicator) {
         typingIndicator.remove();
       }
+    }
+
+    function showGentleEncouragement() {
+      const chat = document.getElementById("chat");
+      const encouragementDiv = document.createElement("div");
+      encouragementDiv.className = "message encouragement-message";
+      encouragementDiv.textContent = `Take your time, ${currentUser?.displayName || 'friend'} - I'm here when you're ready.`;
+      chat.appendChild(encouragementDiv);
+      chat.scrollTop = chat.scrollHeight;
     }
 
     // Dynamic Welcome System Functions
@@ -612,11 +743,18 @@
       let greeting;
       
       if (isReturning) {
-        const useTimeGreeting = Math.random() < 0.6;
-        if (useTimeGreeting && timeGreetings[timeOfDay]) {
-          greeting = timeGreetings[timeOfDay][Math.floor(Math.random() * timeGreetings[timeOfDay].length)];
+        const lastContext = await getLastSessionContext(getUserId());
+        if (lastContext.mood === 'struggling') {
+          greeting = `Hey again, ${userName || 'friend'}. I've been thinking about our last conversation. How are you holding up?`;
+        } else if (lastContext.theme === 'work_stress') {
+          greeting = `Welcome back, ${userName || 'friend'}. How has that work situation been sitting with you?`;
         } else {
-          greeting = returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
+          const useTimeGreeting = Math.random() < 0.6;
+          if (useTimeGreeting && timeGreetings[timeOfDay]) {
+            greeting = timeGreetings[timeOfDay][Math.floor(Math.random() * timeGreetings[timeOfDay].length)];
+          } else {
+            greeting = returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
+          }
         }
       } else {
         greeting = newUserGreetings[Math.floor(Math.random() * newUserGreetings.length)];
@@ -725,27 +863,30 @@
       input.placeholder = enabled ? `Ask ${aiName} something...` : `${aiName} is thinking...`;
     }
 
-    // Chat form submission
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById("chat-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (!isAuthorized) {
-          alert('You are not authorized to chat. Please sign in and complete onboarding.');
-          return;
-        }
-        const input = document.getElementById("message");
-        const message = input.value.trim();
-        if (!message || isTyping) return;
-        appendMessage("user", message);
-        input.value = "";
-        setFormEnabled(false);
-        showTypingIndicator();
+    function checkSessionDuration() {
+      const sessionStartTime = parseInt(sessionStorage.getItem('session_start'), 10) || Date.now();
+      const duration = Date.now() - sessionStartTime;
+      if (duration > 45 * 60 * 1000) { // 45 minutes
+        appendMessage("cael", `We've been talking for a while, ${currentUser?.displayName || 'friend'}. How are you feeling? Sometimes it helps to take a pause.`);
+        // Stop checking after first prompt
+        clearInterval(checkSessionDurationInterval);
+      }
+    }
+
+    async function retryWithContext(originalMessage, attemptNumber) {
+      const retryMessages = [
+        `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
+        `Sorry about that - sometimes I need a moment to find the right words.`,
+        `Technical hiccup on my end. Give me one more try?`
+      ];
+      if (attemptNumber <= 3) {
+        appendMessage("cael", retryMessages[attemptNumber - 1]);
         try {
           const res = await fetch(`${BACKEND_URL}/index`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              message,
+              message: originalMessage,
               user_id: getUserId(),
             }),
           });
@@ -759,23 +900,97 @@
             setTimeout(() => {
               window.location.href = data.redirect_url;
             }, 2000);
-            return;
+            return { success: true, redirect: true };
           }
           hideTypingIndicator();
           if (data.response && data.response.trim()) {
             appendMessage("cael", data.response);
+            return { success: true, redirect: false };
           } else {
-            console.error('❌ Empty response from server:', data);
-            appendMessage("cael", `I'm having trouble formulating a response right now. Could you try asking again?`);
+            console.error('❌ Empty response from server on retry:', data);
+            return { success: false, redirect: false };
           }
         } catch (err) {
-          hideTypingIndicator();
-          appendMessage("cael", `⚠️ Sorry, I'm having trouble connecting right now. Please try again in a moment.`);
-          console.error("❌ Chat error:", err);
-        } finally {
-          setFormEnabled(true);
-          document.getElementById("message").focus();
+          console.error(`Retry ${attemptNumber} failed:`, err);
+          return { success: false, redirect: false };
         }
+      }
+      return { success: false, redirect: false };
+    }
+
+    // Chat form submission and enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+      const input = document.getElementById("message");
+      const form = document.getElementById("chat-form");
+
+      // Session continuity: Restore draft
+      const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
+      if (savedDraft) {
+        input.value = savedDraft;
+        appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
+      }
+
+      // Auto-save drafts
+      setInterval(() => {
+        const draft = input.value;
+        if (draft.length > 3) {
+          localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
+        } else {
+          localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        }
+      }, 2000);
+
+      // Emotional pause detection
+      input.addEventListener('keyup', () => {
+        setTimeout(() => {
+          const pauseDuration = Date.now() - lastKeystroke;
+          if (pauseDuration > 5000 && input.value.length > 10) {
+            showGentleEncouragement();
+          }
+        }, 5000);
+        lastKeystroke = Date.now();
+      });
+
+      // Offline/online handling
+      window.addEventListener('offline', () => {
+        appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
+        setFormEnabled(false);
+      });
+
+      window.addEventListener('online', () => {
+        appendMessage("cael", `We're reconnected, ${currentUser?.displayName || 'friend'}. How are you feeling?`);
+        setFormEnabled(true);
+      });
+
+      // Form submission with retry logic
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!isAuthorized) {
+          alert('You are not authorized to chat. Please sign in and complete onboarding.');
+          return;
+        }
+        const message = input.value.trim();
+        if (!message || isTyping) return;
+        appendMessage("user", message);
+        input.value = "";
+        localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        setFormEnabled(false);
+        showTypingIndicator();
+        let attempt = 1;
+        let result = { success: false, redirect: false };
+        while (attempt <= 3 && !result.success && !result.redirect) {
+          result = await retryWithContext(message, attempt);
+          if (!result.success && !result.redirect) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Backoff
+            attempt++;
+          }
+        }
+        if (!result.success && !result.redirect) {
+          hideTypingIndicator();
+          appendMessage("cael", `⚠️ Sorry, I'm having trouble connecting right now, ${currentUser?.displayName || 'friend'}. Please try again in a moment.`);
+        }
+        setFormEnabled(true);
+        document.getElementById("message").focus();
       });
     });
   </script>
