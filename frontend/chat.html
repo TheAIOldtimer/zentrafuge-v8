@@ -384,29 +384,36 @@
     }
 
     // Auth Guard - Check user authorization
-    async function checkUserAuthorization(user) {
-      try {
-        if (!user.emailVerified) {
-          console.warn(`Authorization failed for ${user.email}: Email not verified`);
-          throw new Error('Email not verified');
-        }
-        const db = firebase.firestore();
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        if (!userDoc.exists) {
-          console.warn(`Authorization failed for ${user.email}: User document not found`);
-          throw new Error('User document not found');
-        }
-        const userData = userDoc.data();
-        if (!userData.onboardingComplete) {
-          console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
-          throw new Error('Onboarding not completed');
-        }
-        console.log(`Authorization succeeded for ${user.email}`);
-        return true;
-      } catch (error) {
-        console.error('Authorization check failed:', error);
-        return false;
-      }
+   async function checkUserAuthorization(user) {
+  try {
+    const db = firebase.firestore();
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    
+    if (!userDoc.exists) {
+      console.warn(`Authorization failed for ${user.email}: User document not found`);
+      throw new Error('User document not found');
+    }
+    
+    const userData = userDoc.data();
+    
+    // Check email verification from Firestore instead of Firebase Auth
+    if (!userData.emailVerified) {
+      console.warn(`Authorization failed for ${user.email}: Email not verified in Firestore`);
+      throw new Error('Email not verified');
+    }
+    
+    if (!userData.onboardingComplete) {
+      console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
+      throw new Error('Onboarding not completed');
+    }
+    
+    console.log(`Authorization succeeded for ${user.email}`);
+    return true;
+  } catch (error) {
+    console.error('Authorization check failed:', error);
+    return false;
+  }
+}
     }
 
     // Redirect to appropriate page based on auth state
