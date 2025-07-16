@@ -380,25 +380,31 @@
 
     // Auth Guard - Check user authorization
     async function checkUserAuthorization(user) {
-      try {
-        if (!user.emailVerified) {
-          throw new Error('Email not verified');
-        }
-        const db = firebase.firestore();
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        if (!userDoc.exists) {
-          throw new Error('User document not found');
-        }
-        const userData = userDoc.data();
-        if (!userData.onboardingComplete) {
-          throw new Error('Onboarding not completed');
-        }
-        return userData; // Return userData for further use
-      } catch (error) {
-        console.error('Authorization check failed:', error);
-        return null;
-      }
+  try {
+    const db = firebase.firestore();
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    
+    if (!userDoc.exists) {
+      throw new Error('User document not found');
     }
+
+    const userData = userDoc.data();
+    
+    // Check email verification from Firestore instead of Firebase Auth
+    if (!userData.emailVerified) {
+      throw new Error('Email not verified');
+    }
+    
+    if (!userData.onboardingComplete) {
+      throw new Error('Onboarding not completed');
+    }
+    
+    return userData; // Return userData for further use
+  } catch (error) {
+    console.error('Authorization check failed:', error);
+    return null;
+  }
+}
 
     // Redirect to appropriate page based on auth state
     function redirectToAuth(reason = 'unauthorized') {
