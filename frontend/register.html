@@ -5,12 +5,12 @@
   <title>Register – Zentrafuge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
-<!-- Firebase v8 scripts -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
-<script src="firebases-init.js"></script>
+  <!-- Firebase v8 scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <script src="firebases-init.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -377,6 +377,10 @@
       <input type="email" id="email" required />
       <input type="password" id="password" required />
       <div class="checkbox">
+        <input type="checkbox" id="veteran" />
+        <label for="veteran" id="veteran-label">I am a military veteran (optional)</label>
+      </div>
+      <div class="checkbox">
         <input type="checkbox" id="terms" required />
         <label for="terms" id="terms-label">
           I agree to the <a href="terms.html" target="_blank" id="terms-link">Terms & Conditions</a>
@@ -396,7 +400,7 @@
   </div>
   
   <footer id="footer-text">
-    &copy; 2025 Zentrafuge. All rights reserved.
+    © 2025 Zentrafuge. All rights reserved.
   </footer>
 
   <script>
@@ -421,23 +425,17 @@
         }
 
         loadLanguagePreference() {
-            // First try to get from session (set by index page)
             try {
                 const sessionLang = sessionStorage.getItem('zentrafuge_selected_language');
                 if (sessionLang && this.supportedLanguages[sessionLang]) {
                     return sessionLang;
                 }
-            } catch (e) {}
-            
-            // Fallback to localStorage
-            try {
                 const storedLang = localStorage.getItem('zentrafuge_language');
                 if (storedLang && this.supportedLanguages[storedLang]) {
                     return storedLang;
                 }
             } catch (e) {}
             
-            // Final fallback to browser detection
             const browserLang = navigator.language || navigator.userLanguage;
             const langCode = browserLang.split('-')[0];
             return this.supportedLanguages[langCode] ? langCode : 'en';
@@ -459,7 +457,8 @@
                     formTitle: 'Create Your Account',
                     namePlaceholder: 'Name',
                     emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password',
+                    passwordPlaceholder: 'Password (6+ characters)',
+                    veteranLabel: 'I am a military veteran (optional)',
                     termsLabel: 'I agree to the',
                     termsLink: 'Terms & Conditions',
                     registerButton: 'Register',
@@ -469,16 +468,20 @@
                     footerText: '© 2025 Zentrafuge. All rights reserved.',
                     privacyNote: 'Your privacy is protected under GDPR and UK data protection laws.',
                     registrationSuccess: 'Registered successfully! Please check your email to verify before logging in.',
-                    registrationError: 'Registration failed',
                     emailSentSuccess: 'Verification email sent! Please check your inbox.',
-                    pleaseWait: 'Please wait...'
+                    pleaseWait: 'Please wait...',
+                    registrationError: 'Registration failed',
+                    emailInUse: 'This email is already registered.',
+                    weakPassword: 'Password must be at least 6 characters long.',
+                    invalidEmail: 'Please enter a valid email address.'
                 },
                 'de': {
                     languageLabel: 'Sprache / Language / Langue',
                     formTitle: 'Erstelle dein Konto',
                     namePlaceholder: 'Name',
                     emailPlaceholder: 'E-Mail',
-                    passwordPlaceholder: 'Passwort',
+                    passwordPlaceholder: 'Passwort (mind. 6 Zeichen)',
+                    veteranLabel: 'Ich bin ein Militärveteran (optional)',
                     termsLabel: 'Ich stimme den',
                     termsLink: 'Allgemeinen Geschäftsbedingungen',
                     registerButton: 'Registrieren',
@@ -488,16 +491,20 @@
                     footerText: '© 2025 Zentrafuge. Alle Rechte vorbehalten.',
                     privacyNote: 'Deine Privatsphäre ist durch die DSGVO und deutsche Datenschutzgesetze geschützt.',
                     registrationSuccess: 'Erfolgreich registriert! Bitte überprüfe deine E-Mail zur Verifizierung vor der Anmeldung.',
-                    registrationError: 'Registrierung fehlgeschlagen',
                     emailSentSuccess: 'Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.',
-                    pleaseWait: 'Bitte warten...'
+                    pleaseWait: 'Bitte warten...',
+                    registrationError: 'Registrierung fehlgeschlagen',
+                    emailInUse: 'Diese E-Mail ist bereits registriert.',
+                    weakPassword: 'Das Passwort muss mindestens 6 Zeichen lang sein.',
+                    invalidEmail: 'Bitte gib eine gültige E-Mail-Adresse ein.'
                 },
                 'fr': {
                     languageLabel: 'Langue / Language / Sprache',
                     formTitle: 'Créez votre compte',
                     namePlaceholder: 'Nom',
                     emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Mot de passe',
+                    passwordPlaceholder: 'Mot de passe (6+ caractères)',
+                    veteranLabel: 'Je suis un vétéran militaire (facultatif)',
                     termsLabel: 'J\'accepte les',
                     termsLink: 'Conditions générales',
                     registerButton: 'S\'inscrire',
@@ -507,16 +514,20 @@
                     footerText: '© 2025 Zentrafuge. Tous droits réservés.',
                     privacyNote: 'Votre vie privée est protégée par le RGPD et les lois françaises sur la protection des données.',
                     registrationSuccess: 'Inscription réussie! Veuillez vérifier votre e-mail avant de vous connecter.',
-                    registrationError: 'Échec de l\'inscription',
                     emailSentSuccess: 'E-mail de vérification envoyé! Veuillez vérifier votre boîte de réception.',
-                    pleaseWait: 'Veuillez patienter...'
+                    pleaseWait: 'Veuillez patienter...',
+                    registrationError: 'Échec de l\'inscription',
+                    emailInUse: 'Cet e-mail est déjà enregistré.',
+                    weakPassword: 'Le mot de passe doit comporter au moins 6 caractères.',
+                    invalidEmail: 'Veuillez entrer une adresse e-mail valide.'
                 },
                 'es': {
                     languageLabel: 'Idioma / Language / Langue',
                     formTitle: 'Crea tu cuenta',
                     namePlaceholder: 'Nombre',
                     emailPlaceholder: 'Correo electrónico',
-                    passwordPlaceholder: 'Contraseña',
+                    passwordPlaceholder: 'Contraseña (6+ caracteres)',
+                    veteranLabel: 'Soy veterano militar (opcional)',
                     termsLabel: 'Acepto los',
                     termsLink: 'Términos y Condiciones',
                     registerButton: 'Registrarse',
@@ -526,16 +537,20 @@
                     footerText: '© 2025 Zentrafuge. Todos los derechos reservados.',
                     privacyNote: 'Tu privacidad está protegida bajo GDPR y las leyes españolas de protección de datos.',
                     registrationSuccess: '¡Registro exitoso! Por favor verifica tu correo electrónico antes de iniciar sesión.',
-                    registrationError: 'Error en el registro',
                     emailSentSuccess: '¡Correo de verificación enviado! Por favor revisa tu bandeja de entrada.',
-                    pleaseWait: 'Por favor espera...'
+                    pleaseWait: 'Por favor espera...',
+                    registrationError: 'Error en el registro',
+                    emailInUse: 'Este correo electrónico ya está registrado.',
+                    weakPassword: 'La contraseña debe tener al menos 6 caracteres.',
+                    invalidEmail: 'Por favor ingresa una dirección de correo electrónico válida.'
                 },
                 'it': {
                     languageLabel: 'Lingua / Language / Langue',
                     formTitle: 'Crea il tuo account',
                     namePlaceholder: 'Nome',
                     emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password',
+                    passwordPlaceholder: 'Password (6+ caratteri)',
+                    veteranLabel: 'Sono un veterano militare (opzionale)',
                     termsLabel: 'Accetto i',
                     termsLink: 'Termini e Condizioni',
                     registerButton: 'Registrati',
@@ -545,16 +560,20 @@
                     footerText: '© 2025 Zentrafuge. Tutti i diritti riservati.',
                     privacyNote: 'La tua privacy è protetta dal GDPR e dalle leggi italiane sulla protezione dei dati.',
                     registrationSuccess: 'Registrazione riuscita! Verifica la tua email prima di accedere.',
-                    registrationError: 'Registrazione fallita',
                     emailSentSuccess: 'Email di verifica inviata! Controlla la tua casella di posta.',
-                    pleaseWait: 'Attendere prego...'
+                    pleaseWait: 'Attendere prego...',
+                    registrationError: 'Registrazione fallita',
+                    emailInUse: 'Questa email è già registrata.',
+                    weakPassword: 'La password deve essere lunga almeno 6 caratteri.',
+                    invalidEmail: 'Inserisci un indirizzo email valido.'
                 },
                 'nl': {
                     languageLabel: 'Taal / Language / Langue',
                     formTitle: 'Maak je account aan',
                     namePlaceholder: 'Naam',
                     emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Wachtwoord',
+                    passwordPlaceholder: 'Wachtwoord (6+ tekens)',
+                    veteranLabel: 'Ik ben een militaire veteraan (optioneel)',
                     termsLabel: 'Ik ga akkoord met de',
                     termsLink: 'Algemene Voorwaarden',
                     registerButton: 'Registreren',
@@ -564,16 +583,20 @@
                     footerText: '© 2025 Zentrafuge. Alle rechten voorbehouden.',
                     privacyNote: 'Je privacy wordt beschermd onder AVG en Nederlandse privacywetten.',
                     registrationSuccess: 'Succesvol geregistreerd! Controleer je e-mail om te verifiëren voordat je inlogt.',
-                    registrationError: 'Registratie mislukt',
                     emailSentSuccess: 'Verificatie-e-mail verzonden! Controleer je inbox.',
-                    pleaseWait: 'Even geduld...'
+                    pleaseWait: 'Even geduld...',
+                    registrationError: 'Registratie mislukt',
+                    emailInUse: 'Dit e-mailadres is al geregistreerd.',
+                    weakPassword: 'Het wachtwoord moet minstens 6 tekens lang zijn.',
+                    invalidEmail: 'Voer een geldig e-mailadres in.'
                 },
                 'pt': {
                     languageLabel: 'Idioma / Language / Langue',
                     formTitle: 'Cria a tua conta',
                     namePlaceholder: 'Nome',
                     emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Palavra-passe',
+                    passwordPlaceholder: 'Palavra-passe (6+ caracteres)',
+                    veteranLabel: 'Sou um veterano militar (opcional)',
                     termsLabel: 'Concordo com os',
                     termsLink: 'Termos e Condições',
                     registerButton: 'Registar',
@@ -583,9 +606,12 @@
                     footerText: '© 2025 Zentrafuge. Todos os direitos reservados.',
                     privacyNote: 'A tua privacidade está protegida pelo RGPD e pelas leis portuguesas de proteção de dados.',
                     registrationSuccess: 'Registo bem-sucedido! Por favor verifica o teu email antes de fazer login.',
-                    registrationError: 'Falha no registo',
                     emailSentSuccess: 'Email de verificação enviado! Verifica a tua caixa de entrada.',
-                    pleaseWait: 'Por favor aguarda...'
+                    pleaseWait: 'Por favor aguarda...',
+                    registrationError: 'Falha no registo',
+                    emailInUse: 'Este email já está registado.',
+                    weakPassword: 'A palavra-passe deve ter pelo menos 6 caracteres.',
+                    invalidEmail: 'Por favor insere um endereço de email válido.'
                 }
             };
         }
@@ -600,7 +626,6 @@
                 </div>
             `).join('');
 
-            // Update selected language display
             const selectedLang = this.supportedLanguages[this.selectedLanguage];
             document.getElementById('selected-flag').textContent = selectedLang.flag;
             document.getElementById('selected-language').textContent = selectedLang.name;
@@ -617,24 +642,20 @@
         updatePageContent() {
             const t = this.translations[this.selectedLanguage];
             
-            // Update all translatable elements
             document.getElementById('language-label').textContent = t.languageLabel;
             document.getElementById('form-title').textContent = t.formTitle;
             document.getElementById('name').placeholder = t.namePlaceholder;
             document.getElementById('email').placeholder = t.emailPlaceholder;
             document.getElementById('password').placeholder = t.passwordPlaceholder;
-            
-            // Update terms label (more complex because of the link)
+            document.getElementById('veteran-label').textContent = t.veteranLabel;
             const termsLabel = document.getElementById('terms-label');
             termsLabel.innerHTML = `${t.termsLabel} <a href="terms.html?lang=${this.selectedLanguage}" target="_blank" id="terms-link">${t.termsLink}</a>`;
-            
             document.getElementById('register-button').textContent = t.registerButton;
             document.getElementById('login-text').textContent = t.loginText;
             document.getElementById('login-link').textContent = t.loginLink;
             document.getElementById('donate-button').textContent = t.donateButton;
             document.getElementById('footer-text').textContent = t.footerText;
             
-            // Add privacy notice if it doesn't exist
             let privacyNotice = document.querySelector('.privacy-notice');
             if (!privacyNotice) {
                 privacyNotice = document.createElement('div');
@@ -643,7 +664,6 @@
             }
             privacyNotice.innerHTML = `<small>🔒 ${t.privacyNote}</small>`;
             
-            // Update page language attribute
             document.documentElement.lang = this.selectedLanguage;
         }
 
@@ -669,7 +689,6 @@
         button.classList.toggle('open');
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const container = document.querySelector('.language-dropdown-container');
         if (!container.contains(e.target)) {
@@ -685,14 +704,30 @@
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const name = document.getElementById('name').value;
+      const name = document.getElementById('name').value.trim();
+      const isVeteran = document.getElementById('veteran').checked;
       const messageEl = document.getElementById('message');
       const loadingEl = document.getElementById('loading');
       const submitButton = document.getElementById('register-button');
       const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
-      
+
+      // Client-side validation
+      if (password.length < 6) {
+        messageEl.className = 'message error';
+        messageEl.textContent = t.weakPassword;
+        messageEl.style.display = 'block';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        messageEl.className = 'message error';
+        messageEl.textContent = t.invalidEmail;
+        messageEl.style.display = 'block';
+        return;
+      }
+
       // Show loading state
       loadingEl.style.display = 'block';
       submitButton.disabled = true;
@@ -700,21 +735,27 @@
       messageEl.style.display = 'none';
       
       try {
+        // Create user with Firebase Auth
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
-        
+
         // Update Firebase Auth profile with name
         await user.updateProfile({ displayName: name });
-        
-        // Save profile to Firestore (THIS IS THE KEY FIX!)
+
+        // Save profile to Firestore with critical fields
         await firebase.firestore().collection("users").doc(user.uid).set({
           name: name,
           email: user.email,
           language: window.zentrafugeIntl.getSelectedLanguage(),
-          created_at: firebase.firestore.FieldValue.serverTimestamp()
+          created_at: firebase.firestore.FieldValue.serverTimestamp(),
+          emailVerified: user.emailVerified, // Initially false
+          onboardingComplete: false, // Required for auth guard
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          isVeteran: isVeteran, // Support veteran access
+          subscription: 'free' // Default tier
         });
-        
-        // Store user's language preference in session (for fallback use)
+
+        // Store language preference
         try {
           sessionStorage.setItem('zentrafuge_user_language', window.zentrafugeIntl.getSelectedLanguage());
         } catch (e) {
@@ -738,12 +779,25 @@
         }, 3000);
         
       } catch (error) {
-        // Show error message
+        // Enhanced error handling
+        let errorMessage = t.registrationError;
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = t.emailInUse;
+            break;
+          case 'auth/invalid-email':
+            errorMessage = t.invalidEmail;
+            break;
+          case 'auth/weak-password':
+            errorMessage = t.weakPassword;
+            break;
+          default:
+            errorMessage = `${t.registrationError}: ${error.message}`;
+        }
         messageEl.className = 'message error';
-        messageEl.textContent = t.registrationError + ': ' + error.message;
+        messageEl.textContent = errorMessage;
         messageEl.style.display = 'block';
       } finally {
-        // Hide loading state
         loadingEl.style.display = 'none';
         submitButton.disabled = false;
         submitButton.textContent = t.registerButton;
@@ -752,14 +806,14 @@
 
     // Handle Enter key for better UX
     document.addEventListener('DOMContentLoaded', function() {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('register-form').dispatchEvent(new Event('submit'));
-                }
-            });
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            document.getElementById('register-form').dispatchEvent(new Event('submit'));
+          }
         });
+      });
     });
   </script>
 </body>
