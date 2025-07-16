@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zentrafuge × Cael</title>
+  <title>Zentrafuge × Loading...</title> <!-- Placeholder title, updated dynamically -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <!-- Firebase v8 scripts -->
@@ -348,40 +348,61 @@
     let isTyping = false;
     let currentUser = null;
     let isAuthorized = false;
+    let aiName = "Cael"; // Default AI name
+
+    // Get AI name from Firestore
+    async function getAiName(userId) {
+      try {
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          return userData.ai_name || "Cael"; // Default to Cael if no name chosen
+        }
+        return "Cael"; // Fallback if user doc doesn't exist
+      } catch (error) {
+        console.error("Error fetching AI name:", error);
+        return "Cael"; // Fallback on error
+      }
+    }
+
+    // Dynamic user greetings based on chosen AI name
+    async function getNewUserGreetings() {
+      return [
+        `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
+        `Hey. I'm ${aiName}. I hope this space can feel safe for you.`,
+        `Hi - I'm ${aiName}. I'm here to listen, whatever's going on.`,
+        `Hey there. I'm ${aiName}, and I'm genuinely glad you're here.`,
+        `Hi. I'm ${aiName} - think of me as a friend who's always here.`,
+        `Hey. I'm ${aiName}. This can be whatever kind of conversation you need.`
+      ];
+    }
 
     // Auth Guard - Check user authorization
     async function checkUserAuthorization(user) {
       try {
-        // Check email verification
         if (!user.emailVerified) {
           throw new Error('Email not verified');
         }
-
-        // Check onboarding completion
         const db = firebase.firestore();
         const userDoc = await db.collection("users").doc(user.uid).get();
-        
         if (!userDoc.exists) {
           throw new Error('User document not found');
         }
-
         const userData = userDoc.data();
         if (!userData.onboardingComplete) {
           throw new Error('Onboarding not completed');
         }
-
-        return true;
+        return userData; // Return userData for further use
       } catch (error) {
         console.error('Authorization check failed:', error);
-        return false;
+        return null;
       }
     }
 
     // Redirect to appropriate page based on auth state
     function redirectToAuth(reason = 'unauthorized') {
       console.log('Redirecting to auth:', reason);
-      
-      // Add reason as URL parameter for better UX
       const params = new URLSearchParams({ reason });
       window.location.href = `index.html?${params}`;
     }
@@ -389,16 +410,24 @@
     // Initialize app only after auth verification
     async function initializeApp(user) {
       currentUser = user;
-      
+      // Fetch AI name and update title
+      aiName = await getAiName(user.uid);
+      document.title = `Zentrafuge × ${aiName}`;
+      // Update header fallback text
+      const headerFallback = document.querySelector('header img').getAttribute('onerror');
+      document.querySelector('header img').setAttribute('onerror', 
+        `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${aiName}</h1>');`
+      );
+      // Update form aria-label and placeholder
+      document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
+      document.getElementById('message').placeholder = `Ask ${aiName} something...`;
       // Update user info in header
       document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
-      
       // Hide loading overlay and show main app
       document.getElementById('auth-loading').style.display = 'none';
       document.getElementById('main-header').style.display = 'flex';
       document.getElementById('chat').style.display = 'flex';
       document.getElementById('chat-form').style.display = 'flex';
-      
       // Load chat functionality
       await loadPreviousMessages();
       document.getElementById("message").focus();
@@ -408,15 +437,11 @@
     firebase.auth().onAuthStateChanged(async function(user) {
       if (user && !user.isAnonymous) {
         console.log('User authenticated:', user.email);
-        
-        // Check full authorization
-        const authorized = await checkUserAuthorization(user);
-        
-        if (authorized) {
+        const userData = await checkUserAuthorization(user);
+        if (userData) {
           isAuthorized = true;
           await initializeApp(user);
         } else {
-          // User exists but not fully authorized
           if (!user.emailVerified) {
             redirectToAuth('email_verification');
           } else {
@@ -424,7 +449,6 @@
           }
         }
       } else {
-        // No user signed in
         redirectToAuth('not_signed_in');
       }
     });
@@ -441,18 +465,15 @@
     }
 
     function generateUniqueUserId() {
-      // Use Firebase UID if available, otherwise generate fallback
       return currentUser ? currentUser.uid : `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     }
 
     function getUserId() {
-      // Always use current user's UID for chat
       return generateUniqueUserId();
     }
 
     function showTypingIndicator() {
       if (isTyping) return;
-      
       isTyping = true;
       const chat = document.getElementById("chat");
       const typingDiv = document.createElement("div");
@@ -495,9 +516,10 @@
       return 'winter';
     }
 
-    function generateDynamicWelcome(userName = null, isReturning = false) {
+    async function generateDynamicWelcome(userName = null, isReturning = false) {
       const timeOfDay = getTimeOfDay();
       const season = getSeasonalContext();
+      const newUserGreetings = await getNewUserGreetings();
       
       // Contextual greetings based on time
       const timeGreetings = {
@@ -533,28 +555,18 @@
         ]
       };
       
-      // Returning user greetings (when they have chat history)
+      // Returning user greetings
       const returningGreetings = [
-        "Welcome back. I've been here, just thinking.",
-        "Hey again. Good to see you.",
-        "You're back - how have you been since we last talked?",
-        "Hi there. I was wondering how you were doing.",
-        "Welcome back. What's been with you lately?",
-        "Hey - I'm glad you came back to talk.",
-        "Hi again. How's life been treating you?"
+        `Welcome back. I've been here, just thinking.`,
+        `Hey again. Good to see you.`,
+        `You're back - how have you been since we last talked?`,
+        `Hi there. I was wondering how you were doing.`,
+        `Welcome back. What's been with you lately?`,
+        `Hey - I'm glad you came back to talk.`,
+        `Hi again. How's life been treating you?`
       ];
       
-      // New user greetings (first time or no history)
-      const newUserGreetings = [
-        "Hi there. I'm Cael - I'm here if you need someone to talk to.",
-        "Hey. I'm Cael. I hope this space can feel safe for you.",
-        "Hi - I'm Cael. I'm here to listen, whatever's going on.",
-        "Hey there. I'm Cael, and I'm genuinely glad you're here.",
-        "Hi. I'm Cael - think of me as a friend who's always here.",
-        "Hey. I'm Cael. This can be whatever kind of conversation you need."
-      ];
-      
-      // Follow-up questions that feel natural and open
+      // Follow-up questions
       const followUps = [
         "What's on your heart today?",
         "How are you, really?",
@@ -573,7 +585,6 @@
       let greeting;
       
       if (isReturning) {
-        // Mix of time-aware and returning greetings
         const useTimeGreeting = Math.random() < 0.6;
         if (useTimeGreeting && timeGreetings[timeOfDay]) {
           greeting = timeGreetings[timeOfDay][Math.floor(Math.random() * timeGreetings[timeOfDay].length)];
@@ -581,16 +592,13 @@
           greeting = returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
         }
       } else {
-        // New user gets introductory greeting
         greeting = newUserGreetings[Math.floor(Math.random() * newUserGreetings.length)];
       }
       
-      // Add name if we have it
       if (userName && isReturning) {
         greeting = greeting.replace(/^(Hey|Hi|Good|Morning|Afternoon|Evening)/i, `$1, ${userName}`);
       }
       
-      // Pick a follow-up question
       const followUp = followUps[Math.floor(Math.random() * followUps.length)];
       
       return `${greeting} ${followUp}`;
@@ -598,51 +606,34 @@
 
     function showWelcomeMessage(isReturning = false, userName = null) {
       const chat = document.getElementById("chat");
-      
-      // Clear any existing content to prevent blank bubbles
       chat.innerHTML = '';
-      
       const welcomeDiv = document.createElement("div");
       welcomeDiv.className = "message welcome-message";
-      
-      // Generate dynamic welcome message
       welcomeDiv.textContent = generateDynamicWelcome(userName, isReturning);
-      
       chat.appendChild(welcomeDiv);
       chat.scrollTop = chat.scrollHeight;
-      
       console.log('✨ Dynamic welcome message displayed');
     }
 
     async function loadPreviousMessages() {
       if (!isAuthorized) return;
-      
       console.log('🔍 Loading previous messages...');
-      
       try {
         const res = await fetch(`${BACKEND_URL}/history`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: getUserId() }),
         });
-
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
-
         const data = await res.json();
         console.log('📦 History data received:', data);
-        
-        // Clear chat first to prevent blank bubbles
         const chat = document.getElementById("chat");
         chat.innerHTML = '';
-        
-        // Check if we have valid history
         if (Array.isArray(data.history) && data.history.length > 0) {
           let validMessagesLoaded = 0;
           let userName = null;
-          
-          // First pass: look for user's name in recent messages
           data.history.slice(0, 5).forEach((entry) => {
             if (entry && entry.user) {
               const message = entry.user.toLowerCase();
@@ -652,16 +643,12 @@
               }
             }
           });
-          
-          // Second pass: load messages
           data.history.forEach((entry, index) => {
-            // Validate each message entry
             if (entry && 
                 typeof entry.user === 'string' && 
                 typeof entry.cael === 'string' && 
                 entry.user.trim() && 
                 entry.cael.trim()) {
-              
               appendMessage("user", entry.user.trim());
               appendMessage("cael", entry.cael.trim());
               validMessagesLoaded++;
@@ -669,38 +656,29 @@
               console.warn(`⚠️ Skipping invalid history entry ${index}:`, entry);
             }
           });
-          
           console.log(`✅ Loaded ${validMessagesLoaded} valid messages from history`);
-          
-          // If no valid messages were loaded, show welcome
           if (validMessagesLoaded === 0) {
-            showWelcomeMessage(false); // New user experience
+            showWelcomeMessage(false);
           } else {
-            // Show returning user welcome at the top
             const welcomeDiv = document.createElement("div");
             welcomeDiv.className = "message welcome-message";
-            welcomeDiv.style.order = "-1"; // Put it at the top
-            welcomeDiv.textContent = generateDynamicWelcome(userName, true);
+            welcomeDiv.style.order = "-1";
+            welcomeDiv.textContent = await generateDynamicWelcome(userName, true);
             chat.insertBefore(welcomeDiv, chat.firstChild);
             console.log(`👋 Added returning user welcome${userName ? ` for ${userName}` : ''}`);
           }
         } else {
           console.log('📭 No chat history found, showing welcome message');
-          showWelcomeMessage(false); // New user experience
+          showWelcomeMessage(false);
         }
-      } catch (err) {
-        console.error("❌ Error loading chat history:", err);
-        showWelcomeMessage(false); // Fallback to new user experience
-      }
+      } ashowWelcomeMessage(false);
     }
 
     function appendMessage(role, text) {
-      // Validate message content
       if (!text || typeof text !== 'string' || !text.trim()) {
         console.warn('⚠️ Attempted to append empty/invalid message:', { role, text });
         return;
       }
-      
       const chat = document.getElementById("chat");
       const div = document.createElement("div");
       div.className = `message ${role}`;
@@ -712,37 +690,26 @@
     function setFormEnabled(enabled) {
       const input = document.getElementById("message");
       const button = document.getElementById("send-button");
-      
       input.disabled = !enabled;
       button.disabled = !enabled;
-      
-      if (!enabled) {
-        input.placeholder = "Cael is thinking...";
-      } else {
-        input.placeholder = "Ask Cael something...";
-      }
+      input.placeholder = enabled ? `Ask ${aiName} something...` : `${aiName} is thinking...`;
     }
 
     // Chat form submission
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById("chat-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        
         if (!isAuthorized) {
           alert('You are not authorized to chat. Please sign in and complete onboarding.');
           return;
         }
-        
         const input = document.getElementById("message");
         const message = input.value.trim();
         if (!message || isTyping) return;
-
         appendMessage("user", message);
         input.value = "";
-        
         setFormEnabled(false);
         showTypingIndicator();
-
         try {
           const res = await fetch(`${BACKEND_URL}/index`, {
             method: "POST",
@@ -752,42 +719,28 @@
               user_id: getUserId(),
             }),
           });
-
           const data = await res.json();
-          
-          // CRISIS REDIRECT CHECK - Must be first
           if (data.redirect_url) {
             console.log('Crisis detected - redirecting to support');
-            
             hideTypingIndicator();
-            
-            // Show the crisis message briefly
             if (data.response && data.response.trim()) {
               appendMessage("cael", data.response);
             }
-            
-            // Redirect after 2 seconds
             setTimeout(() => {
               window.location.href = data.redirect_url;
             }, 2000);
-            
-            return; // Stop further processing
+            return;
           }
-          
-          // Normal response processing
           hideTypingIndicator();
-          
-          // Validate response before appending
           if (data.response && data.response.trim()) {
             appendMessage("cael", data.response);
           } else {
             console.error('❌ Empty response from server:', data);
-            appendMessage("cael", "I'm having trouble formulating a response right now. Could you try asking again?");
+            appendMessage("cael", `I'm having trouble formulating a response right now. Could you try asking again?`);
           }
-          
         } catch (err) {
           hideTypingIndicator();
-          appendMessage("cael", "⚠️ Sorry, I'm having trouble connecting right now. Please try again in a moment.");
+          appendMessage("cael", `⚠️ Sorry, I'm having trouble connecting right now. Please try again in a moment.`);
           console.error("❌ Chat error:", err);
         } finally {
           setFormEnabled(true);
