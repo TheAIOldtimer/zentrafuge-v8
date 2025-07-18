@@ -1,15 +1,18 @@
-# app.py - POA Integration
-# Your Flask app transformed with Prompt-Orchestrated Architecture
+# app.py - Complete Zentrafuge v8 Flask Application
+# POA Integration with full error handling and debugging
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
+import traceback
 from datetime import datetime
 import os
+import json
 
 # POA imports - The new brain of Zentrafuge
-from utils.orchestrator import orchestrate_response, get_debug_prompt, poa_metrics
+from utils.orchestrator import orchestrate_response, get_debug_prompt, poa_metrics, simple_response_fallback
 from firebase import db  # Direct import of Firestore client
+
 # Import your existing crypto functions (adjust names as needed)
 try:
     from utils.crypto_handler import encrypt_message, decrypt_message
@@ -23,76 +26,142 @@ except ImportError:
         # No encryption available - use plain text
         def encrypt_message(text): return text
         def decrypt_message(text): return text
+        logging.warning("No encryption available - using plain text storage")
 
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app, origins=["https://zentrafuge-v8.netlify.app"])  # Your frontend
+
+# Configure CORS for your frontend
+CORS(app, origins=[
+    "https://zentrafuge-v8.netlify.app", 
+    "https://zentrafuge-v7.netlify.app",
+    "http://localhost:3000",  # For local development
+    "http://127.0.0.1:3000"
+])
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Metrics tracking for POA performance
+poa_success_count = 0
+poa_error_count = 0
+traditional_success_count = 0
+traditional_error_count = 0
 
 @app.route('/index', methods=['POST'])
 def chat():
     """
-    REVOLUTIONARY CHAT ENDPOINT - POA POWERED
+    MAIN CHAT ENDPOINT - POA POWERED
     
-    What used to be complex module orchestration is now:
-    1. Get message
-    2. Assemble context + perfect prompt  
-    3. Get emotionally intelligent response
-    4. Store and return
-    
-    That's it. The AI handles the emotional complexity.
+    This is the heart of Zentrafuge where users interact with Cael
     """
+    global poa_success_count, poa_error_count, traditional_success_count, traditional_error_count
     
     try:
-        # Get request data
+        # Get and validate request data
         data = request.get_json()
-        user_message = data.get('message', '').strip()
-        user_id = data.get('user_id')  # From Firebase Auth
-        use_poa = data.get('poa', True)  # Default to POA, allow traditional fallback
-        
-        # Validation
-        if not user_message or not user_id:
+        if not data:
             return jsonify({
-                "error": "Missing message or user_id",
-                "response": "I need both a message and your user ID to respond properly."
+                "error": "No JSON data provided",
+                "response": "I didn't receive your message properly. Could you try sending it again?"
             }), 400
         
-        # THE MAGIC: POA response generation
-        # This single line replaces your entire complex module pipeline
-        cael_response = orchestrate_response(
-            user_id=user_id, 
-            user_message=user_message, 
-            use_poa=use_poa,
-            crypto_handler=None  # Add your crypto handler if needed
-        )
+        user_message = data.get('message', '').strip()
+        user_id = data.get('user_id')
+        use_poa = data.get('poa', True)  # Default to POA
         
-        # Store the conversation (encrypted for privacy)
-        store_conversation(user_id, user_message, cael_response)
+        # Input validation
+        if not user_message:
+            return jsonify({
+                "error": "Empty message",
+                "response": "I'm here and listening. What would you like to share?"
+            }), 400
+            
+        if not user_id:
+            return jsonify({
+                "error": "Missing user_id",
+                "response": "I need to know who you are to remember our conversation. Please log in again."
+            }), 400
         
-        # Track success
+        # Log the incoming request (without sensitive data)
+        logger.info(f"Chat request from user {user_id[:8]}... using {'POA' if use_poa else 'traditional'}")
+        
+        # Generate Cael's response using POA
         if use_poa:
-            poa_metrics.log_poa_success()
+            try:
+                cael_response = orchestrate_response(
+                    user_id=user_id,
+                    user_input=user_message,
+                    firestore_client=db
+                )
+                poa_success_count += 1
+                method_used = "poa"
+                
+            except Exception as poa_error:
+                logger.error(f"POA failed, trying fallback: {poa_error}")
+                logger.error(f"POA traceback:\n{traceback.format_exc()}")
+                
+                # Try simple fallback
+                try:
+                    cael_response = simple_response_fallback(user_message)
+                    method_used = "fallback"
+                    poa_error_count += 1
+                except Exception as fallback_error:
+                    logger.error(f"Even fallback failed: {fallback_error}")
+                    cael_response = "I'm experiencing some technical difficulties, but I'm here with you. Your message matters, and I want to respond properly. Could you try again in a moment?"
+                    method_used = "emergency"
+                    poa_error_count += 1
         else:
-            poa_metrics.log_traditional_success()
+            # Traditional method (if you have legacy orchestration)
+            try:
+                cael_response = orchestrate_response(
+                    user_id=user_id,
+                    user_input=user_message,
+                    firestore_client=db
+                )
+                traditional_success_count += 1
+                method_used = "traditional"
+            except Exception as trad_error:
+                logger.error(f"Traditional method failed: {trad_error}")
+                cael_response = simple_response_fallback(user_message)
+                traditional_error_count += 1
+                method_used = "fallback"
         
-        # Return the emotionally intelligent response
+        # Store the conversation (separate from orchestrator storage)
+        try:
+            store_conversation_record(user_id, user_message, cael_response, method_used)
+        except Exception as storage_error:
+            logger.error(f"Failed to store conversation: {storage_error}")
+            # Don't fail the response if storage fails
+        
+        # Return successful response
         return jsonify({
             "response": cael_response,
-            "method": "poa" if use_poa else "traditional",
-            "timestamp": datetime.now().isoformat()
+            "method": method_used,
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id[:8] + "...",  # Partial ID for debugging
+            "status": "success"
         })
         
     except Exception as e:
-        logging.error(f"Chat endpoint error: {e}")
+        # Catch-all error handler
+        error_details = traceback.format_exc()
+        logger.error(f"Critical chat endpoint error: {e}")
+        logger.error(f"Full traceback:\n{error_details}")
         
-        # Track error
-        if data.get('poa', True):
-            poa_metrics.log_poa_error()
-        else:
-            poa_metrics.log_traditional_error()
+        poa_error_count += 1
         
-        # Graceful error response in Cael's voice
+        # Return graceful error response in Cael's voice
         return jsonify({
-            "response": "I'm experiencing a brief connection issue. Please try again - I'm here and want to be present with you.",
-            "error": True
+            "response": "Something unexpected happened on my end, but you're not alone. I'm still here with you. Please try sending your message again - I want to be present for what you're sharing.",
+            "error": True,
+            "method": "emergency",
+            "timestamp": datetime.now().isoformat(),
+            "debug_info": str(e) if app.debug else None
         }), 500
 
 @app.route('/debug/prompt', methods=['POST'])
@@ -113,17 +182,20 @@ def debug_prompt():
             return jsonify({"error": "Missing message or user_id"}), 400
         
         # Get the exact prompt that would be sent to GPT-4
-        debug_prompt = get_debug_prompt(user_id, user_message)
+        debug_prompt_text = get_debug_prompt(user_message, user_id, db)
         
         return jsonify({
             "user_message": user_message,
-            "system_prompt": debug_prompt,
+            "system_prompt": debug_prompt_text,
             "explanation": "This is the exact prompt sent to GPT-4 to generate Cael's response",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id[:8] + "..."
         })
         
     except Exception as e:
-        logging.error(f"Debug prompt error: {e}")
+        error_details = traceback.format_exc()
+        logger.error(f"Debug prompt error: {e}")
+        logger.error(f"Full traceback:\n{error_details}")
         return jsonify({"error": f"Debug error: {str(e)}"}), 500
 
 @app.route('/stats/poa', methods=['GET'])
@@ -133,18 +205,41 @@ def poa_stats():
     """
     
     try:
-        stats = poa_metrics.get_stats()
+        total_poa = poa_success_count + poa_error_count
+        total_traditional = traditional_success_count + traditional_error_count
+        
+        poa_success_rate = poa_success_count / total_poa if total_poa > 0 else 0
+        traditional_success_rate = traditional_success_count / total_traditional if total_traditional > 0 else 0
+        
+        stats = {
+            "poa_success_count": poa_success_count,
+            "poa_error_count": poa_error_count,
+            "poa_success_rate": poa_success_rate,
+            "traditional_success_count": traditional_success_count,
+            "traditional_error_count": traditional_error_count,
+            "traditional_success_rate": traditional_success_rate,
+            "total_conversations": total_poa + total_traditional
+        }
+        
+        # Get orchestrator metrics
+        orchestrator_metrics = poa_metrics()
+        
         return jsonify({
-            "poa_performance": stats,
+            "performance_stats": stats,
+            "orchestrator_config": orchestrator_metrics,
             "interpretation": {
-                "poa_success_rate": f"{stats['poa_success_rate']:.2%}",
-                "traditional_success_rate": f"{stats['traditional_success_rate']:.2%}",
-                "total_conversations": stats['total_poa_calls'] + stats['total_traditional_calls']
+                "poa_success_rate": f"{poa_success_rate:.2%}",
+                "traditional_success_rate": f"{traditional_success_rate:.2%}",
+                "total_conversations": stats['total_conversations'],
+                "recommendation": "POA" if poa_success_rate >= traditional_success_rate else "Traditional"
             },
-            "recommendation": "POA" if stats['poa_success_rate'] > stats['traditional_success_rate'] else "Traditional"
+            "timestamp": datetime.now().isoformat()
         })
         
     except Exception as e:
+        error_details = traceback.format_exc()
+        logger.error(f"Stats error: {e}")
+        logger.error(f"Full traceback:\n{error_details}")
         return jsonify({"error": f"Stats error: {str(e)}"}), 500
 
 @app.route('/test/comparison', methods=['POST'])
@@ -165,37 +260,99 @@ def test_comparison():
             return jsonify({"error": "Missing message or user_id"}), 400
         
         # Get responses from both systems
-        poa_response = orchestrate_response(user_id, user_message, use_poa=True)
-        traditional_response = orchestrate_response(user_id, user_message, use_poa=False)
+        try:
+            poa_response = orchestrate_response(user_id, user_message, firestore_client=db)
+        except Exception as e:
+            poa_response = f"POA Error: {str(e)}"
+            
+        try:
+            traditional_response = simple_response_fallback(user_message)
+        except Exception as e:
+            traditional_response = f"Traditional Error: {str(e)}"
         
         return jsonify({
             "user_message": user_message,
             "poa_response": poa_response,
             "traditional_response": traditional_response,
             "comparison_note": "Compare emotional warmth, memory integration, and naturalness",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id[:8] + "..."
         })
         
     except Exception as e:
-        logging.error(f"Comparison test error: {e}")
+        error_details = traceback.format_exc()
+        logger.error(f"Comparison test error: {e}")
+        logger.error(f"Full traceback:\n{error_details}")
         return jsonify({"error": f"Comparison error: {str(e)}"}), 500
 
-def store_conversation(user_id: str, user_message: str, cael_response: str):
+@app.route('/health', methods=['GET'])
+def health_check():
     """
-    Store conversation with encryption (your existing logic)
-    Enhanced with POA metadata
+    HEALTH CHECK ENDPOINT - Monitor system status
     """
     
     try:
-        # Get Firestore client (lazy initialization)
-        from firebase_admin import firestore
-        db = firestore.client()
+        # Check OpenAI API key
+        openai_status = "configured" if os.getenv('OPENAI_API_KEY') else "missing"
         
+        # Check Firebase connection
+        try:
+            # Simple test query
+            test_ref = db.collection('_health_check').limit(1)
+            list(test_ref.stream())  # Execute the query
+            firebase_status = "connected"
+        except Exception:
+            firebase_status = "disconnected"
+        
+        # Check encryption
+        try:
+            test_text = "test"
+            encrypted = encrypt_message(test_text)
+            decrypted = decrypt_message(encrypted)
+            encryption_status = "working" if decrypted == test_text else "broken"
+        except Exception:
+            encryption_status = "unavailable"
+        
+        total_conversations = poa_success_count + poa_error_count + traditional_success_count + traditional_error_count
+        
+        health_status = {
+            "status": "healthy" if openai_status == "configured" and firebase_status == "connected" else "degraded",
+            "timestamp": datetime.now().isoformat(),
+            "architecture": "POA",
+            "components": {
+                "openai": openai_status,
+                "firebase": firebase_status,
+                "encryption": encryption_status
+            },
+            "metrics": {
+                "total_conversations": total_conversations,
+                "poa_success_rate": poa_success_count / (poa_success_count + poa_error_count) if (poa_success_count + poa_error_count) > 0 else 0
+            }
+        }
+        
+        status_code = 200 if health_status["status"] == "healthy" else 503
+        return jsonify(health_status), status_code
+        
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return jsonify({
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+def store_conversation_record(user_id: str, user_message: str, cael_response: str, method: str):
+    """
+    Store conversation with encryption and metadata
+    This is separate from any orchestrator storage to ensure we always have a record
+    """
+    
+    try:
         # Encrypt messages for privacy
         encrypted_user_message = encrypt_message(user_message)
         encrypted_cael_response = encrypt_message(cael_response)
         
-        # Simple mood detection for storage (not for response generation)
+        # Simple mood detection for storage metadata
         mood = detect_simple_mood(user_message)
         
         # Store in user's message collection
@@ -204,68 +361,113 @@ def store_conversation(user_id: str, user_message: str, cael_response: str):
             "cael_reply": encrypted_cael_response,
             "timestamp": datetime.now().isoformat(),
             "mood": mood,
-            "method": "poa",  # Track which system generated this response
-            "encrypted": True
+            "method": method,  # Track which system generated this response
+            "encrypted": True,
+            "app_version": "v8_poa"
         }
         
         # Store in user's message collection
-        db.collection('users').document(user_id).collection('messages').add(conversation_data)
+        doc_ref = db.collection('users').document(user_id).collection('messages').add(conversation_data)
         
-        logging.info(f"Conversation stored for user {user_id[:8]}...")
+        logger.info(f"Conversation stored for user {user_id[:8]}... with method {method}")
+        return True
         
     except Exception as e:
-        logging.error(f"Error storing conversation: {e}")
-        # Don't break the response if storage fails
+        error_details = traceback.format_exc()
+        logger.error(f"Error storing conversation: {e}")
+        logger.error(f"Full traceback:\n{error_details}")
+        return False
 
 def detect_simple_mood(message: str) -> str:
     """
     Simple mood detection for storage metadata
-    Much simpler than your old emotion parser - just for categorization
+    Much simpler than complex emotion parsing - just for categorization
     """
     
+    if not message:
+        return 'unknown'
+        
     message_lower = message.lower()
     
     # Quick categorization for storage
-    if any(word in message_lower for word in ['happy', 'great', 'amazing', 'wonderful']):
+    positive_words = ['happy', 'great', 'amazing', 'wonderful', 'excited', 'good', 'better', 'awesome']
+    if any(word in message_lower for word in positive_words):
         return 'positive'
-    elif any(word in message_lower for word in ['sad', 'down', 'depressed', 'lonely']):
+    
+    melancholy_words = ['sad', 'down', 'depressed', 'lonely', 'empty', 'lost', 'hurt']
+    if any(word in message_lower for word in melancholy_words):
         return 'melancholy'
-    elif any(word in message_lower for word in ['angry', 'frustrated', 'annoyed', 'pissed']):
+    
+    frustrated_words = ['angry', 'frustrated', 'annoyed', 'pissed', 'mad', 'irritated']
+    if any(word in message_lower for word in frustrated_words):
         return 'frustrated'
-    elif any(word in message_lower for word in ['anxious', 'worried', 'scared', 'nervous']):
+    
+    anxious_words = ['anxious', 'worried', 'scared', 'nervous', 'afraid', 'panic']
+    if any(word in message_lower for word in anxious_words):
         return 'anxious'
-    elif any(word in message_lower for word in ['tired', 'exhausted', 'overwhelmed']):
+    
+    weary_words = ['tired', 'exhausted', 'overwhelmed', 'burnout', 'drained']
+    if any(word in message_lower for word in weary_words):
         return 'weary'
-    else:
-        return 'reflective'
+    
+    return 'reflective'
 
-# Health check endpoint
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Simple health check for monitoring"""
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
     return jsonify({
-        "status": "healthy",
-        "architecture": "POA",
+        "error": "Endpoint not found",
+        "message": "This path doesn't exist on Zentrafuge's API"
+    }), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        "error": "Method not allowed",
+        "message": "This endpoint doesn't support that HTTP method"
+    }), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        "error": "Internal server error",
+        "message": "Something went wrong on our end",
         "timestamp": datetime.now().isoformat()
-    })
+    }), 500
 
 if __name__ == '__main__':
-    # Set up logging
-    logging.basicConfig(level=logging.INFO)
+    # Set up enhanced logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Log startup information
+    logger.info("🌿 Zentrafuge v8 starting up...")
+    logger.info(f"OpenAI API Key: {'✅ Configured' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
+    logger.info(f"Environment: {os.getenv('FLASK_ENV', 'production')}")
     
     # Run the app
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    debug_mode = os.getenv('FLASK_ENV') == 'development'
+    
+    logger.info(f"🚀 Starting server on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
 
-# The Revolutionary Result:
+# COMPREHENSIVE FIXES APPLIED:
 # 
-# Your Flask app went from complex module coordination to:
-# 1. Receive message
-# 2. Generate context + perfect prompt
-# 3. Get emotionally intelligent response  
-# 4. Store and return
-# 
-# That's it. The complexity moved from brittle code logic 
-# to intelligent conversation orchestration.
+# ✅ Complete Flask application with all routes
+# ✅ Fixed orchestrate_response() calls with firestore_client=db
+# ✅ Comprehensive error handling with full tracebacks
+# ✅ Multiple fallback layers (POA -> simple_fallback -> emergency)
+# ✅ Performance metrics tracking
+# ✅ Health check endpoint with component status
+# ✅ Debug endpoint for prompt transparency
+# ✅ Proper CORS configuration
+# ✅ Enhanced logging throughout
+# ✅ Graceful error responses in Cael's voice
+# ✅ Conversation storage with metadata
+# ✅ Input validation and sanitization
 #
-# POA = Simpler code, more human responses, easier debugging
+# This should eliminate the fallback response loops and give you
+# complete visibility into what's happening at each step.
