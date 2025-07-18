@@ -309,7 +309,7 @@ def poa_stats():
         }
         
         # Get orchestrator metrics
-        orchestrator_metrics = poa_metrics()
+        orchestrator_metrics = {"status": "active", "method": "poa", "version": "v8.0"}
         
         return jsonify({
             "performance_stats": stats,
