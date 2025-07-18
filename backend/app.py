@@ -1,5 +1,5 @@
 # app.py - Complete Zentrafuge v8 Flask Application
-# POA Integration with full error handling and debugging
+# POA Integration with full error handling and dynamic AI name support
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -52,12 +52,27 @@ poa_error_count = 0
 traditional_success_count = 0
 traditional_error_count = 0
 
+def get_user_ai_name(user_id):
+    """Get the user's chosen AI name from Firestore"""
+    try:
+        user_doc = db.collection('users').document(user_id).get()
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            ai_name = user_data.get('ai_name', 'Cael')
+            logger.info(f"Retrieved AI name '{ai_name}' for user {user_id[:8]}...")
+            return ai_name
+        logger.warning(f"User document not found for {user_id[:8]}..., defaulting to Cael")
+        return 'Cael'
+    except Exception as e:
+        logger.error(f"Error getting AI name for user {user_id[:8]}...: {e}")
+        return 'Cael'
+
 @app.route('/index', methods=['POST'])
 def chat():
     """
-    MAIN CHAT ENDPOINT - POA POWERED
+    MAIN CHAT ENDPOINT - POA POWERED WITH DYNAMIC AI NAMES
     
-    This is the heart of Zentrafuge where users interact with Cael
+    This is the heart of Zentrafuge where users interact with their chosen AI companion
     """
     global poa_success_count, poa_error_count, traditional_success_count, traditional_error_count
     
@@ -87,16 +102,20 @@ def chat():
                 "response": "I need to know who you are to remember our conversation. Please log in again."
             }), 400
         
-        # Log the incoming request (without sensitive data)
-        logger.info(f"Chat request from user {user_id[:8]}... using {'POA' if use_poa else 'traditional'}")
+        # Get the user's chosen AI name
+        ai_name = get_user_ai_name(user_id)
         
-        # Generate Cael's response using POA
+        # Log the incoming request (without sensitive data)
+        logger.info(f"Chat request from user {user_id[:8]}... using {'POA' if use_poa else 'traditional'} with AI name '{ai_name}'")
+        
+        # Generate AI response using POA with dynamic name
         if use_poa:
             try:
-                cael_response = orchestrate_response(
+                ai_response = orchestrate_response(
                     user_id=user_id,
                     user_input=user_message,
-                    firestore_client=db
+                    firestore_client=db,
+                    ai_name=ai_name  # FIXED: Pass dynamic AI name
                 )
                 poa_success_count += 1
                 method_used = "poa"
@@ -105,43 +124,45 @@ def chat():
                 logger.error(f"POA failed, trying fallback: {poa_error}")
                 logger.error(f"POA traceback:\n{traceback.format_exc()}")
                 
-                # Try simple fallback
+                # Try simple fallback with AI name
                 try:
-                    cael_response = simple_response_fallback(user_message)
+                    ai_response = simple_response_fallback(user_message, ai_name)
                     method_used = "fallback"
                     poa_error_count += 1
                 except Exception as fallback_error:
                     logger.error(f"Even fallback failed: {fallback_error}")
-                    cael_response = "I'm experiencing some technical difficulties, but I'm here with you. Your message matters, and I want to respond properly. Could you try again in a moment?"
+                    ai_response = "I'm experiencing some technical difficulties, but I'm here with you. Your message matters, and I want to respond properly. Could you try again in a moment?"
                     method_used = "emergency"
                     poa_error_count += 1
         else:
             # Traditional method (if you have legacy orchestration)
             try:
-                cael_response = orchestrate_response(
+                ai_response = orchestrate_response(
                     user_id=user_id,
                     user_input=user_message,
-                    firestore_client=db
+                    firestore_client=db,
+                    ai_name=ai_name  # FIXED: Pass dynamic AI name
                 )
                 traditional_success_count += 1
                 method_used = "traditional"
             except Exception as trad_error:
                 logger.error(f"Traditional method failed: {trad_error}")
-                cael_response = simple_response_fallback(user_message)
+                ai_response = simple_response_fallback(user_message, ai_name)
                 traditional_error_count += 1
                 method_used = "fallback"
         
         # Store the conversation (separate from orchestrator storage)
         try:
-            store_conversation_record(user_id, user_message, cael_response, method_used)
+            store_conversation_record(user_id, user_message, ai_response, method_used, ai_name)
         except Exception as storage_error:
             logger.error(f"Failed to store conversation: {storage_error}")
             # Don't fail the response if storage fails
         
         # Return successful response
         return jsonify({
-            "response": cael_response,
+            "response": ai_response,
             "method": method_used,
+            "ai_name": ai_name,  # Include AI name in response for debugging
             "timestamp": datetime.now().isoformat(),
             "user_id": user_id[:8] + "...",  # Partial ID for debugging
             "status": "success"
@@ -155,7 +176,7 @@ def chat():
         
         poa_error_count += 1
         
-        # Return graceful error response in Cael's voice
+        # Return graceful error response
         return jsonify({
             "response": "Something unexpected happened on my end, but you're not alone. I'm still here with you. Please try sending your message again - I want to be present for what you're sharing.",
             "error": True,
@@ -181,13 +202,15 @@ def debug_prompt():
         if not user_message or not user_id:
             return jsonify({"error": "Missing message or user_id"}), 400
         
-        # Get the exact prompt that would be sent to GPT-4
-        debug_prompt_text = get_debug_prompt(user_message, user_id, db)
+        # Get the user's AI name and generate debug prompt
+        ai_name = get_user_ai_name(user_id)
+        debug_prompt_text = get_debug_prompt(user_message, user_id, db, ai_name)
         
         return jsonify({
             "user_message": user_message,
             "system_prompt": debug_prompt_text,
-            "explanation": "This is the exact prompt sent to GPT-4 to generate Cael's response",
+            "ai_name": ai_name,
+            "explanation": f"This is the exact prompt sent to GPT-4 to generate {ai_name}'s response",
             "timestamp": datetime.now().isoformat(),
             "user_id": user_id[:8] + "..."
         })
@@ -259,19 +282,23 @@ def test_comparison():
         if not user_message or not user_id:
             return jsonify({"error": "Missing message or user_id"}), 400
         
-        # Get responses from both systems
+        # Get user's AI name
+        ai_name = get_user_ai_name(user_id)
+        
+        # Get responses from both systems with dynamic AI name
         try:
-            poa_response = orchestrate_response(user_id, user_message, firestore_client=db)
+            poa_response = orchestrate_response(user_id, user_message, firestore_client=db, ai_name=ai_name)
         except Exception as e:
             poa_response = f"POA Error: {str(e)}"
             
         try:
-            traditional_response = simple_response_fallback(user_message)
+            traditional_response = simple_response_fallback(user_message, ai_name)
         except Exception as e:
             traditional_response = f"Traditional Error: {str(e)}"
         
         return jsonify({
             "user_message": user_message,
+            "ai_name": ai_name,
             "poa_response": poa_response,
             "traditional_response": traditional_response,
             "comparison_note": "Compare emotional warmth, memory integration, and naturalness",
@@ -318,7 +345,7 @@ def health_check():
         health_status = {
             "status": "healthy" if openai_status == "configured" and firebase_status == "connected" else "degraded",
             "timestamp": datetime.now().isoformat(),
-            "architecture": "POA",
+            "architecture": "POA_Dynamic_AI",
             "components": {
                 "openai": openai_status,
                 "firebase": firebase_status,
@@ -341,7 +368,7 @@ def health_check():
             "timestamp": datetime.now().isoformat()
         }), 500
 
-def store_conversation_record(user_id: str, user_message: str, cael_response: str, method: str):
+def store_conversation_record(user_id: str, user_message: str, ai_response: str, method: str, ai_name: str = "Cael"):
     """
     Store conversation with encryption and metadata
     This is separate from any orchestrator storage to ensure we always have a record
@@ -350,7 +377,7 @@ def store_conversation_record(user_id: str, user_message: str, cael_response: st
     try:
         # Encrypt messages for privacy
         encrypted_user_message = encrypt_message(user_message)
-        encrypted_cael_response = encrypt_message(cael_response)
+        encrypted_ai_response = encrypt_message(ai_response)
         
         # Simple mood detection for storage metadata
         mood = detect_simple_mood(user_message)
@@ -358,18 +385,19 @@ def store_conversation_record(user_id: str, user_message: str, cael_response: st
         # Store in user's message collection
         conversation_data = {
             "user_message": encrypted_user_message,
-            "cael_reply": encrypted_cael_response,
+            "ai_reply": encrypted_ai_response,  # Changed from cael_reply to ai_reply
+            "ai_name": ai_name,  # Track which AI generated this response
             "timestamp": datetime.now().isoformat(),
             "mood": mood,
             "method": method,  # Track which system generated this response
             "encrypted": True,
-            "app_version": "v8_poa"
+            "app_version": "v8_poa_dynamic"
         }
         
         # Store in user's message collection
         doc_ref = db.collection('users').document(user_id).collection('messages').add(conversation_data)
         
-        logger.info(f"Conversation stored for user {user_id[:8]}... with method {method}")
+        logger.info(f"Conversation stored for user {user_id[:8]}... with AI '{ai_name}' using method {method}")
         return True
         
     except Exception as e:
@@ -443,7 +471,7 @@ if __name__ == '__main__':
     )
     
     # Log startup information
-    logger.info("🌿 Zentrafuge v8 starting up...")
+    logger.info("🌿 Zentrafuge v8 starting up with dynamic AI name support...")
     logger.info(f"OpenAI API Key: {'✅ Configured' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
     logger.info(f"Environment: {os.getenv('FLASK_ENV', 'production')}")
     
@@ -454,20 +482,17 @@ if __name__ == '__main__':
     logger.info(f"🚀 Starting server on port {port}")
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
 
-# COMPREHENSIVE FIXES APPLIED:
+# DYNAMIC AI NAME FIXES APPLIED:
 # 
-# ✅ Complete Flask application with all routes
-# ✅ Fixed orchestrate_response() calls with firestore_client=db
-# ✅ Comprehensive error handling with full tracebacks
-# ✅ Multiple fallback layers (POA -> simple_fallback -> emergency)
-# ✅ Performance metrics tracking
-# ✅ Health check endpoint with component status
-# ✅ Debug endpoint for prompt transparency
-# ✅ Proper CORS configuration
-# ✅ Enhanced logging throughout
-# ✅ Graceful error responses in Cael's voice
-# ✅ Conversation storage with metadata
-# ✅ Input validation and sanitization
+# ✅ Added get_user_ai_name() function to retrieve AI name from Firestore
+# ✅ Pass ai_name parameter to all orchestrate_response() calls
+# ✅ Pass ai_name parameter to all simple_response_fallback() calls
+# ✅ Pass ai_name parameter to get_debug_prompt() calls
+# ✅ Updated store_conversation_record() to include AI name
+# ✅ Updated logging to show which AI name is being used
+# ✅ Added ai_name to JSON responses for debugging
+# ✅ Changed "cael_reply" to "ai_reply" in storage for clarity
+# ✅ Updated health check architecture name
 #
-# This should eliminate the fallback response loops and give you
-# complete visibility into what's happening at each step.
+# Now Pax users will get responses from "Pax", Cael users from "Cael",
+# and any custom AI names will work correctly!
