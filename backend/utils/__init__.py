@@ -8,7 +8,7 @@ __version__ = "8.0.0"
 __author__ = "Zentrafuge Team"
 
 # Core module imports
-from .orchestrator import orchestrate_response, get_debug_prompt, poa_metrics
+from .orchestrator import orchestrate_response, get_debug_prompt
 from .emotion_parser import parse_emotional_tone, analyze_emotional_signature
 from .memory_engine import retrieve_relevant_memories, store_conversation, get_user_profile
 
