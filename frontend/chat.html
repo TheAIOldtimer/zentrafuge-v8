@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zentrafuge × Loading...</title> <!-- Placeholder title, updated dynamically -->
+  <title>Zentrafuge × Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <link rel="stylesheet" href="styles.css" />
@@ -10,36 +10,30 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <!-- Add this line if missing: -->
-  <script src="firebases-init.js"></script>
 </head>
 <body>
-  <!-- Auth Loading Overlay -->
-  <div class="auth-loading" id="auth-loading">
+  <div class="auth-loading" id="auth-loading" style="display: none;">
     <div class="loading-spinner"></div>
     <div class="auth-message">Verifying access...</div>
   </div>
 
-  <header style="display: none;" id="main-header">
+  <header id="main-header">
     <div class="header-left">
       <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
-           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
-      <div class="user-info" id="user-info">Loading...</div>
-    </div>
-    <div class="header-right">
-      <a href="dashboard.html" class="chat-button">Mood Dashboard</a>
-      <a href="charts.html" class="chat-button">More Charts</a>
-      <a class="donate-button" href="https://www.paypal.com/paypalme/zentrafuge" target="_blank">Donate</a>
-      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge</h1>');" />
     </div>
   </header>
 
-  <main id="chat" role="log" aria-live="polite" style="display: none;"></main>
-
-  <form id="chat-form" aria-label="Ask Cael something" style="display: none;">
-    <input type="text" id="message" placeholder="Ask Cael something..." autocomplete="off" required />
-    <button type="submit" id="send-button">Send</button>
-  </form>
+  <main class="login-container">
+    <h2>Login to Zentrafuge</h2>
+    <form id="login-form" aria-label="Login to Zentrafuge">
+      <input type="email" id="email" placeholder="Email" autocomplete="email" required />
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="chat-button">Login</button>
+      <p id="login-error" class="error-message" style="display: none;"></p>
+    </form>
+    <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+  </main>
 
   <script src="script.js"></script>
 </body>
