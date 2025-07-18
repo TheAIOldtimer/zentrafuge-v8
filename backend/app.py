@@ -8,6 +8,8 @@ import traceback
 from datetime import datetime
 import os
 import json
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # POA imports - The new brain of Zentrafuge
 from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback
@@ -38,6 +40,13 @@ CORS(app, origins=[
     "http://localhost:3000",  # For local development
     "http://127.0.0.1:3000"
 ])
+
+# Configure rate limiting
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 # Configure logging
 logging.basicConfig(
@@ -71,8 +80,6 @@ def get_user_ai_name(user_id):
 def chat():
     """
     MAIN CHAT ENDPOINT - POA POWERED WITH DYNAMIC AI NAMES
-    
-    This is the heart of Zentrafuge where users interact with their chosen AI companion
     """
     global poa_success_count, poa_error_count, traditional_success_count, traditional_error_count
     
@@ -115,7 +122,7 @@ def chat():
                     user_id=user_id,
                     user_input=user_message,
                     firestore_client=db,
-                    ai_name=ai_name  # FIXED: Pass dynamic AI name
+                    ai_name=ai_name
                 )
                 poa_success_count += 1
                 method_used = "poa"
@@ -135,13 +142,13 @@ def chat():
                     method_used = "emergency"
                     poa_error_count += 1
         else:
-            # Traditional method (if you have legacy orchestration)
+            # Traditional method
             try:
                 ai_response = orchestrate_response(
                     user_id=user_id,
                     user_input=user_message,
                     firestore_client=db,
-                    ai_name=ai_name  # FIXED: Pass dynamic AI name
+                    ai_name=ai_name
                 )
                 traditional_success_count += 1
                 method_used = "traditional"
@@ -151,32 +158,29 @@ def chat():
                 traditional_error_count += 1
                 method_used = "fallback"
         
-        # Store the conversation (separate from orchestrator storage)
+        # Store the conversation
         try:
             store_conversation_record(user_id, user_message, ai_response, method_used, ai_name)
         except Exception as storage_error:
             logger.error(f"Failed to store conversation: {storage_error}")
-            # Don't fail the response if storage fails
         
         # Return successful response
         return jsonify({
             "response": ai_response,
             "method": method_used,
-            "ai_name": ai_name,  # Include AI name in response for debugging
+            "ai_name": ai_name,
             "timestamp": datetime.now().isoformat(),
-            "user_id": user_id[:8] + "...",  # Partial ID for debugging
+            "user_id": user_id[:8] + "...",
             "status": "success"
         })
         
     except Exception as e:
-        # Catch-all error handler
         error_details = traceback.format_exc()
         logger.error(f"Critical chat endpoint error: {e}")
         logger.error(f"Full traceback:\n{error_details}")
         
         poa_error_count += 1
         
-        # Return graceful error response
         return jsonify({
             "response": "Something unexpected happened on my end, but you're not alone. I'm still here with you. Please try sending your message again - I want to be present for what you're sharing.",
             "error": True,
@@ -185,15 +189,75 @@ def chat():
             "debug_info": str(e) if app.debug else None
         }), 500
 
+@app.route('/mood_data', methods=['POST'])
+@limiter.limit("10 per minute")
+def get_mood_data():
+    """Get mood tracking data for dashboard"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "Missing user_id"}), 400
+            
+        # Get recent messages with mood data
+        messages_ref = db.collection("users").document(user_id).collection("messages")
+        recent_messages = messages_ref.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(20).get()
+        
+        moods = []
+        for msg in recent_messages:
+            msg_data = msg.to_dict()
+            if msg_data.get('mood') and msg_data.get('timestamp'):
+                # Convert mood to numeric score (1-10)
+                mood_score = convert_mood_to_score(msg_data['mood'])
+                if mood_score:
+                    moods.append({
+                        'timestamp': msg_data['timestamp'],
+                        'score': mood_score,
+                        'mood': msg_data['mood']
+                    })
+        
+        # Sort by timestamp (oldest first for chart)
+        moods.sort(key=lambda x: x['timestamp'])
+        
+        return jsonify({
+            "status": "success", 
+            "moods": moods,
+            "count": len(moods)
+        })
+        
+    except Exception as e:
+        logger.error(f"Mood data error: {str(e)}")
+        return jsonify({"error": "Failed to fetch mood data"}), 500
+
+def convert_mood_to_score(mood_str):
+    """Convert mood string to 1-10 numeric score"""
+    mood_map = {
+        'very_sad': 2, 'sad': 3, 'melancholy': 3,
+        'anxious': 4, 'worried': 4, 'stressed': 4,
+        'neutral': 5, 'calm': 6, 'peaceful': 6,
+        'content': 6, 'hopeful': 7, 'happy': 7,
+        'joyful': 8, 'excited': 8, 'elated': 9,
+        'euphoric': 10, 'blissful': 10
+    }
+    
+    # Try exact match first
+    if mood_str in mood_map:
+        return mood_map[mood_str]
+    
+    # Try partial matching for compound moods
+    for mood, score in mood_map.items():
+        if mood in mood_str.lower():
+            return score
+    
+    # Default to neutral if can't parse
+    return 5
+
 @app.route('/debug/prompt', methods=['POST'])
 def debug_prompt():
     """
     TRANSPARENCY ENDPOINT - See the exact prompt sent to GPT-4
-    
-    Perfect for refining emotional intelligence and maintaining
-    Zentrafuge's transparency principles
     """
-    
     try:
         data = request.get_json()
         user_message = data.get('message', '').strip()
@@ -226,7 +290,6 @@ def poa_stats():
     """
     PERFORMANCE MONITORING - Compare POA vs traditional approaches
     """
-    
     try:
         total_poa = poa_success_count + poa_error_count
         total_traditional = traditional_success_count + traditional_error_count
@@ -269,11 +332,7 @@ def poa_stats():
 def test_comparison():
     """
     A/B TESTING ENDPOINT - Compare POA vs traditional side-by-side
-    
-    Send the same message through both systems to compare responses
-    Perfect for validating POA's emotional intelligence
     """
-    
     try:
         data = request.get_json()
         user_message = data.get('message', '').strip()
@@ -317,16 +376,14 @@ def health_check():
     """
     HEALTH CHECK ENDPOINT - Monitor system status
     """
-    
     try:
         # Check OpenAI API key
         openai_status = "configured" if os.getenv('OPENAI_API_KEY') else "missing"
         
         # Check Firebase connection
         try:
-            # Simple test query
             test_ref = db.collection('_health_check').limit(1)
-            list(test_ref.stream())  # Execute the query
+            list(test_ref.stream())
             firebase_status = "connected"
         except Exception:
             firebase_status = "disconnected"
@@ -371,9 +428,7 @@ def health_check():
 def store_conversation_record(user_id: str, user_message: str, ai_response: str, method: str, ai_name: str = "Cael"):
     """
     Store conversation with encryption and metadata
-    This is separate from any orchestrator storage to ensure we always have a record
     """
-    
     try:
         # Encrypt messages for privacy
         encrypted_user_message = encrypt_message(user_message)
@@ -385,16 +440,15 @@ def store_conversation_record(user_id: str, user_message: str, ai_response: str,
         # Store in user's message collection
         conversation_data = {
             "user_message": encrypted_user_message,
-            "ai_reply": encrypted_ai_response,  # Changed from cael_reply to ai_reply
-            "ai_name": ai_name,  # Track which AI generated this response
+            "ai_reply": encrypted_ai_response,
+            "ai_name": ai_name,
             "timestamp": datetime.now().isoformat(),
             "mood": mood,
-            "method": method,  # Track which system generated this response
+            "method": method,
             "encrypted": True,
             "app_version": "v8_poa_dynamic"
         }
         
-        # Store in user's message collection
         doc_ref = db.collection('users').document(user_id).collection('messages').add(conversation_data)
         
         logger.info(f"Conversation stored for user {user_id[:8]}... with AI '{ai_name}' using method {method}")
@@ -409,9 +463,7 @@ def store_conversation_record(user_id: str, user_message: str, ai_response: str,
 def detect_simple_mood(message: str) -> str:
     """
     Simple mood detection for storage metadata
-    Much simpler than complex emotion parsing - just for categorization
     """
-    
     if not message:
         return 'unknown'
         
@@ -481,18 +533,3 @@ if __name__ == '__main__':
     
     logger.info(f"🚀 Starting server on port {port}")
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
-
-# DYNAMIC AI NAME FIXES APPLIED:
-# 
-# ✅ Added get_user_ai_name() function to retrieve AI name from Firestore
-# ✅ Pass ai_name parameter to all orchestrate_response() calls
-# ✅ Pass ai_name parameter to all simple_response_fallback() calls
-# ✅ Pass ai_name parameter to get_debug_prompt() calls
-# ✅ Updated store_conversation_record() to include AI name
-# ✅ Updated logging to show which AI name is being used
-# ✅ Added ai_name to JSON responses for debugging
-# ✅ Changed "cael_reply" to "ai_reply" in storage for clarity
-# ✅ Updated health check architecture name
-#
-# Now Pax users will get responses from "Pax", Cael users from "Cael",
-# and any custom AI names will work correctly!
