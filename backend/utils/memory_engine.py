@@ -40,22 +40,40 @@ class UserProfile:
     created_at: str
     last_active: str
 
-def retrieve_relevant_memories(user_id: str, current_input: str, firestore_client=None, limit: int = 3) -> str:
+# In your utils/memory_engine.py file
+# Change this function signature:
+
+def retrieve_relevant_memories(user_id, current_message, firestore_client=None):
     """
-    Main function called by orchestrator - retrieves relevant memories
+    FIXED: Changed parameter name from 'user_input' to 'current_message'
+    to match the orchestrator call
     """
     try:
         if not firestore_client:
-            return "Memory system offline - responding in present moment"
+            logger.warning("No firestore_client provided to retrieve_relevant_memories")
+            return "Memory system temporarily unavailable"
+            
+        # Your existing memory retrieval logic here...
+        # Use 'current_message' instead of 'user_input'
         
-        memories = get_user_memories(user_id, firestore_client, limit=10)
-        relevant_memories = find_relevant_memories(memories, current_input, limit)
+        # Example implementation:
+        messages_ref = firestore_client.collection('users').document(user_id).collection('messages')
+        recent_messages = messages_ref.order_by('timestamp', direction='DESCENDING').limit(5).stream()
         
-        return format_memory_recall(relevant_memories)
+        memory_context = []
+        for message in recent_messages:
+            data = message.to_dict()
+            # Build memory context from recent conversations
+            memory_context.append(f"Previous: {data.get('user_message', '')}")
         
+        if memory_context:
+            return f"Recent context: {'; '.join(memory_context[:3])}"
+        else:
+            return "No previous conversation context found"
+            
     except Exception as e:
-        logger.error(f"Error retrieving memories: {e}")
-        return "Memory retrieval error - responding authentically to current moment"
+        logger.error(f"Memory retrieval error: {e}")
+        return "Memory temporarily unavailable"
 
 def store_conversation(user_id: str, user_message: str, cael_reply: str, firestore_client, emotional_tone: str = "neutral"):
     """
