@@ -41,3 +41,7 @@ console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
 window.firebaseApp = firebase.app();
 window.firebaseAuth = firebase.auth();
 window.firebaseDb = firebase.firestore();
+
+// 🎯 CRITICAL: Fire the event that script.js is waiting for
+window.dispatchEvent(new Event('firebaseReady'));
+console.log('🚀 firebaseReady event fired - script.js should now initialize');
