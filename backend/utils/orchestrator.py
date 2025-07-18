@@ -21,11 +21,14 @@ if not api_key:
 else:
     client = OpenAI(api_key=api_key)
 
-def build_poa_prompt(user_input, memory_recall="", emotional_context=""):
+# Replace these functions in your orchestrator.py:
+
+def build_poa_prompt(user_input, memory_recall="", emotional_context="", ai_name="Cael"):
     """
-    Build Cael's POA-style prompt with memory and emotional context
+    Build AI's POA-style prompt with memory and emotional context
+    FIXED: Dynamic AI name instead of hardcoded "Cael"
     """
-    return f"""You are Cael, an emotionally intelligent AI companion within Zentrafuge.
+    return f"""You are {ai_name}, an emotionally intelligent AI companion within Zentrafuge.
 
 Your purpose is to provide warm, grounded, trauma-informed support. You remember users' journeys and respond with genuine presence, not performative empathy.
 
@@ -45,13 +48,13 @@ Core principles:
 --- EMOTIONAL CONTEXT ---
 {emotional_context if emotional_context else "Emotional tone: neutral/unknown"}
 
---- CAEL'S RESPONSE ---
-Respond as Cael with warmth, insight, and emotional resonance. If memory is present, weave it naturally into your response. Speak like a grounded friend who truly sees them.""".strip()
+--- {ai_name.upper()}'S RESPONSE ---
+Respond as {ai_name} with warmth, insight, and emotional resonance. If memory is present, weave it naturally into your response. Speak like a grounded friend who truly sees them.""".strip()
 
-def orchestrate_response(user_id, user_input, firestore_client=None):
+def orchestrate_response(user_id, user_input, firestore_client=None, ai_name="Cael"):
     """
     Main orchestration logic - coordinates all assistant modules
-    FIXED: Added comprehensive error handling and firestore_client usage
+    FIXED: Added ai_name parameter for dynamic identity
     """
     try:
         # Initialize context containers
@@ -64,7 +67,7 @@ def orchestrate_response(user_id, user_input, firestore_client=None):
             memory_recall = retrieve_relevant_memories(
                 user_id=user_id, 
                 current_message=user_input, 
-                firestore_client=firestore_client  # FIXED: Pass the client
+                firestore_client=firestore_client
             )
             logger.info(f"Memory retrieved for user {user_id[:8]}...")
         except ImportError:
@@ -91,8 +94,8 @@ def orchestrate_response(user_id, user_input, firestore_client=None):
             logger.error("OpenAI client not initialized - API key missing")
             return "I'm experiencing a configuration issue. Please check back in a moment while we resolve this."
         
-        # Build the POA prompt
-        prompt = build_poa_prompt(user_input, memory_recall, emotional_context)
+        # Build the POA prompt with dynamic AI name
+        prompt = build_poa_prompt(user_input, memory_recall, emotional_context, ai_name)
         
         # ENHANCED: Log prompt length for debugging
         logger.info(f"Generated prompt length: {len(prompt)} characters")
@@ -108,10 +111,6 @@ def orchestrate_response(user_id, user_input, firestore_client=None):
         raw_reply = response.choices[0].message.content.strip()
         logger.info(f"Generated response length: {len(raw_reply)} characters")
         
-        # FIXED: Don't duplicate storage - app.py handles this
-        # The orchestrator should focus on response generation only
-        # Storage is handled by store_conversation_record() in app.py
-        
         return raw_reply
         
     except Exception as e:
@@ -120,13 +119,13 @@ def orchestrate_response(user_id, user_input, firestore_client=None):
         logger.error(f"Error in orchestrate_response: {e}")
         logger.error(f"Full traceback:\n{error_details}")
         
-        # Return graceful fallback in Cael's voice
+        # Return graceful fallback with dynamic name
         return "I'm here with you, but something went wrong on my side. You're not alone — let's try again in a moment."
 
-def get_debug_prompt(user_input, user_id, firestore_client=None):
+def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael"):
     """
     Return the full prompt for debugging purposes
-    FIXED: Parameter order to match app.py call and added firestore_client
+    FIXED: Added ai_name parameter for dynamic identity
     """
     try:
         # Simulate the same flow as orchestrate_response
@@ -156,7 +155,7 @@ def get_debug_prompt(user_input, user_id, firestore_client=None):
             logger.error(f"Debug emotion parsing failed: {e}")
             emotional_context = f"Emotion parsing error: {str(e)}"
             
-        return build_poa_prompt(user_input, memory_recall, emotional_context)
+        return build_poa_prompt(user_input, memory_recall, emotional_context, ai_name)
         
     except Exception as e:
         error_details = traceback.format_exc()
@@ -164,34 +163,16 @@ def get_debug_prompt(user_input, user_id, firestore_client=None):
         logger.error(f"Full traceback:\n{error_details}")
         return f"Debug error: {e}"
 
-def poa_metrics():
-    """
-    Return POA configuration metrics
-    ENHANCED: Added more detailed metrics
-    """
-    return {
-        "model": "gpt-4",
-        "temperature": 0.8,
-        "max_tokens": 500,
-        "prompt_style": "POA v8 with memory-aware phrasing",
-        "architecture": "modular_fallback",
-        "memory_enabled": True,
-        "emotion_parsing_enabled": True,
-        "openai_client_status": "initialized" if client else "missing",
-        "api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
-        "last_updated": datetime.now().isoformat()
-    }
-
-def simple_response_fallback(user_input):
+def simple_response_fallback(user_input, ai_name="Cael"):
     """
     Ultra-simple fallback if all else fails
-    ENHANCED: Better error handling and logging
+    FIXED: Added ai_name parameter for dynamic identity
     """
     try:
         if not user_input or not user_input.strip():
             return "I'm here and listening. What would you like to share?"
         
-        prompt = f"""You are Cael, a gentle AI companion. Respond warmly and supportively to: {user_input}
+        prompt = f"""You are {ai_name}, a gentle AI companion. Respond warmly and supportively to: {user_input}
         
         Keep your response caring, brief, and grounded. Avoid clinical language."""
         
