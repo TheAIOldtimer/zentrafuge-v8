@@ -2,42 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zentrafuge × Login</title>
+  <title>Zentrafuge × Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- Firebase v8 scripts -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
-<script src="firebases-init.js"></script>
-<script src="script.js"></script>
 </head>
 <body>
-  <div class="auth-loading" id="auth-loading" style="display: none;">
+  <div class="auth-loading" id="auth-loading" style="display: block;">
     <div class="loading-spinner"></div>
     <div class="auth-message">Verifying access...</div>
   </div>
-
-  <header id="main-header">
+  
+  <header id="main-header" style="display: none;">
     <div class="header-left">
       <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
-           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge</h1>');" />
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
+    </div>
+    <div class="header-right">
+      <span id="user-info"></span>
+      <button onclick="handleLogout()" class="logout-btn">Logout</button>
     </div>
   </header>
 
-  <main class="login-container">
-    <h2>Login to Zentrafuge</h2>
-    <form id="login-form" aria-label="Login to Zentrafuge">
-      <input type="email" id="email" placeholder="Email" autocomplete="email" required />
-      <input type="password" id="password" placeholder="Password" autocomplete="current-password" required />
-      <button type="submit" class="chat-button">Login</button>
-      <p id="login-error" class="error-message" style="display: none;"></p>
-    </form>
-    <p>Don't have an account? <a href="signup.html">Sign up</a></p>
-  </main>
+  <div id="chat" style="display: none;"></div>
+  
+  <form id="chat-form" style="display: none;">
+    <input type="text" id="message" placeholder="Ask Cael something..." autocomplete="off" />
+    <button type="submit" id="send-button">Send</button>
+  </form>
 
+  <!-- Firebase v8 scripts - ONLY AT THE BOTTOM -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <script src="firebases-init.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
