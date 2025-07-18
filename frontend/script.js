@@ -12,7 +12,6 @@ function streamTextAdvanced(text, targetElement, speed = 30) {
     let index = 0;
     targetElement.textContent = '';
     
-    // Add a subtle cursor effect while typing
     const cursor = document.createElement('span');
     cursor.textContent = '▋';
     cursor.style.opacity = '0.7';
@@ -23,7 +22,6 @@ function streamTextAdvanced(text, targetElement, speed = 30) {
       if (index < text.length) {
         const char = text[index];
         
-        // Add natural pauses for punctuation
         let delay = speed;
         if (char === '.' || char === '!' || char === '?') {
           delay = speed * 3; // 90ms for sentence endings
@@ -35,25 +33,21 @@ function streamTextAdvanced(text, targetElement, speed = 30) {
         targetElement.appendChild(cursor);
         index++;
         
-        // Auto-scroll
         const chat = document.getElementById("chat");
-        chat.scrollTop = chat.scrollHeight;
+        if (chat) chat.scrollTop = chat.scrollHeight;
         
-        // Schedule next character
         setTimeout(typeNextCharacter, delay);
       } else {
-        // Remove cursor and finish
         cursor.remove();
         resolve();
       }
     }
     
-    // Start typing
     typeNextCharacter();
   });
 }
 
-// Initialize Firebase with actual Zentrafuge v8 config
+// Initialize Firebase
 try {
   const firebaseConfig = {
     apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
@@ -65,16 +59,14 @@ try {
     measurementId: "G-WZNXDGR0BN"
   };
 
-  // Initialize Firebase if not already initialized
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
     console.log('🔥 Firebase initialized successfully');
   } else {
-    firebase.app(); // Use existing instance
+    firebase.app();
     console.log('🔥 Firebase already initialized');
   }
 
-  // Optional: Initialize Analytics
   try {
     if (typeof firebase.analytics === 'function') {
       firebase.analytics();
@@ -84,11 +76,9 @@ try {
     console.log('Analytics skipped:', err.message);
   }
 
-  // Debug logs to confirm SDKs are loaded
   console.log('📧 Auth SDK loaded:', typeof firebase.auth);
   console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
 
-  // Export global references for debugging (optional)
   window.firebaseApp = firebase.app();
   window.firebaseAuth = firebase.auth();
   window.firebaseDb = firebase.firestore();
@@ -106,17 +96,17 @@ async function getAiName(userId) {
     if (userDoc.exists) {
       const userData = userDoc.data();
       console.log(`Fetched user document for ${userId}:`, userData);
-      return userData.ai_name || "Cael"; // Default to Cael if no name chosen
+      return userData.ai_name || "Cael";
     }
     console.warn(`User document not found for ${userId}`);
-    return "Cael"; // Fallback if user doc doesn't exist
+    return "Cael";
   } catch (error) {
     console.error("Error fetching AI name:", error);
-    return "Cael"; // Fallback on error
+    return "Cael";
   }
 }
 
-// Fetch last session context from backend
+// Fetch last session context
 async function getLastSessionContext(userId) {
   try {
     const res = await fetch(`${BACKEND_URL}/context`, {
@@ -124,9 +114,7 @@ async function getLastSessionContext(userId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId }),
     });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
     console.log('Last session context:', data);
     return data.context || { mood: null, theme: null };
@@ -136,7 +124,92 @@ async function getLastSessionContext(userId) {
   }
 }
 
-// Dynamic user greetings based on chosen AI name
+// Fetch mood data for dashboard
+async function getMoodData(userId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/mood_data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+    console.log('Mood data received:', data);
+    return data.moods || [];
+  } catch (error) {
+    console.error("Error fetching mood data:", error);
+    return [];
+  }
+}
+
+// Render mood chart using Chart.js
+async function renderMoodChart(userId) {
+  const moodData = await getMoodData(userId);
+  const ctx = document.getElementById('moodChart')?.getContext('2d');
+  if (!ctx) return;
+
+  const labels = moodData.map(m => new Date(m.timestamp).toLocaleDateString());
+  const scores = moodData.map(m => m.score);
+  const moods = moodData.map(m => m.mood);
+
+  // Calculate trend for summary
+  let trend = 'stable';
+  if (moodData.length >= 2) {
+    const recentScore = scores[scores.length - 1];
+    const prevScore = scores[0];
+    trend = recentScore > prevScore ? 'improving' : recentScore < prevScore ? 'declining' : 'stable';
+  }
+
+  // Update summary
+  const summaryDiv = document.getElementById('moodSummary');
+  if (summaryDiv) {
+    summaryDiv.textContent = moodData.length > 0
+      ? `Your mood has been ${trend} over the last ${moodData.length} entries. Latest mood: ${moods[moods.length - 1] || 'unknown'} (Score: ${scores[scores.length - 1] || 5}).`
+      : 'No mood data available yet. Chat with your AI companion to start tracking your mood!';
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Mood Score',
+        data: scores,
+        borderColor: '#0055aa',
+        backgroundColor: 'rgba(0, 85, 170, 0.2)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#0055aa',
+        pointHoverBackgroundColor: '#4a90e2',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (context) => `Mood: ${moods[context.dataIndex]} (Score: ${context.parsed.y})`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 1 },
+          title: { display: true, text: 'Mood Score (1-10)' }
+        },
+        x: {
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
+// Dynamic user greetings
 async function getNewUserGreetings() {
   return [
     `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
@@ -148,7 +221,7 @@ async function getNewUserGreetings() {
   ];
 }
 
-// Auth Guard - Check user authorization
+// Auth Guard
 async function checkUserAuthorization(user) {
   try {
     const db = firebase.firestore();
@@ -174,41 +247,46 @@ async function checkUserAuthorization(user) {
   }
 }
 
-// Redirect to appropriate page based on auth state
+// Redirect to auth
 function redirectToAuth(reason = 'unauthorized') {
   console.log('Redirecting to auth:', reason);
   const params = new URLSearchParams({ reason });
   window.location.href = `index.html?${params}`;
 }
 
-// Initialize app only after auth verification
+// Initialize app
 async function initializeApp(user) {
   try {
     currentUser = user;
-    // Fetch AI name and update title
     aiName = await getAiName(user.uid);
     console.log(`Setting AI name to: ${aiName}`);
-    document.title = `Zentrafuge × ${aiName}`;
-    // Update header fallback text
+    
+    // Update title and header based on page
+    const isDashboard = window.location.pathname.includes('dashboard.html');
+    document.title = `Zentrafuge × ${isDashboard ? 'Dashboard' : aiName}`;
     document.querySelector('header img').setAttribute('onerror', 
-      `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${aiName}</h1>');`
+      `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${isDashboard ? 'Dashboard' : aiName}</h1>');`
     );
-    // Update form aria-label and placeholder
-    document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
-    document.getElementById('message').placeholder = `Ask ${aiName} something...`;
-    // Update user info in header
+    
+    // Update user info
     document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
-    // Hide loading overlay and show main app
+    
+    // Show main content
     document.getElementById('auth-loading').style.display = 'none';
     document.getElementById('main-header').style.display = 'flex';
-    document.getElementById('chat').style.display = 'flex';
-    document.getElementById('chat-form').style.display = 'flex';
-    // Load chat functionality
-    await loadPreviousMessages();
-    document.getElementById("message").focus();
-    // Start session duration check
-    sessionStorage.setItem('session_start', Date.now());
-    setInterval(checkSessionDuration, 60000); // Check every minute
+    document.getElementById(isDashboard ? 'dashboard' : 'chat').style.display = 'flex';
+    
+    if (isDashboard) {
+      await renderMoodChart(user.uid);
+    } else {
+      document.getElementById('chat-form').style.display = 'flex';
+      document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
+      document.getElementById('message').placeholder = `Ask ${aiName} something...`;
+      await loadPreviousMessages();
+      document.getElementById("message").focus();
+      sessionStorage.setItem('session_start', Date.now());
+      setInterval(checkSessionDuration, 60000);
+    }
   } catch (error) {
     console.error('Error initializing app:', error);
     redirectToAuth('initialization_failed');
@@ -264,6 +342,7 @@ function showTypingIndicator() {
   if (isTyping) return;
   isTyping = true;
   const chat = document.getElementById("chat");
+  if (!chat) return;
   const typingDiv = document.createElement("div");
   typingDiv.className = "typing-indicator";
   typingDiv.id = "typing-indicator";
@@ -281,13 +360,12 @@ function showTypingIndicator() {
 function hideTypingIndicator() {
   isTyping = false;
   const typingIndicator = document.getElementById("typing-indicator");
-  if (typingIndicator) {
-    typingIndicator.remove();
-  }
+  if (typingIndicator) typingIndicator.remove();
 }
 
 function showGentleEncouragement() {
   const chat = document.getElementById("chat");
+  if (!chat) return;
   const encouragementDiv = document.createElement("div");
   encouragementDiv.className = "message encouragement-message";
   encouragementDiv.textContent = `Take your time, ${currentUser?.displayName || 'friend'} - I'm here when you're ready.`;
@@ -295,7 +373,7 @@ function showGentleEncouragement() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-// Dynamic Welcome System Functions
+// Dynamic Welcome System
 function getTimeOfDay() {
   const hour = new Date().getHours();
   if (hour < 6) return 'late night';
@@ -306,7 +384,7 @@ function getTimeOfDay() {
 }
 
 function getSeasonalContext() {
-  const month = new Date().getMonth(); // 0-11
+  const month = new Date().getMonth();
   if (month >= 2 && month <= 4) return 'spring';
   if (month >= 5 && month <= 7) return 'summer';
   if (month >= 8 && month <= 10) return 'autumn';
@@ -318,7 +396,6 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
   const season = getSeasonalContext();
   const newUserGreetings = await getNewUserGreetings();
   
-  // Contextual greetings based on time
   const timeGreetings = {
     'morning': [
       "Morning! Hope you're starting your day gently.",
@@ -352,7 +429,6 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
     ]
   };
   
-  // Returning user greetings
   const returningGreetings = [
     `Welcome back. I've been here, just thinking.`,
     `Hey again. Good to see you.`,
@@ -363,7 +439,6 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
     `Hi again. How's life been treating you?`
   ];
   
-  // Follow-up questions
   const followUps = [
     "What's on your heart today?",
     "How are you, really?",
@@ -410,6 +485,7 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
 
 async function showWelcomeMessage(isReturning = false, userName = null) {
   const chat = document.getElementById("chat");
+  if (!chat) return;
   chat.innerHTML = '';
   const welcomeDiv = document.createElement("div");
   welcomeDiv.className = "message welcome-message";
@@ -428,12 +504,11 @@ async function loadPreviousMessages() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: getUserId() }),
     });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
     console.log('📦 History data received:', data);
     const chat = document.getElementById("chat");
+    if (!chat) return;
     chat.innerHTML = '';
     if (Array.isArray(data.history) && data.history.length > 0) {
       let validMessagesLoaded = 0;
@@ -488,16 +563,15 @@ function appendMessage(role, text, useStreaming = false) {
   }
   
   const chat = document.getElementById("chat");
+  if (!chat) return;
   const div = document.createElement("div");
   div.className = `message ${role}`;
   
   if (useStreaming && role === 'cael') {
-    // For Cael messages, use streaming with cursor and pauses
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
-    return streamTextAdvanced(text.trim(), div, 30); // 30ms = ~33 characters/second
+    return streamTextAdvanced(text.trim(), div, 30);
   } else {
-    // For user messages or non-streaming, instant display
     div.textContent = text.trim();
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
@@ -508,6 +582,7 @@ function appendMessage(role, text, useStreaming = false) {
 function setFormEnabled(enabled) {
   const input = document.getElementById("message");
   const button = document.getElementById("send-button");
+  if (!input || !button) return;
   input.disabled = !enabled;
   button.disabled = !enabled;
   input.placeholder = enabled ? `Ask ${aiName} something...` : `${aiName} is thinking...`;
@@ -516,27 +591,26 @@ function setFormEnabled(enabled) {
 function checkSessionDuration() {
   const sessionStartTime = parseInt(sessionStorage.getItem('session_start'), 10) || Date.now();
   const duration = Date.now() - sessionStartTime;
-  if (duration > 45 * 60 * 1000) { // 45 minutes
+  if (duration > 45 * 60 * 1000) {
     appendMessage("cael", `We've been talking for a while, ${currentUser?.displayName || 'friend'}. How are you feeling? Sometimes it helps to take a pause.`);
-    // Stop checking after first prompt
     clearInterval(checkSessionDuration);
   }
 }
 
-// Chat form submission and enhancements
+// Chat form submission
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById("message");
   const form = document.getElementById("chat-form");
+  if (!form) return;
 
-  // Session continuity: Restore draft
   const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
   if (savedDraft) {
     input.value = savedDraft;
     appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
   }
 
-  // Auto-save drafts
   setInterval(() => {
+    if (!input) return;
     const draft = input.value;
     if (draft.length > 3) {
       localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
@@ -545,8 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, 2000);
 
-  // Emotional pause detection
-  input.addEventListener('keyup', () => {
+  input?.addEventListener('keyup', () => {
     setTimeout(() => {
       const pauseDuration = Date.now() - lastKeystroke;
       if (pauseDuration > 5000 && input.value.length > 10) {
@@ -556,7 +629,6 @@ document.addEventListener('DOMContentLoaded', function() {
     lastKeystroke = Date.now();
   });
 
-  // Offline/online handling
   window.addEventListener('offline', () => {
     appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
     setFormEnabled(false);
@@ -567,7 +639,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setFormEnabled(true);
   });
 
-  // Single form submission handler with proper retry logic
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     
@@ -579,12 +650,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const message = input.value.trim();
     if (!message || isTyping) return;
     
-    // Add user message to chat
     appendMessage("user", message);
     input.value = "";
     localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
     
-    // Disable form and show typing
     setFormEnabled(false);
     showTypingIndicator();
     
@@ -605,14 +674,11 @@ document.addEventListener('DOMContentLoaded', function() {
           }),
         });
         
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         
         const data = await res.json();
         console.log(`Response received on attempt ${attempt}:`, data);
         
-        // Handle crisis detection
         if (data.redirect_url) {
           console.log('Crisis detected - redirecting to support');
           hideTypingIndicator();
@@ -622,11 +688,10 @@ document.addEventListener('DOMContentLoaded', function() {
           setTimeout(() => {
             window.location.href = data.redirect_url;
           }, 2000);
-          success = true; // Don't retry for redirects
+          success = true;
           break;
         }
         
-        // Handle successful response
         if (data.response && data.response.trim()) {
           hideTypingIndicator();
           await appendMessage("cael", data.response, true);
@@ -640,7 +705,6 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (error) {
         console.error(`❌ Attempt ${attempt} failed:`, error);
         
-        // If this isn't the last attempt, show retry message and wait
         if (attempt < maxAttempts) {
           const retryMessages = [
             `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
@@ -648,10 +712,8 @@ document.addEventListener('DOMContentLoaded', function() {
             `Technical hiccup on my end. Give me one more try?`
           ];
           
-          // Only show retry message AFTER a failure
           await appendMessage("cael", retryMessages[attempt - 1], true);
           
-          // Wait before retrying (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
         
@@ -659,14 +721,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // If all attempts failed
     if (!success) {
       hideTypingIndicator();
       await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
     }
     
-    // Re-enable form
     setFormEnabled(true);
-    document.getElementById("message").focus();
+    document.getElementById("message")?.focus();
   });
 });
