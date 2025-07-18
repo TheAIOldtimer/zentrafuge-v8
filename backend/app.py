@@ -13,7 +13,7 @@ from flask_limiter.util import get_remote_address
 import firebase_admin.firestore as firestore  # Added for Query.DESCENDING
 
 # POA imports - The new brain of Zentrafuge
-from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback, poa_metrics  # Added poa_metrics
+from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback # REMOVED poa_metrics
 from firebase import db  # Direct import of Firestore client
 
 # Import your existing crypto functions (adjust names as needed)
