@@ -442,53 +442,51 @@
     let lastKeystroke = Date.now();
     let sessionStart = Date.now();
 
-// Replace the entire Firebase initialization section in chat.html with this:
+    // Initialize Firebase with actual Zentrafuge v8 config
+    try {
+      const firebaseConfig = {
+        apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
+        authDomain: "zentrafuge-v8.firebaseapp.com",
+        projectId: "zentrafuge-v8",
+        storageBucket: "zentrafuge-v8.appspot.com",
+        messagingSenderId: "1035979155498",
+        appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
+        measurementId: "G-WZNXDGR0BN"
+      };
 
-// Initialize Firebase with actual Zentrafuge v8 config
-try {
-  const firebaseConfig = {
-    apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
-    authDomain: "zentrafuge-v8.firebaseapp.com",
-    projectId: "zentrafuge-v8",
-    storageBucket: "zentrafuge-v8.appspot.com",
-    messagingSenderId: "1035979155498",
-    appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
-    measurementId: "G-WZNXDGR0BN"
-  };
+      // Initialize Firebase if not already initialized
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+        console.log('🔥 Firebase initialized successfully');
+      } else {
+        firebase.app(); // Use existing instance
+        console.log('🔥 Firebase already initialized');
+      }
 
-  // Initialize Firebase if not already initialized
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log('🔥 Firebase initialized successfully');
-  } else {
-    firebase.app(); // Use existing instance
-    console.log('🔥 Firebase already initialized');
-  }
+      // Optional: Initialize Analytics
+      try {
+        if (typeof firebase.analytics === 'function') {
+          firebase.analytics();
+          console.log('📊 Firebase Analytics initialized');
+        }
+      } catch (err) {
+        console.log('Analytics skipped:', err.message);
+      }
 
-  // Optional: Initialize Analytics
-  try {
-    if (typeof firebase.analytics === 'function') {
-      firebase.analytics();
-      console.log('📊 Firebase Analytics initialized');
+      // Debug logs to confirm SDKs are loaded
+      console.log('📧 Auth SDK loaded:', typeof firebase.auth);
+      console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
+
+      // Export global references for debugging (optional)
+      window.firebaseApp = firebase.app();
+      window.firebaseAuth = firebase.auth();
+      window.firebaseDb = firebase.firestore();
+
+    } catch (error) {
+      console.error('🚨 Firebase initialization failed:', error);
+      document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error connecting to Zentrafuge. Please refresh and try again.</div>';
     }
-  } catch (err) {
-    console.log('Analytics skipped:', err.message);
-  }
 
-  // Debug logs to confirm SDKs are loaded
-  console.log('📧 Auth SDK loaded:', typeof firebase.auth);
-  console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
-
-  // Export global references for debugging (optional)
-  window.firebaseApp = firebase.app();
-  window.firebaseAuth = firebase.auth();
-  window.firebaseDb = firebase.firestore();
-
-} catch (error) {
-  console.error('🚨 Firebase initialization failed:', error);
-  document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error connecting to Zentrafuge. Please refresh and try again.</div>';
-}
-    
     // Get AI name from Firestore
     async function getAiName(userId) {
       try {
@@ -800,15 +798,15 @@ try {
     }
 
     async function showWelcomeMessage(isReturning = false, userName = null) {
-  const chat = document.getElementById("chat");
-  chat.innerHTML = '';
-  const welcomeDiv = document.createElement("div");
-  welcomeDiv.className = "message welcome-message";
-  welcomeDiv.textContent = await generateDynamicWelcome(userName, isReturning); // ✅ Added await
-  chat.appendChild(welcomeDiv);
-  chat.scrollTop = chat.scrollHeight;
-  console.log('✨ Dynamic welcome message displayed');
-}
+      const chat = document.getElementById("chat");
+      chat.innerHTML = '';
+      const welcomeDiv = document.createElement("div");
+      welcomeDiv.className = "message welcome-message";
+      welcomeDiv.textContent = await generateDynamicWelcome(userName, isReturning);
+      chat.appendChild(welcomeDiv);
+      chat.scrollTop = chat.scrollHeight;
+      console.log('✨ Dynamic welcome message displayed');
+    }
 
     async function loadPreviousMessages() {
       if (!isAuthorized) return;
@@ -903,51 +901,6 @@ try {
       }
     }
 
-    async function retryWithContext(originalMessage, attemptNumber) {
-      const retryMessages = [
-        `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
-        `Sorry about that - sometimes I need a moment to find the right words.`,
-        `Technical hiccup on my end. Give me one more try?`
-      ];
-      if (attemptNumber <= 3) {
-        appendMessage("cael", retryMessages[attemptNumber - 1]);
-        try {
-          const res = await fetch(`${BACKEND_URL}/index`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message: originalMessage,
-              user_id: getUserId(),
-            }),
-          });
-          const data = await res.json();
-          if (data.redirect_url) {
-            console.log('Crisis detected - redirecting to support');
-            hideTypingIndicator();
-            if (data.response && data.response.trim()) {
-              appendMessage("cael", data.response);
-            }
-            setTimeout(() => {
-              window.location.href = data.redirect_url;
-            }, 2000);
-            return { success: true, redirect: true };
-          }
-          hideTypingIndicator();
-          if (data.response && data.response.trim()) {
-            appendMessage("cael", data.response);
-            return { success: true, redirect: false };
-          } else {
-            console.error('❌ Empty response from server on retry:', data);
-            return { success: false, redirect: false };
-          }
-        } catch (err) {
-          console.error(`Retry ${attemptNumber} failed:`, err);
-          return { success: false, redirect: false };
-        }
-      }
-      return { success: false, redirect: false };
-    }
-
     // Chat form submission and enhancements
     document.addEventListener('DOMContentLoaded', function() {
       const input = document.getElementById("message");
@@ -992,33 +945,105 @@ try {
         setFormEnabled(true);
       });
 
-      // Form submission with retry logic
+      // Single form submission handler with proper retry logic
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        
         if (!isAuthorized) {
           alert('You are not authorized to chat. Please sign in and complete onboarding.');
           return;
         }
+        
         const message = input.value.trim();
         if (!message || isTyping) return;
+        
+        // Add user message to chat
         appendMessage("user", message);
         input.value = "";
         localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        
+        // Disable form and show typing
         setFormEnabled(false);
         showTypingIndicator();
+        
         let attempt = 1;
-        let result = { success: false, redirect: false };
-        while (attempt <= 3 && !result.success && !result.redirect) {
-          result = await retryWithContext(message, attempt);
-          if (!result.success && !result.redirect) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Backoff
+        const maxAttempts = 3;
+        let success = false;
+        
+        while (attempt <= maxAttempts && !success) {
+          try {
+            console.log(`Attempt ${attempt} for message: "${message}"`);
+            
+            const res = await fetch(`${BACKEND_URL}/index`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: message,
+                user_id: getUserId(),
+              }),
+            });
+            
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            
+            const data = await res.json();
+            console.log(`Response received on attempt ${attempt}:`, data);
+            
+            // Handle crisis detection
+            if (data.redirect_url) {
+              console.log('Crisis detected - redirecting to support');
+              hideTypingIndicator();
+              if (data.response && data.response.trim()) {
+                appendMessage("cael", data.response);
+              }
+              setTimeout(() => {
+                window.location.href = data.redirect_url;
+              }, 2000);
+              success = true; // Don't retry for redirects
+              break;
+            }
+            
+            // Handle successful response
+            if (data.response && data.response.trim()) {
+              hideTypingIndicator();
+              appendMessage("cael", data.response);
+              success = true;
+              console.log(`✅ Success on attempt ${attempt}`);
+              break;
+            } else {
+              throw new Error('Empty or invalid response from server');
+            }
+            
+          } catch (error) {
+            console.error(`❌ Attempt ${attempt} failed:`, error);
+            
+            // If this isn't the last attempt, show retry message and wait
+            if (attempt < maxAttempts) {
+              const retryMessages = [
+                `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
+                `Sorry about that - sometimes I need a moment to find the right words.`,
+                `Technical hiccup on my end. Give me one more try?`
+              ];
+              
+              // Only show retry message AFTER a failure
+              appendMessage("cael", retryMessages[attempt - 1]);
+              
+              // Wait before retrying (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
+            
             attempt++;
           }
         }
-        if (!result.success && !result.redirect) {
+        
+        // If all attempts failed
+        if (!success) {
           hideTypingIndicator();
-          appendMessage("cael", `⚠️ Sorry, I'm having trouble connecting right now, ${currentUser?.displayName || 'friend'}. Please try again in a moment.`);
+          appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`);
         }
+        
+        // Re-enable form
         setFormEnabled(true);
         document.getElementById("message").focus();
       });
