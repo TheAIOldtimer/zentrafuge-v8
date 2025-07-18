@@ -2,103 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Your Dashboard – Zentrafuge</title>
+  <title>Zentrafuge × Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="../assets/Zentrafuge-WIDE-Logo-Transparent.png" />
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f3f7f4;
-      margin: 0;
-      padding: 2rem;
-      color: #1f1f1f;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-    }
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 1rem;
-    }
-    .section {
-      margin-bottom: 2rem;
-      background: white;
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .section h2 {
-      font-size: 1.4rem;
-      margin-bottom: 0.5rem;
-    }
-    .theme-tag {
-      display: inline-block;
-      background: #d9f3e8;
-      color: #145c42;
-      padding: 0.3rem 0.6rem;
-      border-radius: 0.5rem;
-      margin: 0.2rem;
-      font-size: 0.9rem;
-    }
-    .journal-preview {
-      border-left: 4px solid #a0c4a7;
-      padding-left: 1rem;
-      margin-top: 1rem;
-      color: #444;
-    }
-    .settings-link {
-      font-size: 0.95rem;
-      color: #006b4f;
-      text-decoration: underline;
-      margin-top: 0.5rem;
-      display: inline-block;
-    }
-  </style>
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Firebase v8 scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- Chart.js for mood visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1 data-i18n="dashboard.welcome">Welcome back, friend</h1>
-
-    <div class="section">
-      <h2 data-i18n="dashboard.emotionalOverview">Emotional Overview</h2>
-      <p data-i18n="dashboard.overviewText">
-        Cael has noticed these recurring emotional themes lately:
-      </p>
-      <div>
-        <span class="theme-tag" data-i18n="dashboard.themeResilience">Resilience</span>
-        <span class="theme-tag" data-i18n="dashboard.themeLoneliness">Loneliness</span>
-        <span class="theme-tag" data-i18n="dashboard.themeCreativity">Creativity</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2 data-i18n="dashboard.memorySettings">Memory & Support Settings</h2>
-      <p data-i18n="dashboard.memoryNote">
-        Cael remembers your preferred support style and growth areas. You can pause or reset memory below:
-      </p>
-      <a href="#" class="settings-link" data-i18n="dashboard.pauseMemory">Pause Memory</a><br>
-      <a href="#" class="settings-link" data-i18n="dashboard.deleteMemory">Delete All Memory</a>
-    </div>
-
-    <div class="section">
-      <h2 data-i18n="dashboard.journal">Private Journal</h2>
-      <p data-i18n="dashboard.journalIntro">
-        These are reflections you've written (or Cael helped you explore):
-      </p>
-      <div class="journal-preview">
-        <strong data-i18n="dashboard.journalEntry1Title">Entry: Feeling stuck but still moving</strong><br>
-        <span data-i18n="dashboard.journalEntry1Text">
-          "I didn’t realize I’ve been trying to prove my worth through overwork again. Cael noticed the loop before I did."
-        </span>
-      </div>
-    </div>
+  <!-- Auth Loading Overlay -->
+  <div class="auth-loading" id="auth-loading">
+    <div class="loading-spinner"></div>
+    <div class="auth-message">Verifying access...</div>
   </div>
 
-  <script>
-    const lang = localStorage.getItem('language') || 'en';
-    document.documentElement.lang = lang;
-    // Future: Add i18n injection here using language files.
-  </script>
+  <header style="display: none;" id="main-header">
+    <div class="header-left">
+      <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Dashboard</h1>');" />
+      <div class="user-info" id="user-info">Loading...</div>
+    </div>
+    <div class="header-right">
+      <a href="chat.html" class="chat-button">Go to Chat</a>
+      <a class="donate-button" href="https://www.paypal.com/paypalme/zentrafuge" target="_blank">Donate</a>
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </header>
+
+  <main id="dashboard" style="display: none;">
+    <h2>Your Mood Journey</h2>
+    <canvas id="moodChart" aria-label="Mood trend chart"></canvas>
+    <div id="moodSummary" class="mood-summary" aria-live="polite"></div>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
