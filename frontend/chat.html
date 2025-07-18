@@ -286,6 +286,12 @@
       margin-bottom: 1rem;
     }
 
+    /* Cursor blink effect for streamTextAdvanced */
+    @keyframes blink {
+      0%, 50% { opacity: 0.7; }
+      51%, 100% { opacity: 0; }
+    }
+
     /* Dark mode support */
     @media (prefers-color-scheme: dark) {
       body {
@@ -297,6 +303,10 @@
         background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
         color: #e0e0e0;
         border-left-color: #4a90e2;
+      }
+
+      .cael span[style*="animation: blink"] {
+        color: #4a90e2;
       }
 
       .user {
@@ -441,6 +451,53 @@
     let aiName = "Cael"; // Default AI name
     let lastKeystroke = Date.now();
     let sessionStart = Date.now();
+
+    // Stream text character by character with pauses and cursor
+    function streamTextAdvanced(text, targetElement, speed = 30) {
+      return new Promise((resolve) => {
+        let index = 0;
+        targetElement.textContent = '';
+        
+        // Add a subtle cursor effect while typing
+        const cursor = document.createElement('span');
+        cursor.textContent = '▋';
+        cursor.style.opacity = '0.7';
+        cursor.style.animation = 'blink 1s infinite';
+        targetElement.appendChild(cursor);
+        
+        function typeNextCharacter() {
+          if (index < text.length) {
+            const char = text[index];
+            
+            // Add natural pauses for punctuation
+            let delay = speed;
+            if (char === '.' || char === '!' || char === '?') {
+              delay = speed * 3; // 90ms for sentence endings
+            } else if (char === ',' || char === ';') {
+              delay = speed * 2; // 60ms for commas
+            }
+            
+            targetElement.textContent = text.slice(0, index + 1);
+            targetElement.appendChild(cursor);
+            index++;
+            
+            // Auto-scroll
+            const chat = document.getElementById("chat");
+            chat.scrollTop = chat.scrollHeight;
+            
+            // Schedule next character
+            setTimeout(typeNextCharacter, delay);
+          } else {
+            // Remove cursor and finish
+            cursor.remove();
+            resolve();
+          }
+        }
+        
+        // Start typing
+        typeNextCharacter();
+      });
+    }
 
     // Initialize Firebase with actual Zentrafuge v8 config
     try {
@@ -870,17 +927,28 @@
       }
     }
 
-    function appendMessage(role, text) {
+    function appendMessage(role, text, useStreaming = false) {
       if (!text || typeof text !== 'string' || !text.trim()) {
         console.warn('⚠️ Attempted to append empty/invalid message:', { role, text });
         return;
       }
+      
       const chat = document.getElementById("chat");
       const div = document.createElement("div");
       div.className = `message ${role}`;
-      div.textContent = text.trim();
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+      
+      if (useStreaming && role === 'cael') {
+        // For Cael messages, use streaming with cursor and pauses
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+        return streamTextAdvanced(text.trim(), div, 30); // 30ms = ~33 characters/second
+      } else {
+        // For user messages or non-streaming, instant display
+        div.textContent = text.trim();
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+        return Promise.resolve();
+      }
     }
 
     function setFormEnabled(enabled) {
@@ -897,7 +965,7 @@
       if (duration > 45 * 60 * 1000) { // 45 minutes
         appendMessage("cael", `We've been talking for a while, ${currentUser?.displayName || 'friend'}. How are you feeling? Sometimes it helps to take a pause.`);
         // Stop checking after first prompt
-        clearInterval(checkSessionDurationInterval);
+        clearInterval(checkSessionDuration);
       }
     }
 
@@ -995,7 +1063,7 @@
               console.log('Crisis detected - redirecting to support');
               hideTypingIndicator();
               if (data.response && data.response.trim()) {
-                appendMessage("cael", data.response);
+                await appendMessage("cael", data.response, true);
               }
               setTimeout(() => {
                 window.location.href = data.redirect_url;
@@ -1007,7 +1075,7 @@
             // Handle successful response
             if (data.response && data.response.trim()) {
               hideTypingIndicator();
-              appendMessage("cael", data.response);
+              await appendMessage("cael", data.response, true);
               success = true;
               console.log(`✅ Success on attempt ${attempt}`);
               break;
@@ -1027,7 +1095,7 @@
               ];
               
               // Only show retry message AFTER a failure
-              appendMessage("cael", retryMessages[attempt - 1]);
+              await appendMessage("cael", retryMessages[attempt - 1], true);
               
               // Wait before retrying (exponential backoff)
               await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
@@ -1040,7 +1108,7 @@
         // If all attempts failed
         if (!success) {
           hideTypingIndicator();
-          appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`);
+          await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
         }
         
         // Re-enable form
