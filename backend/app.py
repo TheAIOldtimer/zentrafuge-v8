@@ -13,7 +13,7 @@ from flask_limiter.util import get_remote_address
 import firebase_admin.firestore as firestore  # Added for Query.DESCENDING
 
 # POA imports - The new brain of Zentrafuge
-from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback # REMOVED poa_metrics
+from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback
 from firebase import db  # Direct import of Firestore client
 
 # Import your existing crypto functions (adjust names as needed)
@@ -76,6 +76,63 @@ def get_user_ai_name(user_id):
     except Exception as e:
         logger.error(f"Error getting AI name for user {user_id[:8]}...: {e}")
         return 'Cael'
+
+@app.route('/history', methods=['POST'])
+@limiter.limit("20 per minute")
+def get_history():
+    """Get chat history for user"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        
+        if not user_id:
+            return jsonify({"error": "Missing user_id"}), 400
+            
+        logger.info(f"Fetching history for user {user_id[:8]}...")
+            
+        # Get recent messages
+        messages_ref = db.collection("users").document(user_id).collection("messages")
+        recent_messages = messages_ref.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(15).get()
+        
+        history = []
+        for msg in recent_messages:
+            msg_data = msg.to_dict()
+            if msg_data.get('user_message') and msg_data.get('ai_reply'):
+                try:
+                    # Decrypt if needed
+                    user_msg = decrypt_message(msg_data['user_message']) if msg_data.get('encrypted') else msg_data['user_message']
+                    ai_msg = decrypt_message(msg_data['ai_reply']) if msg_data.get('encrypted') else msg_data['ai_reply']
+                    
+                    # Get AI name from message or default
+                    ai_name = msg_data.get('ai_name', 'Cael')
+                    
+                    history.append({
+                        'user': user_msg,
+                        'cael': ai_msg,  # Keep 'cael' for frontend compatibility
+                        'ai_name': ai_name,
+                        'timestamp': msg_data.get('timestamp'),
+                        'mood': msg_data.get('mood', 'unknown')
+                    })
+                except Exception as decrypt_error:
+                    logger.warning(f"Failed to decrypt message: {decrypt_error}")
+                    continue
+        
+        # Reverse to get chronological order (oldest first)
+        history.reverse()
+        
+        logger.info(f"Retrieved {len(history)} messages for user {user_id[:8]}...")
+        
+        return jsonify({
+            "status": "success",
+            "history": history,
+            "count": len(history),
+            "user_id": user_id[:8] + "..."
+        })
+        
+    except Exception as e:
+        logger.error(f"History error: {str(e)}")
+        logger.error(f"History traceback:\n{traceback.format_exc()}")
+        return jsonify({"error": "Failed to fetch history"}), 500
 
 @app.route('/index', methods=['POST'])
 def chat():
