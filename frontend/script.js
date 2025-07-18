@@ -47,47 +47,6 @@ function streamTextAdvanced(text, targetElement, speed = 30) {
   });
 }
 
-// Initialize Firebase
-try {
-  const firebaseConfig = {
-    apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
-    authDomain: "zentrafuge-v8.firebaseapp.com",
-    projectId: "zentrafuge-v8",
-    storageBucket: "zentrafuge-v8.appspot.com",
-    messagingSenderId: "1035979155498",
-    appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
-    measurementId: "G-WZNXDGR0BN"
-  };
-
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log('🔥 Firebase initialized successfully');
-  } else {
-    firebase.app();
-    console.log('🔥 Firebase already initialized');
-  }
-
-  try {
-    if (typeof firebase.analytics === 'function') {
-      firebase.analytics();
-      console.log('📊 Firebase Analytics initialized');
-    }
-  } catch (err) {
-    console.log('Analytics skipped:', err.message);
-  }
-
-  console.log('📧 Auth SDK loaded:', typeof firebase.auth);
-  console.log('📂 Firestore SDK loaded:', typeof firebase.firestore);
-
-  window.firebaseApp = firebase.app();
-  window.firebaseAuth = firebase.auth();
-  window.firebaseDb = firebase.firestore();
-
-} catch (error) {
-  console.error('🚨 Firebase initialization failed:', error);
-  document.getElementById('auth-loading').innerHTML = '<div class="auth-message">Error connecting to Zentrafuge. Please refresh and try again.</div>';
-}
-
 // Get AI name from Firestore
 async function getAiName(userId) {
   try {
@@ -293,30 +252,34 @@ async function initializeApp(user) {
   }
 }
 
-// Firebase Auth State Observer
-firebase.auth().onAuthStateChanged(async function(user) {
-  try {
-    if (user && !user.isAnonymous) {
-      console.log('User authenticated:', user.email);
-      const authorized = await checkUserAuthorization(user);
-      if (authorized) {
-        isAuthorized = true;
-        await initializeApp(user);
-      } else {
-        const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
-        if (!userDoc.exists || !userDoc.data().emailVerified) {
-          redirectToAuth('email_verification');
+// Wait for Firebase to be initialized, then set up auth observer
+window.addEventListener('firebaseReady', function() {
+  console.log('🔥 Firebase is ready, setting up auth observer');
+  
+  firebase.auth().onAuthStateChanged(async function(user) {
+    try {
+      if (user && !user.isAnonymous) {
+        console.log('User authenticated:', user.email);
+        const authorized = await checkUserAuthorization(user);
+        if (authorized) {
+          isAuthorized = true;
+          await initializeApp(user);
         } else {
-          redirectToAuth('onboarding_incomplete');
+          const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+          if (!userDoc.exists || !userDoc.data().emailVerified) {
+            redirectToAuth('email_verification');
+          } else {
+            redirectToAuth('onboarding_incomplete');
+          }
         }
+      } else {
+        redirectToAuth('not_signed_in');
       }
-    } else {
-      redirectToAuth('not_signed_in');
+    } catch (error) {
+      console.error('Auth state observer error:', error);
+      redirectToAuth('auth_error');
     }
-  } catch (error) {
-    console.error('Auth state observer error:', error);
-    redirectToAuth('auth_error');
-  }
+  });
 });
 
 // Logout handler
