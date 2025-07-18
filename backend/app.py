@@ -10,7 +10,7 @@ import os
 import json
 
 # POA imports - The new brain of Zentrafuge
-from utils.orchestrator import orchestrate_response, get_debug_prompt, poa_metrics, simple_response_fallback
+from utils.orchestrator import orchestrate_response, get_debug_prompt, simple_response_fallback
 from firebase import db  # Direct import of Firestore client
 
 # Import your existing crypto functions (adjust names as needed)
