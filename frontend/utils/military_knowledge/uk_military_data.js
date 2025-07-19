@@ -1,9 +1,4 @@
-// uk_military_data.js - British Military Knowledge Module for Zentrafuge
-// For veteran users only - provides authentic military cultural context
-
 const UK_MILITARY_DATA = {
-  
-  // British Army Regiments & Corps
   army: {
     guards: {
       "Grenadier Guards": {
@@ -57,7 +52,6 @@ const UK_MILITARY_DATA = {
         traditions: "Welsh heritage, goat mascot"
       }
     },
-    
     parachute_regiment: {
       "1st Battalion Parachute Regiment": {
         motto: "Utrinque Paratus (Ready for Anything)",
@@ -86,7 +80,6 @@ const UK_MILITARY_DATA = {
         traditions: "Known for aggressive tactics"
       }
     },
-    
     royal_marines: {
       "Royal Marines": {
         motto: "Per Mare, Per Terram (By Sea, By Land)",
@@ -114,7 +107,6 @@ const UK_MILITARY_DATA = {
         traditions: "Condor Barracks"
       }
     },
-    
     infantry: {
       "The Rifles": {
         motto: "Swift and Bold",
@@ -123,14 +115,8 @@ const UK_MILITARY_DATA = {
         quick_march: "Road to the Isles",
         recent_ops: ["Iraq", "Afghanistan"],
         traditions: "Largest infantry regiment, rifle green uniform"
-      },
-      "Scots Guards": {
-        motto: "Nemo Me Impune Lacessit",
-        nickname: "The Jocks",
-        traditions: "Scottish regiment with fierce pride"
       }
     },
-    
     special_forces: {
       "22 SAS": {
         motto: "Who Dares Wins",
@@ -150,8 +136,6 @@ const UK_MILITARY_DATA = {
       }
     }
   },
-  
-  // Royal Air Force
   raf: {
     "RAF Regiment": {
       motto: "Per Ardua ad Astra",
@@ -159,18 +143,21 @@ const UK_MILITARY_DATA = {
       founded: 1942,
       recent_ops: ["Iraq", "Afghanistan"],
       traditions: "Ground defence of airfields"
+    },
+    "No. 617 Squadron": {
+      motto: "Après moi, le déluge (After me, the flood)",
+      nickname: "Dambusters",
+      founded: 1943,
+      recent_ops: ["Iraq", "Afghanistan", "Syria"],
+      traditions: "Lancaster bomber legacy, precision strikes"
     }
   },
-  
-  // Royal Navy
   royal_navy: {
     traditions: {
       general: "Senior Service, Jack Tar traditions",
       ships: "HMS tradition, ship's company pride"
     }
   },
-  
-  // Military slang and terminology
   slang: {
     general: [
       "Squaddie", "Rupert", "Crow", "Wets", "Dry", "Jack", "Pongo", 
@@ -184,10 +171,14 @@ const UK_MILITARY_DATA = {
     ],
     marines_specific: [
       "Bootneck", "Green lid", "Yomp", "Commando course"
+    ],
+    raf_specific: [
+      "Crabs", "Rock Apes", "Wings"
+    ],
+    navy_specific: [
+      "Matelots", "WAFUs", "Pusser"
     ]
   },
-  
-  // Recent operations context
   operations: {
     "Northern Ireland": {
       period: "1969-2007",
@@ -215,8 +206,6 @@ const UK_MILITARY_DATA = {
       significance: "Longest campaign, heavy casualties"
     }
   },
-  
-  // Cultural knowledge
   culture: {
     mess_traditions: "Officers' mess, sergeants' mess protocols",
     regimental_days: "Battle honours commemorations",
@@ -224,8 +213,6 @@ const UK_MILITARY_DATA = {
     humor: "Dark military humor, piss-taking culture",
     hierarchy: "Respect for rank but informal when appropriate"
   },
-  
-  // Deployment patterns and veteran experiences
   veteran_context: {
     common_deployments: ["Northern Ireland", "Falklands", "Iraq", "Afghanistan", "Bosnia", "Sierra Leone"],
     transition_challenges: "Leaving tight-knit military family",
@@ -234,62 +221,71 @@ const UK_MILITARY_DATA = {
   }
 };
 
-// Helper functions for the AI to use this data
 const UKMilitaryKnowledge = {
-  
-  // Identify potential military background from user input
   detectMilitaryService: function(userMessage) {
-    const militaryKeywords = [
-      'served', 'deployed', 'regiment', 'battalion', 'company', 'platoon',
-      'para', 'guards', 'marines', 'raf', 'navy', 'army', 'squadron',
-      'afghanistan', 'iraq', 'falklands', 'northern ireland', 'helmand',
-      'sangin', 'basra', 'goose green', 'mount longdon'
-    ];
-    
-    return militaryKeywords.some(keyword => 
-      userMessage.toLowerCase().includes(keyword)
-    );
+    try {
+      if (!userMessage || typeof userMessage !== 'string') return false;
+      const militaryKeywords = [
+        'served', 'deployed', 'regiment', 'battalion', 'company', 'platoon',
+        'para', 'guards', 'marines', 'raf', 'navy', 'army', 'squadron',
+        'afghanistan', 'iraq', 'falklands', 'northern ireland', 'helmand',
+        'sangin', 'basra', 'goose green', 'mount longdon'
+      ];
+      return militaryKeywords.some(keyword => 
+        userMessage.toLowerCase().includes(keyword)
+      );
+    } catch (error) {
+      console.error("Error in detectMilitaryService:", error);
+      return false;
+    }
   },
-  
-  // Get regiment information
   getRegimentInfo: function(regimentName) {
-    // Search through all branches for the regiment
-    for (const branch in UK_MILITARY_DATA.army) {
-      for (const unit in UK_MILITARY_DATA.army[branch]) {
-        if (unit.toLowerCase().includes(regimentName.toLowerCase()) ||
-            UK_MILITARY_DATA.army[branch][unit].nickname?.toLowerCase().includes(regimentName.toLowerCase())) {
-          return UK_MILITARY_DATA.army[branch][unit];
+    try {
+      if (!regimentName || typeof regimentName !== 'string') return null;
+      for (const branch in UK_MILITARY_DATA.army) {
+        for (const unit in UK_MILITARY_DATA.army[branch]) {
+          if (unit.toLowerCase().includes(regimentName.toLowerCase()) ||
+              (UK_MILITARY_DATA.army[branch][unit].nickname?.toLowerCase().includes(regimentName.toLowerCase()))) {
+            return UK_MILITARY_DATA.army[branch][unit];
+          }
         }
       }
+      return null;
+    } catch (error) {
+      console.error("Error in getRegimentInfo:", error);
+      return null;
     }
-    return null;
   },
-  
-  // Get contextual response for military veterans
   getMilitaryResponse: function(userContext, regimentInfo) {
-    if (!regimentInfo) return null;
-    
-    const responses = [
-      `I see you served with ${regimentInfo.nickname ? regimentInfo.nickname : 'a distinguished unit'}. That's serious military heritage.`,
-      `${regimentInfo.motto ? regimentInfo.motto + ' - ' : ''}Those are words that mean something.`,
-      `The military family is different, isn't it? That bond you had with your unit - it's not something civilians really understand.`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  },
-  
-  // Check if user mentions specific operations
-  getOperationContext: function(userMessage) {
-    for (const op in UK_MILITARY_DATA.operations) {
-      if (userMessage.toLowerCase().includes(op.toLowerCase())) {
-        return UK_MILITARY_DATA.operations[op];
-      }
+    try {
+      if (!regimentInfo) return null;
+      const responses = [
+        `I see you served with ${regimentInfo.nickname || 'a distinguished unit'}. That's a proud history with battles like ${regimentInfo.notable_battles?.[0] || 'many'}.`,
+        `${regimentInfo.motto ? `"${regimentInfo.motto}" - ` : ''}That’s a legacy that carries weight. How’s it feel to carry that pride?`,
+        `The ${regimentInfo.nickname || unit} have a tight bond, don’t they? That kind of camaraderie is hard to find outside the service.`
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } catch (error) {
+      console.error("Error in getMilitaryResponse:", error);
+      return null;
     }
-    return null;
+  },
+  getOperationContext: function(userMessage) {
+    try {
+      if (!userMessage || typeof userMessage !== 'string') return null;
+      for (const op in UK_MILITARY_DATA.operations) {
+        if (userMessage.toLowerCase().includes(op.toLowerCase())) {
+          return UK_MILITARY_DATA.operations[op];
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in getOperationContext:", error);
+      return null;
+    }
   }
 };
 
-// Export for use in Zentrafuge
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { UK_MILITARY_DATA, UKMilitaryKnowledge };
 } else if (typeof window !== 'undefined') {
