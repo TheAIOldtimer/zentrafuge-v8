@@ -13,27 +13,26 @@
     <div class="auth-message">Verifying access...</div>
   </div>
   
-  <!-- Updated header section in chat.html -->
-<header id="main-header" style="display: none;">
-  <div class="header-left">
-    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
-         onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
-    <span id="user-info">Welcome, [User]</span>
-  </div>
+  <header id="main-header" style="display: none;">
+    <div class="header-left">
+      <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
+      <span id="user-info">Welcome, [User]</span>
+    </div>
   
-  <div class="header-center">
-    <nav class="main-nav">
-      <button onclick="window.location.href='chat.html'" class="nav-btn active">Chat</button>
-      <button onclick="window.location.href='dashboard.html'" class="nav-btn">Dashboard</button>
-      <button onclick="showChartsModal()" class="nav-btn">Charts</button>
-    </nav>
-  </div>
+    <div class="header-center">
+      <nav class="main-nav">
+        <button onclick="window.location.href='chat.html'" class="nav-btn active">Chat</button>
+        <button onclick="window.location.href='dashboard.html'" class="nav-btn">Dashboard</button>
+        <button onclick="showChartsModal()" class="nav-btn">Charts</button>
+      </nav>
+    </div>
   
-  <div class="header-right">
-    <button onclick="window.location.href='donate.html'" class="donate-btn">Donate</button>
-    <button onclick="handleLogout()" class="logout-btn">Logout</button>
-  </div>
-</header>
+    <div class="header-right">
+      <button onclick="window.location.href='donate.html'" class="donate-btn">Donate</button>
+      <button onclick="handleLogout()" class="logout-btn">Logout</button>
+    </div>
+  </header>
 
   <div id="chat" style="display: none;"></div>
   
@@ -42,13 +41,18 @@
     <button type="submit" id="send-button">Send</button>
   </form>
 
-  <!-- Firebase v8 scripts - ONLY AT THE BOTTOM -->
+  <!-- Firebase v8 scripts and military data scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="firebases-init.js"></script>
+  <script src="uk_military_data.js"></script>
+  <script src="us_military_data.js"></script>
+  <script src="ca_military_data.js"></script>
+  <script src="au_military_data.js"></script>
+  <script src="nz_military_data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
