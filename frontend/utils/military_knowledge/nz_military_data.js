@@ -1,9 +1,4 @@
-// nz_military_data.js - New Zealand Defence Force Knowledge Module for Zentrafuge
-// For veteran users only - provides authentic military cultural context
-
 const NZ_MILITARY_DATA = {
-  
-  // New Zealand Army
   army: {
     infantry: {
       "Royal New Zealand Infantry Regiment": {
@@ -24,7 +19,6 @@ const NZ_MILITARY_DATA = {
         traditions: "Territorial Force, citizen soldiers"
       }
     },
-    
     special_forces: {
       "New Zealand Special Air Service": {
         motto: "Who Dares Wins",
@@ -36,7 +30,6 @@ const NZ_MILITARY_DATA = {
         traditions: "Sand-colored beret, selection course, extreme professionalism"
       }
     },
-    
     artillery: {
       "Royal New Zealand Artillery": {
         motto: "Ubique (Everywhere)",
@@ -47,7 +40,6 @@ const NZ_MILITARY_DATA = {
         traditions: "Red beret, artillery support"
       }
     },
-    
     engineers: {
       "Corps of Royal New Zealand Engineers": {
         motto: "Ubique Quo Fas et Gloria Ducunt",
@@ -58,7 +50,6 @@ const NZ_MILITARY_DATA = {
         traditions: "Dark blue beret, engineering support"
       }
     },
-    
     armoured: {
       "Queen Alexandra's Mounted Rifles": {
         motto: "Onward",
@@ -69,8 +60,6 @@ const NZ_MILITARY_DATA = {
       }
     }
   },
-  
-  // Royal New Zealand Navy
   navy: {
     "Royal New Zealand Navy": {
       motto: "Ready Aye Ready",
@@ -78,10 +67,15 @@ const NZ_MILITARY_DATA = {
       founded: 1941,
       traditions: "HMNZS ship prefix, naval heritage",
       notable_ops: ["WWII", "Korea", "Vietnam", "Gulf War", "East Timor"]
+    },
+    ships: {
+      "HMNZS Te Kaha": {
+        nickname: "Fighting Frigate",
+        notable_ops: ["East Timor", "Gulf operations"],
+        traditions: "Anzac-class frigate, modern naval operations"
+      }
     }
   },
-  
-  // Royal New Zealand Air Force
   air_force: {
     "Royal New Zealand Air Force": {
       motto: "Per Ardua ad Astra (Through Adversity to the Stars)",
@@ -89,7 +83,6 @@ const NZ_MILITARY_DATA = {
       founded: 1937,
       traditions: "Commonwealth air force heritage, light blue uniform"
     },
-    
     squadrons: {
       "No. 75 Squadron": {
         nickname: "Kiwi Squadron",
@@ -106,8 +99,6 @@ const NZ_MILITARY_DATA = {
       }
     }
   },
-  
-  // ANZAC Heritage (shared with Australia)
   anzac: {
     heritage: {
       "ANZAC": {
@@ -123,8 +114,6 @@ const NZ_MILITARY_DATA = {
       }
     }
   },
-  
-  // New Zealand operations and deployments
   operations: {
     "New Zealand Wars": {
       period: "1845-1872",
@@ -196,8 +185,6 @@ const NZ_MILITARY_DATA = {
       significance: "Longest deployment, reconstruction focus"
     }
   },
-  
-  // New Zealand military culture
   culture: {
     kiwi_spirit: "Pragmatic, egalitarian, getting on with the job",
     small_nation_pride: "Punching above our weight, quality over quantity",
@@ -205,8 +192,6 @@ const NZ_MILITARY_DATA = {
     biculturalism: "Māori-Pākehā partnership, cultural integration",
     understatement: "Kiwi modesty, quiet professionalism"
   },
-  
-  // Military slang and terminology
   slang: {
     general: [
       "Kiwi", "NZDF", "Digger", "Mate", "Bro", "Chur", "Yeah nah",
@@ -229,8 +214,6 @@ const NZ_MILITARY_DATA = {
       "Lest We Forget", "They shall grow not old", "ANZAC biscuits"
     ]
   },
-  
-  // Training establishments
   training: {
     "New Zealand Defence College": {
       location: "Wellington",
@@ -251,8 +234,6 @@ const NZ_MILITARY_DATA = {
       traditions: "Recruit training, soldier development"
     }
   },
-  
-  // Māori military heritage
   maori_heritage: {
     "Māori Battalion": {
       full_name: "28th (Māori) Battalion",
@@ -268,8 +249,6 @@ const NZ_MILITARY_DATA = {
       iwi_connections: "Tribal military service, whakapapa"
     }
   },
-  
-  // Veteran context
   veteran_context: {
     common_deployments: ["Malaya", "Vietnam", "East Timor", "Afghanistan", "Various peacekeeping"],
     transition_support: ["VANZ", "RSA", "Unit associations"],
@@ -277,8 +256,6 @@ const NZ_MILITARY_DATA = {
     generational_differences: ["WWII veterans", "Cold War generation", "Modern NZDF"],
     pride_points: ["Professional military", "ANZAC heritage", "Punching above weight", "Peacekeeping"]
   },
-  
-  // Regional connections
   regional: {
     north_island: {
       bases: ["Waiouru", "Papakura", "Whenuapai", "Ohakea"],
@@ -295,36 +272,25 @@ const NZ_MILITARY_DATA = {
   }
 };
 
-// Helper functions for the AI to use this data
 const NZMilitaryKnowledge = {
-  
-  // Identify potential military background from user input
   detectMilitaryService: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const militaryKeywords = [
         'served', 'deployed', 'army', 'navy', 'air force', 'nzdf', 'defence force',
         'vietnam', 'afghanistan', 'east timor', 'korea', 'malaya', 'borneo',
         'rnzir', 'nzsas', 'rnza', 'rnze', 'anzac', 'gallipoli', 'waiouru',
         'burnham', 'papakura', 'ohakea', 'whenuapai', 'māori battalion'
       ];
-      
-      return militaryKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return militaryKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectMilitaryService:", error);
       return false;
     }
   },
-  
-  // Get unit information
   getUnitInfo: function(unitName) {
     try {
       if (!unitName || typeof unitName !== 'string') return null;
-      
-      // Search through all branches for the unit
       for (const branch in NZ_MILITARY_DATA) {
         if (typeof NZ_MILITARY_DATA[branch] === 'object') {
           for (const category in NZ_MILITARY_DATA[branch]) {
@@ -345,31 +311,31 @@ const NZMilitaryKnowledge = {
       return null;
     }
   },
-  
-  // Get contextual response for military veterans
   getMilitaryResponse: function(userContext, unitInfo) {
     try {
       if (!unitInfo) return null;
-      
-      const responses = [
-        `${unitInfo.nickname ? unitInfo.nickname + ' - ' : ''}That's a unit with real New Zealand military heritage.`,
-        `${unitInfo.motto ? `"${unitInfo.motto}" - ` : ''}Those words carry the ANZAC spirit and Kiwi professionalism.`,
-        `The NZDF family - small but professional. That Kiwi way of getting on with the job, eh?`,
-        `New Zealand service - punching above our weight, as always. That's something to be proud of.`
+      const isMaori = NZMilitaryKnowledge.detectMaoriHeritage(userContext);
+      const isANZAC = NZMilitaryKnowledge.detectANZACHeritage(userContext);
+      const responses = isMaori ? [
+        `${unitInfo.nickname || unitInfo} – a unit with deep ties to Māori warrior traditions. Ake Ake Kia Kaha!`,
+        `${unitInfo.motto ? `"${unitInfo.motto}" – ` : ''}That’s the spirit of the Māori Battalion in you. What’s your whakapapa connection?`,
+        `The ${unitInfo.nickname || 'NZDF'} and Māori pride – that’s a powerful legacy, bro.`
+      ] : [
+        `${unitInfo.nickname || unitInfo} – a unit with a proud history in battles like ${unitInfo.notable_battles?.[0] || 'many'}.`,
+        `${unitInfo.motto ? `"${unitInfo.motto}" – ` : ''}That’s the Kiwi spirit, eh? Always punching above your weight.`,
+        isANZAC
+          ? `The ${unitInfo.nickname || 'NZDF'} and ANZAC mateship – Lest We Forget, mate.`
+          : `The ${unitInfo.nickname || 'unit'} – small but mighty, that’s the Kiwi way.`
       ];
-      
       return responses[Math.floor(Math.random() * responses.length)];
     } catch (error) {
       console.error("Error in getMilitaryResponse:", error);
       return null;
     }
   },
-  
-  // Check if user mentions specific operations
   getOperationContext: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return null;
-      
       for (const op in NZ_MILITARY_DATA.operations) {
         if (userMessage.toLowerCase().includes(op.toLowerCase().replace(" ", ""))) {
           return NZ_MILITARY_DATA.operations[op];
@@ -381,42 +347,29 @@ const NZMilitaryKnowledge = {
       return null;
     }
   },
-  
-  // Detect ANZAC heritage references
   detectANZACHeritage: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const anzacKeywords = ['anzac', 'gallipoli', 'dawn service', 'lest we forget', 'anzac day', 'chunuk bair'];
-      return anzacKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return anzacKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectANZACHeritage:", error);
       return false;
     }
   },
-  
-  // Detect Māori military heritage
   detectMaoriHeritage: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const maoriKeywords = ['māori battalion', 'maori battalion', '28th battalion', 'ake ake kia kaha', 'haka', 'iwi'];
-      return maoriKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return maoriKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectMaoriHeritage:", error);
       return false;
     }
   },
-  
-  // Detect generation/era of service
   detectServiceEra: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return 'general';
-      
       const message = userMessage.toLowerCase();
       if (message.includes('vietnam') || message.includes('nui le')) {
         return 'vietnam';
@@ -436,16 +389,11 @@ const NZMilitaryKnowledge = {
       return 'general';
     }
   },
-  
-  // Detect Kiwi cultural elements
   detectKiwiCulture: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const kiwiKeywords = ['kiwi', 'she\'ll be right', 'choice', 'chur', 'sweet as', 'yeah nah'];
-      return kiwiKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return kiwiKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectKiwiCulture:", error);
       return false;
@@ -453,7 +401,6 @@ const NZMilitaryKnowledge = {
   }
 };
 
-// Export for use in Zentrafuge
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { NZ_MILITARY_DATA, NZMilitaryKnowledge };
 } else if (typeof window !== 'undefined') {
