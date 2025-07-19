@@ -1,0 +1,17 @@
+{
+  "name": "zentrafuge-dashboard",
+  "version": "1.0.0",
+  "description": "Secure admin dashboard for Zentrafuge",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "bcryptjs": "^2.4.3",
+    "mongoose": "^6.0.0",
+    "express-rate-limit": "^5.3.0",
+    "cors": "^2.8.5"
+  }
+}
