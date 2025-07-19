@@ -1,9 +1,4 @@
-// au_military_data.js - Australian Defence Force Knowledge Module for Zentrafuge
-// For veteran users only - provides authentic military cultural context
-
 const AU_MILITARY_DATA = {
-  
-  // Australian Army
   army: {
     infantry: {
       "Royal Australian Regiment": {
@@ -22,10 +17,9 @@ const AU_MILITARY_DATA = {
         founded: 1951,
         disbanded: 2006,
         notable_battles: ["Borneo", "Vietnam"],
-        traditions: "Maroon beret, airborne operations, integrated into RAR"
+        traditions: "Maroon beret, airborne operations, legacy integrated into 3 RAR"
       }
     },
-    
     special_forces: {
       "Special Air Service Regiment": {
         motto: "Who Dares Wins",
@@ -44,7 +38,6 @@ const AU_MILITARY_DATA = {
         traditions: "Green beret, commando training, special operations"
       }
     },
-    
     armoured: {
       "Royal Australian Armoured Corps": {
         motto: "Paratus et Fidelis (Ready and Faithful)",
@@ -55,7 +48,6 @@ const AU_MILITARY_DATA = {
         traditions: "Black beret, armoured warfare"
       }
     },
-    
     artillery: {
       "Royal Regiment of Australian Artillery": {
         motto: "Ubique (Everywhere)",
@@ -66,7 +58,6 @@ const AU_MILITARY_DATA = {
         traditions: "Red beret, artillery support"
       }
     },
-    
     engineers: {
       "Royal Australian Engineers": {
         motto: "Ubique Quo Fas et Gloria Ducunt",
@@ -78,8 +69,6 @@ const AU_MILITARY_DATA = {
       }
     }
   },
-  
-  // Royal Australian Navy
   navy: {
     "Royal Australian Navy": {
       motto: "Ready Aye Ready",
@@ -88,7 +77,13 @@ const AU_MILITARY_DATA = {
       traditions: "HMAS ship prefix, naval heritage",
       notable_ops: ["WWII", "Korea", "Vietnam", "Gulf War", "East Timor"]
     },
-    
+    ships: {
+      "HMAS Anzac": {
+        nickname: "Anzac Spirit",
+        notable_ops: ["Gulf War", "East Timor", "Iraq"],
+        traditions: "Anzac-class frigate, modern naval operations"
+      }
+    },
     clearance_divers: {
       "RAN Clearance Divers": {
         motto: "Lentus Emergit (Slow to Surface)",
@@ -98,8 +93,6 @@ const AU_MILITARY_DATA = {
       }
     }
   },
-  
-  // Royal Australian Air Force
   air_force: {
     "Royal Australian Air Force": {
       motto: "Per Ardua ad Astra (Through Adversity to the Stars)",
@@ -107,7 +100,6 @@ const AU_MILITARY_DATA = {
       founded: 1921,
       traditions: "Commonwealth air force heritage, light blue uniform"
     },
-    
     squadrons: {
       "No. 75 Squadron": {
         nickname: "Tiger Squadron",
@@ -121,11 +113,15 @@ const AU_MILITARY_DATA = {
         notable_ops: ["Iraq", "Afghanistan"],
         aircraft: "F/A-18 Hornet",
         traditions: "Strike operations"
+      },
+      "No. 3 Squadron": {
+        nickname: "Hornet Squadron",
+        motto: "Operta Aperta (Hidden Things Are Revealed)",
+        aircraft: "F-35A Lightning II",
+        traditions: "Modern fighter operations"
       }
     }
   },
-  
-  // ANZAC Heritage and Traditions
   anzac: {
     heritage: {
       "ANZAC": {
@@ -141,8 +137,6 @@ const AU_MILITARY_DATA = {
       }
     }
   },
-  
-  // Australian operations and deployments
   operations: {
     "Gallipoli": {
       period: "1915",
@@ -207,8 +201,6 @@ const AU_MILITARY_DATA = {
       significance: "Longest war, special operations focus"
     }
   },
-  
-  // Australian military culture
   culture: {
     mateship: "Core Australian military value, looking after your mates",
     irreverence: "Healthy disrespect for authority, larrikin spirit",
@@ -216,8 +208,6 @@ const AU_MILITARY_DATA = {
     anzac_tradition: "ANZAC Day, Dawn Service, Lest We Forget",
     regional_focus: "Asia-Pacific orientation, regional partnerships"
   },
-  
-  // Military slang and terminology
   slang: {
     general: [
       "Digger", "Aussie", "Mate", "Blue", "Cobber", "ADF",
@@ -237,8 +227,6 @@ const AU_MILITARY_DATA = {
       "Lest We Forget", "They shall grow not old", "Simpson and his donkey"
     ]
   },
-  
-  // Training establishments
   training: {
     "Royal Military College Duntroon": {
       location: "Canberra, ACT",
@@ -258,8 +246,6 @@ const AU_MILITARY_DATA = {
       traditions: "Air combat, F/A-18 operations"
     }
   },
-  
-  // Veteran context
   veteran_context: {
     common_deployments: ["Vietnam", "East Timor", "Iraq", "Afghanistan", "Various peacekeeping"],
     transition_support: ["DVA", "RSL", "Legacy", "Unit associations"],
@@ -267,8 +253,6 @@ const AU_MILITARY_DATA = {
     generational_differences: ["WWII/Korea veterans", "Vietnam generation", "Modern ADF"],
     pride_points: ["Professional military", "ANZAC heritage", "Punching above weight", "Regional leadership"]
   },
-  
-  // State connections
   regional: {
     new_south_wales: {
       bases: ["Holsworthy", "Randwick", "Singleton"],
@@ -300,36 +284,25 @@ const AU_MILITARY_DATA = {
   }
 };
 
-// Helper functions for the AI to use this data
 const AUMilitaryKnowledge = {
-  
-  // Identify potential military background from user input
   detectMilitaryService: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const militaryKeywords = [
         'served', 'deployed', 'army', 'navy', 'air force', 'adf', 'defence force',
         'vietnam', 'afghanistan', 'iraq', 'east timor', 'korea', 'malaya',
         'rar', 'sasr', 'commando', 'anzac', 'digger', 'gallipoli', 'kokoda',
         'long tan', 'kapyong', 'duntroon', 'kapooka', 'holsworthy'
       ];
-      
-      return militaryKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return militaryKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectMilitaryService:", error);
       return false;
     }
   },
-  
-  // Get unit information
   getUnitInfo: function(unitName) {
     try {
       if (!unitName || typeof unitName !== 'string') return null;
-      
-      // Search through all branches for the unit
       for (const branch in AU_MILITARY_DATA) {
         if (typeof AU_MILITARY_DATA[branch] === 'object') {
           for (const category in AU_MILITARY_DATA[branch]) {
@@ -350,31 +323,26 @@ const AUMilitaryKnowledge = {
       return null;
     }
   },
-  
-  // Get contextual response for military veterans
   getMilitaryResponse: function(userContext, unitInfo) {
     try {
       if (!unitInfo) return null;
-      
+      const isANZAC = AUMilitaryKnowledge.detectANZACHeritage(userContext);
       const responses = [
-        `${unitInfo.nickname ? unitInfo.nickname + ' - ' : ''}That's a unit with real Australian military heritage.`,
-        `${unitInfo.motto ? `"${unitInfo.motto}" - ` : ''}Those are words that carry the ANZAC spirit.`,
-        `The Australian Defence Force family - there's something special about that mateship and professional pride.`,
-        `Serving Australia - whether it's the ANZAC tradition or modern operations, that service means something.`
+        `${unitInfo.nickname || unitInfo} – a unit with a proud history in battles like ${unitInfo.notable_battles?.[0] || 'many'}.`,
+        `${unitInfo.motto ? `"${unitInfo.motto}" – ` : ''}That’s the ANZAC spirit right there. What’s it like carrying that legacy?`,
+        isANZAC
+          ? `The ${unitInfo.nickname || 'ADF'} and ANZAC mateship – there’s nothing like it, is there? Lest we forget.`
+          : `The ${unitInfo.nickname || 'unit'} is all about mateship and getting the job done. That’s proper Aussie pride.`
       ];
-      
       return responses[Math.floor(Math.random() * responses.length)];
     } catch (error) {
       console.error("Error in getMilitaryResponse:", error);
       return null;
     }
   },
-  
-  // Check if user mentions specific operations
   getOperationContext: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return null;
-      
       for (const op in AU_MILITARY_DATA.operations) {
         if (userMessage.toLowerCase().includes(op.toLowerCase())) {
           return AU_MILITARY_DATA.operations[op];
@@ -386,27 +354,19 @@ const AUMilitaryKnowledge = {
       return null;
     }
   },
-  
-  // Detect ANZAC heritage references
   detectANZACHeritage: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return false;
-      
       const anzacKeywords = ['anzac', 'gallipoli', 'dawn service', 'lest we forget', 'anzac day'];
-      return anzacKeywords.some(keyword => 
-        userMessage.toLowerCase().includes(keyword)
-      );
+      return anzacKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
     } catch (error) {
       console.error("Error in detectANZACHeritage:", error);
       return false;
     }
   },
-  
-  // Detect generation/era of service
   detectServiceEra: function(userMessage) {
     try {
       if (!userMessage || typeof userMessage !== 'string') return 'general';
-      
       const message = userMessage.toLowerCase();
       if (message.includes('vietnam') || message.includes('long tan')) {
         return 'vietnam';
@@ -425,7 +385,6 @@ const AUMilitaryKnowledge = {
   }
 };
 
-// Export for use in Zentrafuge
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { AU_MILITARY_DATA, AUMilitaryKnowledge };
 } else if (typeof window !== 'undefined') {
