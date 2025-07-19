@@ -97,7 +97,6 @@ async function getMoodData(userId) {
     return data.moods || [];
   } catch (error) {
     console.error("Error fetching mood data:", error);
-    returnBrasileiro
     return [];
   }
 }
@@ -470,7 +469,7 @@ async function loadPreviousMessages() {
         }
       });
       console.log(`✅ Loaded ${validMessagesLoaded} valid messages from history`);
-      if (validMessagesLoaded === 0) {
+      if (validMessagesLoaded == 0) {
         showWelcomeMessage(false);
       } else {
         const welcomeDiv = document.createElement("div");
@@ -694,3 +693,175 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("message")?.focus();
   });
 });
+
+function showChartsModal() {
+  if (!currentUser) {
+    alert('Please log in to view your charts.');
+    return;
+  }
+  
+  const modalOverlay = document.createElement('div');
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  `;
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    position: relative;
+  `;
+  
+  modalContent.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2 style="margin: 0; color: #0055aa;">Your Emotional Journey</h2>
+      <button onclick="this.closest('.modal-overlay').remove()" style="
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      ">×</button>
+    </div>
+    
+    <div id="modal-mood-summary" style="
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-style: italic;
+      color: #666;
+    ">Loading your mood data...</div>
+    
+    <div style="height: 400px; position: relative;">
+      <canvas id="modal-mood-chart"></canvas>
+    </div>
+    
+    <div style="margin-top: 1.5rem; text-align: center;">
+      <button onclick="window.location.href='dashboard.html'" style="
+        background: #0055aa;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        margin-right: 0.5rem;
+      ">View Full Dashboard</button>
+      
+      <button onclick="this.closest('.modal-overlay').remove()" style="
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+      ">Close</button>
+    </div>
+  `;
+  
+  modalOverlay.className = 'modal-overlay';
+  modalOverlay.appendChild(modalContent);
+  document.body.appendChild(modalOverlay);
+  
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  });
+  
+  renderModalMoodChart(currentUser.uid);
+}
+
+async function renderModalMoodChart(userId) {
+  const moodData = await getMoodData(userId);
+  const ctx = document.getElementById('modal-mood-chart')?.getContext('2d');
+  if (!ctx) return;
+
+  const labels = moodData.map(m => new Date(m.timestamp).toLocaleDateString());
+  const scores = moodData.map(m => m.score);
+  const moods = moodData.map(m => m.mood);
+
+  let trend = 'stable';
+  if (moodData.length >= 2) {
+    const recentScore = scores[scores.length - 1];
+    const prevScore = scores[0];
+    trend = recentScore > prevScore ? 'improving' : recentScore < prevScore ? 'declining' : 'stable';
+  }
+
+  const summaryDiv = document.getElementById('modal-mood-summary');
+  if (summaryDiv) {
+    summaryDiv.textContent = moodData.length > 0
+      ? `Your mood has been ${trend} over the last ${moodData.length} entries. Latest mood: ${moods[moods.length - 1] || 'unknown'} (Score: ${scores[scores.length - 1] || 5}).`
+      : 'No mood data available yet. Chat with Cael to start tracking your emotional journey!';
+  }
+
+  if (moodData.length === 0) {
+    ctx.canvas.style.display = 'none';
+    return;
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Mood Score',
+        data: scores,
+        borderColor: '#0055aa',
+        backgroundColor: 'rgba(0, 85, 170, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#0055aa',
+        pointHoverBackgroundColor: '#4a90e2',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${moods[context.dataIndex]} (Score: ${context.parsed.y})`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 1 },
+          title: { display: true, text: 'Mood Score (1-10)' }
+        },
+        x: {
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
