@@ -1,9 +1,4 @@
-// us_military_data.js - United States Military Knowledge Module for Zentrafuge
-// For veteran users only - provides authentic military cultural context
-
 const US_MILITARY_DATA = {
-  
-  // United States Army
   army: {
     airborne: {
       "82nd Airborne Division": {
@@ -37,7 +32,6 @@ const US_MILITARY_DATA = {
         traditions: "Only airborne unit in Europe"
       }
     },
-    
     infantry_divisions: {
       "1st Infantry Division": {
         motto: "No Mission Too Difficult, No Sacrifice Too Great",
@@ -86,7 +80,6 @@ const US_MILITARY_DATA = {
         traditions: "Pacific theater heritage"
       }
     },
-    
     armored: {
       "1st Armored Division": {
         motto: "Old Ironsides",
@@ -107,7 +100,6 @@ const US_MILITARY_DATA = {
         traditions: "Yellow and black patch, air mobility"
       }
     },
-    
     special_forces: {
       "Army Special Forces": {
         motto: "De Oppresso Liber (To Free the Oppressed)",
@@ -135,8 +127,6 @@ const US_MILITARY_DATA = {
       }
     }
   },
-  
-  // United States Marine Corps
   marines: {
     "United States Marine Corps": {
       motto: "Semper Fidelis (Always Faithful)",
@@ -147,7 +137,6 @@ const US_MILITARY_DATA = {
       recent_ops: ["Iraq", "Afghanistan"],
       traditions: "Eagle, Globe, and Anchor, Marine Corps Birthday (Nov 10), Esprit de corps"
     },
-    
     divisions: {
       "1st Marine Division": {
         nickname: "The Old Breed",
@@ -168,7 +157,6 @@ const US_MILITARY_DATA = {
         recent_ops: ["Iraq", "Afghanistan"]
       }
     },
-    
     special_operations: {
       "Force Reconnaissance": {
         motto: "Swift, Silent, Deadly",
@@ -184,8 +172,6 @@ const US_MILITARY_DATA = {
       }
     }
   },
-  
-  // United States Navy
   navy: {
     "United States Navy": {
       motto: "Non sibi sed patriae (Not for self but for country)",
@@ -193,7 +179,13 @@ const US_MILITARY_DATA = {
       founded: 1775,
       traditions: "Crossing the line, shellback ceremonies, ship's company pride"
     },
-    
+    fleets: {
+      "Seventh Fleet": {
+        base: "Yokosuka, Japan",
+        recent_ops: ["Indo-Pacific operations", "Korean Peninsula"],
+        traditions: "Largest forward-deployed fleet"
+      }
+    },
     special_operations: {
       "Navy SEALs": {
         motto: "The Only Easy Day Was Yesterday",
@@ -210,8 +202,6 @@ const US_MILITARY_DATA = {
       }
     }
   },
-  
-  // United States Air Force
   air_force: {
     "United States Air Force": {
       motto: "Aim High... Fly-Fight-Win",
@@ -219,7 +209,6 @@ const US_MILITARY_DATA = {
       founded: 1947,
       traditions: "Blue uniform, Aim High motto, flight heritage"
     },
-    
     special_operations: {
       "Pararescue": {
         motto: "That Others May Live",
@@ -240,8 +229,16 @@ const US_MILITARY_DATA = {
       }
     }
   },
-  
-  // Military slang and terminology
+  coast_guard: {
+    "United States Coast Guard": {
+      motto: "Semper Paratus (Always Ready)",
+      nickname: "Coasties",
+      founded: 1790,
+      traditions: "Maritime security, search and rescue, law enforcement",
+      recent_ops: ["Hurricane Katrina", "Drug interdiction", "Port security"],
+      bases: ["Coast Guard Island, CA", "Cape May, NJ"]
+    }
+  },
   slang: {
     general: [
       "GI", "Grunt", "Jarhead", "Squid", "Airman", "Soldier", "Marine",
@@ -257,11 +254,12 @@ const US_MILITARY_DATA = {
       "Hooyah", "Shipmate", "Deck", "Bulkhead", "Scuttlebutt", "Chief", "Anchor"
     ],
     air_force_specific: [
-      "Hooah" , "Airman", "Blue", "Zoomie", "Crew Chief", "Maintainer"
+      "Hooah", "Airman", "Blue", "Zoomie", "Crew Chief", "Maintainer"
+    ],
+    coast_guard_specific: [
+      "Coastie", "Puddle Pirate", "Guardian"
     ]
   },
-  
-  // Recent operations context
   operations: {
     "Vietnam": {
       period: "1955-1975",
@@ -294,8 +292,6 @@ const US_MILITARY_DATA = {
       significance: "Longest war, mountain warfare, Taliban"
     }
   },
-  
-  // Cultural knowledge
   culture: {
     chain_of_command: "Strict hierarchy, respect for rank",
     military_time: "24-hour clock usage",
@@ -304,8 +300,6 @@ const US_MILITARY_DATA = {
     humor: "Dark humor, military jokes, ball-busting",
     brotherhood: "Unit cohesion, never leave a man behind"
   },
-  
-  // Deployment patterns and veteran experiences
   veteran_context: {
     common_deployments: ["Vietnam", "Desert Storm", "Somalia", "Iraq", "Afghanistan"],
     multiple_tours: "OIF/OEF veterans often did 2-4 deployments",
@@ -314,8 +308,6 @@ const US_MILITARY_DATA = {
     support_networks: ["VFW", "American Legion", "Unit reunions", "VA services"],
     generational_differences: ["WWII/Korea veterans", "Vietnam era", "Gulf War", "9/11 generation"]
   },
-  
-  // Branch rivalries and traditions
   inter_service: {
     rivalries: {
       "Army vs Marines": "Marines claim superiority, Army claims bigger mission",
@@ -332,89 +324,102 @@ const US_MILITARY_DATA = {
   }
 };
 
-// Helper functions for the AI to use this data
 const USMilitaryKnowledge = {
-  
-  // Identify potential military background from user input
   detectMilitaryService: function(userMessage) {
-    const militaryKeywords = [
-      'served', 'deployed', 'army', 'navy', 'marines', 'air force', 'coast guard',
-      'iraq', 'afghanistan', 'vietnam', 'desert storm', 'oif', 'oef',
-      'fort bragg', 'camp pendleton', 'norfolk', 'hood', 'benning',
-      'airborne', 'ranger', 'seal', 'marine corps', 'semper fi', 'hooah', 'oorah'
-    ];
-    
-    return militaryKeywords.some(keyword => 
-      userMessage.toLowerCase().includes(keyword)
-    );
+    try {
+      if (!userMessage || typeof userMessage !== 'string') return false;
+      const militaryKeywords = [
+        'served', 'deployed', 'army', 'navy', 'marines', 'air force', 'coast guard',
+        'iraq', 'afghanistan', 'vietnam', 'desert storm', 'oif', 'oef',
+        'fort bragg', 'camp pendleton', 'norfolk', 'hood', 'benning',
+        'airborne', 'ranger', 'seal', 'marine corps', 'semper fi', 'hooah', 'oorah'
+      ];
+      return militaryKeywords.some(keyword => userMessage.toLowerCase().includes(keyword));
+    } catch (error) {
+      console.error("Error in detectMilitaryService:", error);
+      return false;
+    }
   },
-  
-  // Get unit information
   getUnitInfo: function(unitName) {
-    // Search through all branches for the unit
-    for (const branch in US_MILITARY_DATA) {
-      if (typeof US_MILITARY_DATA[branch] === 'object') {
-        for (const category in US_MILITARY_DATA[branch]) {
-          if (typeof US_MILITARY_DATA[branch][category] === 'object') {
-            for (const unit in US_MILITARY_DATA[branch][category]) {
-              if (unit.toLowerCase().includes(unitName.toLowerCase()) ||
-                  US_MILITARY_DATA[branch][category][unit].nickname?.toLowerCase().includes(unitName.toLowerCase())) {
-                return US_MILITARY_DATA[branch][category][unit];
+    try {
+      if (!unitName || typeof unitName !== 'string') return null;
+      for (const branch in US_MILITARY_DATA) {
+        if (typeof US_MILITARY_DATA[branch] === 'object') {
+          for (const category in US_MILITARY_DATA[branch]) {
+            if (typeof US_MILITARY_DATA[branch][category] === 'object') {
+              for (const unit in US_MILITARY_DATA[branch][category]) {
+                if (unit.toLowerCase().includes(unitName.toLowerCase()) ||
+                    US_MILITARY_DATA[branch][category][unit].nickname?.toLowerCase().includes(unitName.toLowerCase())) {
+                  return US_MILITARY_DATA[branch][category][unit];
+                }
               }
             }
           }
         }
       }
+      return null;
+    } catch (error) {
+      console.error("Error in getUnitInfo:", error);
+      return null;
     }
-    return null;
   },
-  
-  // Get contextual response for military veterans
   getMilitaryResponse: function(userContext, unitInfo) {
-    if (!unitInfo) return null;
-    
-    const responses = [
-      `${unitInfo.nickname ? unitInfo.nickname + ' - ' : ''}That's a unit with real history.`,
-      `${unitInfo.motto ? unitInfo.motto + '. ' : ''}Those words mean something to someone who served.`,
-      `I know that brotherhood you had in the service. That connection - it's different than anything in civilian life.`,
-      `The military family is something else, isn't it? That bond with your unit, your battle buddies - civilians don't really get it.`
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
+    try {
+      if (!unitInfo) return null;
+      const responses = [
+        `${unitInfo.nickname || 'That unit'} has a proud history with battles like ${unitInfo.notable_battles?.[0] || 'many'}.`,
+        `${unitInfo.motto ? `"${unitInfo.motto}" - ` : ''}That’s a legacy that sticks with you. How’s it feel to carry that pride?`,
+        `The ${unitInfo.nickname || 'unit'} brotherhood is something special, isn’t it? That bond is hard to find outside the service.`
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } catch (error) {
+      console.error("Error in getMilitaryResponse:", error);
+      return null;
+    }
   },
-  
-  // Check if user mentions specific operations
   getOperationContext: function(userMessage) {
-    for (const op in US_MILITARY_DATA.operations) {
-      if (userMessage.toLowerCase().includes(op.toLowerCase()) ||
-          (op === "Iraq" && userMessage.toLowerCase().includes("oif")) ||
-          (op === "Afghanistan" && userMessage.toLowerCase().includes("oef"))) {
-        return US_MILITARY_DATA.operations[op];
+    try {
+      if (!userMessage || typeof userMessage !== 'string') return null;
+      for (const op in US_MILITARY_DATA.operations) {
+        if (userMessage.toLowerCase().includes(op.toLowerCase()) ||
+            (op === "Iraq" && userMessage.toLowerCase().includes("oif")) ||
+            (op === "Afghanistan" && userMessage.toLowerCase().includes("oef"))) {
+          return US_MILITARY_DATA.operations[op];
+        }
       }
+      return null;
+    } catch (error) {
+      console.error("Error in getOperationContext:", error);
+      return null;
     }
-    return null;
   },
-  
-  // Detect branch affiliation
   detectBranch: function(userMessage) {
-    const message = userMessage.toLowerCase();
-    if (message.includes('marine') || message.includes('usmc') || message.includes('semper fi') || message.includes('oorah')) {
-      return 'marines';
+    try {
+      if (!userMessage || typeof userMessage !== 'string') return null;
+      const message = userMessage.toLowerCase();
+      if (message.includes('marine') || message.includes('usmc') || message.includes('semper fi') || message.includes('oorah')) {
+        return 'marines';
+      }
+      if (message.includes('army') || message.includes('soldier') || message.includes('hooah')) {
+        return 'army';
+      }
+      if (message.includes('navy') || message.includes('sailor') || message.includes('ship')) {
+        return 'navy';
+      }
+      if (message.includes('air force') || message.includes('airman') || message.includes('usaf')) {
+        return 'air_force';
+      }
+      if (message.includes('coast guard') || message.includes('coastie')) {
+        return 'coast_guard';
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in detectBranch:", error);
+      return null;
     }
-    if (message.includes('army') || message.includes('soldier') || message.includes('hooah')) {
-      return 'army';
-    }
-    if (message.includes('navy') || message.includes('sailor') || message.includes('ship')) {
-      return 'navy';
-    }
-    if (message.includes('air force') || message.includes('airman') || message.includes('usaf')) {
-      return 'air_force';
-    }
-    return null;
   }
 };
 
-// Export for use in Zentrafuge
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { US_MILITARY_DATA, USMilitaryKnowledge };
 } else if (typeof window !== 'undefined') {
