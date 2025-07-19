@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zentrafuge Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Dashboard() {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [username, setUsername] = useState('');
+      const [password, setPassword] = useState('');
+      const [metrics, setMetrics] = useState({});
+      const [suggestions, setSuggestions] = useState([]);
+      const [error, setError] = useState('');
+
+      const login = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await response.json();
+          if (response.ok) {
+            localStorage.setItem('token', data.token);
+            setIsAuthenticated(true);
+            fetchDashboardData();
+          } else {
+            setError(data.message || 'Login failed');
+          }
+        } catch (err) {
+          setError('Network error');
+        }
+      };
+
+      const fetchDashboardData = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch('/api/admin/dashboard', {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setMetrics(data.metrics);
+            setSuggestions(data.suggestions);
+          } else {
+            setError('Failed to fetch dashboard data');
+            setIsAuthenticated(false);
+          }
+        } catch (err) {
+          setError('Network error');
+          setIsAuthenticated(false);
+        }
+      };
+
+      useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          fetchDashboardData();
+          setIsAuthenticated(true);
+        }
+      }, []);
+
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+              <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+              <form onSubmit={login} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    required
+                  />
+                </div>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
+                >
+                  Login
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gray-100 p-6">
+          <h1 className="text-3xl font-bold mb-6">Zentrafuge Admin Dashboard</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold mb-4">System Metrics</h2>
+              <p>Active Users: {metrics.activeUsers || 0}</p>
+              <p>API Calls (Last 24h): {metrics.apiCalls || 0}</p>
+              <p>Average Response Time: {metrics.responseTime || 0}ms</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold mb-4">Cael's Suggestions</h2>
+              <ul className="list-disc pl-5">
+                {suggestions.map((suggestion, index) => (
+                  <li key={index} className="mb-2">{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('token');
+              setIsAuthenticated(false);
+            }}
+            className="mt-6 bg-red-600 text-white p-2 rounded-md hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>
