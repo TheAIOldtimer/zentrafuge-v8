@@ -13,16 +13,27 @@
     <div class="auth-message">Verifying access...</div>
   </div>
   
-  <header id="main-header" style="display: none;">
-    <div class="header-left">
-      <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
-           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
-    </div>
-    <div class="header-right">
-      <span id="user-info"></span>
-      <button onclick="handleLogout()" class="logout-btn">Logout</button>
-    </div>
-  </header>
+  <!-- Updated header section in chat.html -->
+<header id="main-header" style="display: none;">
+  <div class="header-left">
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
+         onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
+    <span id="user-info">Welcome, [User]</span>
+  </div>
+  
+  <div class="header-center">
+    <nav class="main-nav">
+      <button onclick="window.location.href='chat.html'" class="nav-btn active">Chat</button>
+      <button onclick="window.location.href='dashboard.html'" class="nav-btn">Dashboard</button>
+      <button onclick="showChartsModal()" class="nav-btn">Charts</button>
+    </nav>
+  </div>
+  
+  <div class="header-right">
+    <button onclick="window.location.href='donate.html'" class="donate-btn">Donate</button>
+    <button onclick="handleLogout()" class="logout-btn">Logout</button>
+  </div>
+</header>
 
   <div id="chat" style="display: none;"></div>
   
