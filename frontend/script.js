@@ -380,7 +380,7 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
     "What do you need to share today?",
     "How are you holding up?",
     "What's been heavy on your mind?",
-    "How's your spirit doing today?",
+    "How has your spirit doing today?",
     "What would feel good to talk about?",
     "How are you taking care of yourself lately?",
     "What's your heart telling you today?",
@@ -624,6 +624,77 @@ document.addEventListener('DOMContentLoaded', function() {
     const maxAttempts = 3;
     let success = false;
     
+    // Check for military context across UK, US, Canada, Australia, and New Zealand
+    let militaryResponse = null;
+    let country = null;
+    
+    // Detect country context
+    const messageLower = message.toLowerCase();
+    if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
+      country = 'uk';
+    } else if (messageLower.includes('us') || messageLower.includes('marine corps') || messageLower.includes('semper fi') || messageLower.includes('fort bragg')) {
+      country = 'us';
+    } else if (messageLower.includes('canada') || messageLower.includes('van doos') || messageLower.includes('ppcli') || messageLower.includes('peacekeeping')) {
+      country = 'ca';
+    } else if (messageLower.includes('australia') || messageLower.includes('anzac') || messageLower.includes('digger') || messageLower.includes('sasr')) {
+      country = 'au';
+    } else if (messageLower.includes('new zealand') || messageLower.includes('kiwi') || messageLower.includes('nzsas') || messageLower.includes('māori battalion')) {
+      country = 'nz';
+    }
+    
+    try {
+      if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
+        const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
+        const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
+        if (regimentInfo) {
+          militaryResponse = window.UKMilitaryKnowledge.getMilitaryResponse(message, regimentInfo);
+        } else if (opContext) {
+          militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more about your experience?`;
+        }
+      } else if (country === 'us' && window.USMilitaryKnowledge?.detectMilitaryService(message)) {
+        const unitInfo = window.USMilitaryKnowledge.getUnitInfo(message);
+        const opContext = window.USMilitaryKnowledge.getOperationContext(message);
+        if (unitInfo) {
+          militaryResponse = window.USMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+        } else if (opContext) {
+          militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a defining moment for many. Want to share more?`;
+        }
+      } else if (country === 'ca' && window.CAMilitaryKnowledge?.detectMilitaryService(message)) {
+        const unitInfo = window.CAMilitaryKnowledge.getUnitInfo(message);
+        const opContext = window.CAMilitaryKnowledge.getOperationContext(message);
+        const isFrench = window.CAMilitaryKnowledge.detectLanguage(message) === 'french';
+        if (unitInfo) {
+          militaryResponse = window.CAMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+        } else if (opContext) {
+          militaryResponse = isFrench
+            ? `Vous avez mentionné ${opContext.context} (${opContext.period}). C'était une période importante. Voulez-vous en dire plus?`
+            : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
+        }
+      } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
+        const unitInfo = window.AUMilitaryKnowledge.getUnitInfo(message);
+        const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
+        if (unitInfo) {
+          militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+        } else if (opContext) {
+          militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That’s part of the ANZAC legacy. Want to share more, mate?`;
+        }
+      } else if (country === 'nz' && window.NZMilitaryKnowledge?.detectMilitaryService(message)) {
+        const unitInfo = window.NZMilitaryKnowledge.getUnitInfo(message);
+        const opContext = window.NZMilitaryKnowledge.getOperationContext(message);
+        const isMaori = window.NZMilitaryKnowledge.detectMaoriHeritage(message);
+        if (unitInfo) {
+          militaryResponse = window.NZMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+        } else if (opContext) {
+          militaryResponse = isMaori
+            ? `You mentioned ${opContext.context} (${opContext.period}). That’s tied to Māori warrior pride. Ake Ake Kia Kaha! Want to share more?`
+            : `You mentioned ${opContext.context} (${opContext.period}). That’s part of the Kiwi legacy. Want to share more, mate?`;
+        }
+      }
+    } catch (error) {
+      console.error('Error processing military context:', error);
+      militaryResponse = null;
+    }
+    
     while (attempt <= maxAttempts && !success) {
       try {
         console.log(`Attempt ${attempt} for message: "${message}"`);
@@ -634,6 +705,7 @@ document.addEventListener('DOMContentLoaded', function() {
           body: JSON.stringify({
             message: message,
             user_id: getUserId(),
+            military_context: militaryResponse ? { detected: true, response: militaryResponse, country } : null
           }),
         });
         
@@ -657,7 +729,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (data.response && data.response.trim()) {
           hideTypingIndicator();
-          await appendMessage("cael", data.response, true);
+          const finalResponse = militaryResponse ? `${militaryResponse} ${data.response}` : data.response;
+          await appendMessage("cael", finalResponse, true);
           success = true;
           console.log(`✅ Success on attempt ${attempt}`);
           break;
