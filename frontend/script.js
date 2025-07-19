@@ -97,6 +97,7 @@ async function getMoodData(userId) {
     return data.moods || [];
   } catch (error) {
     console.error("Error fetching mood data:", error);
+    returnBrasileiro
     return [];
   }
 }
@@ -251,36 +252,6 @@ async function initializeApp(user) {
     redirectToAuth('initialization_failed');
   }
 }
-
-// Wait for Firebase to be initialized, then set up auth observer
-window.addEventListener('firebaseReady', function() {
-  console.log('🔥 Firebase is ready, setting up auth observer');
-  
-  firebase.auth().onAuthStateChanged(async function(user) {
-    try {
-      if (user && !user.isAnonymous) {
-        console.log('User authenticated:', user.email);
-        const authorized = await checkUserAuthorization(user);
-        if (authorized) {
-          isAuthorized = true;
-          await initializeApp(user);
-        } else {
-          const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
-          if (!userDoc.exists || !userDoc.data().emailVerified) {
-            redirectToAuth('email_verification');
-          } else {
-            redirectToAuth('onboarding_incomplete');
-          }
-        }
-      } else {
-        redirectToAuth('not_signed_in');
-      }
-    } catch (error) {
-      console.error('Auth state observer error:', error);
-      redirectToAuth('auth_error');
-    }
-  });
-});
 
 // Logout handler
 async function handleLogout() {
@@ -560,8 +531,38 @@ function checkSessionDuration() {
   }
 }
 
-// Chat form submission
+// Authentication and chat form submission
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔥 DOM loaded, setting up Firebase auth observer');
+  
+  // Set up auth observer directly
+  firebase.auth().onAuthStateChanged(async function(user) {
+    console.log('Auth state changed:', user ? user.email : 'No user');
+    
+    try {
+      if (user && !user.isAnonymous) {
+        console.log('User authenticated:', user.email);
+        const authorized = await checkUserAuthorization(user);
+        if (authorized) {
+          isAuthorized = true;
+          await initializeApp(user);
+        } else {
+          const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+          if (!userDoc.exists || !userDoc.data().emailVerified) {
+            redirectToAuth('email_verification');
+          } else {
+            redirectToAuth('onboarding_incomplete');
+          }
+        }
+      } else {
+        redirectToAuth('not_signed_in');
+      }
+    } catch (error) {
+      console.error('Auth state observer error:', error);
+      redirectToAuth('auth_error');
+    }
+  });
+  
   const input = document.getElementById("message");
   const form = document.getElementById("chat-form");
   if (!form) return;
