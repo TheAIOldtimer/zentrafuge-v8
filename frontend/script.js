@@ -6,6 +6,7 @@ let aiName = "Cael"; // Default AI name
 let lastKeystroke = Date.now();
 let sessionDurationInterval = null;
 let sessionWarningShown = false;
+let isInitializing = false; // Prevent multiple initializations
 
 // Default preferences
 const DEFAULT_PREFERENCES = {
@@ -19,6 +20,24 @@ const DEFAULT_PREFERENCES = {
 
 // Current user preferences
 let userPreferences = { ...DEFAULT_PREFERENCES };
+
+// Wait for Firebase to initialize
+async function waitForFirebase() {
+  return new Promise((resolve, reject) => {
+    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+      console.error('Firebase not initialized');
+      reject(new Error('Firebase SDK not loaded or initialized'));
+    }
+    const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+      unsubscribe(); // Clean up immediately
+      resolve();
+    }, error => {
+      unsubscribe();
+      console.error('Firebase auth initialization error:', error);
+      reject(error);
+    });
+  });
+}
 
 // Stream text character by character with pauses and cursor
 function streamTextAdvanced(text, targetElement, speed = 30) {
@@ -197,6 +216,10 @@ async function getNewUserGreetings() {
 // Auth Guard
 async function checkUserAuthorization(user) {
   try {
+    if (!user) {
+      console.warn('No user provided to checkUserAuthorization');
+      throw new Error('No user provided');
+    }
     const db = firebase.firestore();
     const userDoc = await db.collection("users").doc(user.uid).get();
     if (!userDoc.exists) {
@@ -215,13 +238,17 @@ async function checkUserAuthorization(user) {
     console.log(`Authorization succeeded for ${user.email}`);
     return true;
   } catch (error) {
-    console.error('Authorization check failed:', error);
+    console.error('Authorization check failed:', error.message, error.stack);
     return false;
   }
 }
 
 // Redirect to auth
 function redirectToAuth(reason = 'unauthorized') {
+  if (isInitializing) {
+    console.warn('Preventing redirect loop during initialization:', reason);
+    return;
+  }
   console.log('Redirecting to auth:', reason);
   const params = new URLSearchParams({ reason });
   window.location.href = `index.html?${params}`;
@@ -229,6 +256,11 @@ function redirectToAuth(reason = 'unauthorized') {
 
 // Initialize app
 async function initializeApp(user) {
+  if (isInitializing) {
+    console.warn('Already initializing, skipping...');
+    return;
+  }
+  isInitializing = true;
   try {
     currentUser = user;
     aiName = await getAiName(user.uid);
@@ -239,17 +271,26 @@ async function initializeApp(user) {
     const isPreferences = window.location.pathname.includes('preferences.html');
     const pageTitle = isDashboard ? 'Dashboard' : isPreferences ? 'Preferences' : aiName;
     document.title = `Zentrafuge × ${pageTitle}`;
-    document.querySelector('header img').setAttribute('onerror', 
-      `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${pageTitle}</h1>');`
-    );
+    const headerImg = document.querySelector('header img');
+    if (headerImg) {
+      headerImg.setAttribute('onerror', 
+        `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${pageTitle}</h1>');`
+      );
+    }
     
     // Update user info
-    document.getElementById('user-info').textContent = `Welcome, ${user.displayName || user.email}`;
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) {
+      userInfo.textContent = `Welcome, ${user.displayName || user.email}`;
+    }
     
     // Show main content
-    document.getElementById('auth-loading').style.display = 'none';
-    document.getElementById('main-header').style.display = 'flex';
-    document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat').style.display = 'flex';
+    const authLoading = document.getElementById('auth-loading');
+    if (authLoading) authLoading.style.display = 'none';
+    const mainHeader = document.getElementById('main-header');
+    if (mainHeader) mainHeader.style.display = 'flex';
+    const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat');
+    if (contentDiv) contentDiv.style.display = 'flex';
     
     if (isDashboard) {
       await renderMoodChart(user.uid);
@@ -257,11 +298,17 @@ async function initializeApp(user) {
       await loadUserPreferences();
       loadPreferencesIntoForm();
     } else {
-      document.getElementById('chat-form').style.display = 'flex';
-      document.getElementById('chat-form').setAttribute('aria-label', `Ask ${aiName} something`);
-      document.getElementById('message').placeholder = `Ask ${aiName} something...`;
+      const chatForm = document.getElementById('chat-form');
+      if (chatForm) {
+        chatForm.style.display = 'flex';
+        chatForm.setAttribute('aria-label', `Ask ${aiName} something`);
+        const messageInput = document.getElementById('message');
+        if (messageInput) {
+          messageInput.placeholder = `Ask ${aiName} something...`;
+          messageInput.focus();
+        }
+      }
       await loadPreviousMessages();
-      document.getElementById("message").focus();
       
       // Set session start time and begin monitoring
       sessionStorage.setItem('session_start', Date.now());
@@ -276,8 +323,10 @@ async function initializeApp(user) {
       sessionDurationInterval = setInterval(checkSessionDuration, 60000); // Check every minute
     }
   } catch (error) {
-    console.error('Error initializing app:', error);
+    console.error('Error initializing app:', error.message, error.stack);
     redirectToAuth('initialization_failed');
+  } finally {
+    isInitializing = false;
   }
 }
 
@@ -596,7 +645,10 @@ function checkSessionDuration() {
 // Load user preferences from Firestore
 async function loadUserPreferences() {
   try {
-    if (!currentUser) return DEFAULT_PREFERENCES;
+    if (!currentUser) {
+      console.warn('No current user, returning default preferences');
+      return DEFAULT_PREFERENCES;
+    }
     
     const db = firebase.firestore();
     const userDoc = await db.collection("users").doc(currentUser.uid).get();
@@ -604,11 +656,14 @@ async function loadUserPreferences() {
     if (userDoc.exists) {
       const userData = userDoc.data();
       userPreferences = { ...DEFAULT_PREFERENCES, ...userData.ai_preferences };
+      console.log('Loaded user preferences:', userPreferences);
+    } else {
+      console.warn('User document not found, using default preferences');
     }
     
     return userPreferences;
   } catch (error) {
-    console.error("Error loading user preferences:", error);
+    console.error("Error loading user preferences:", error.message, error.stack);
     return DEFAULT_PREFERENCES;
   }
 }
@@ -643,7 +698,7 @@ async function saveUserPreferences() {
     console.log('User preferences saved:', preferences);
     
   } catch (error) {
-    console.error("Error saving preferences:", error);
+    console.error("Error saving preferences:", error.message, error.stack);
     showPreferencesStatus('Failed to save preferences. Please try again.', 'error');
   }
 }
@@ -658,7 +713,7 @@ function loadPreferencesIntoForm() {
     document.getElementById('memory-usage').value = userPreferences.memory_usage || 'contextual';
     document.getElementById('session-reminders').value = userPreferences.session_reminders || 'gentle';
   } catch (error) {
-    console.error("Error loading preferences into form:", error);
+    console.error("Error loading preferences into form:", error.message, error.stack);
   }
 }
 
@@ -672,7 +727,7 @@ async function resetUserPreferences() {
       showPreferencesStatus('Preferences reset to defaults', 'success');
     }
   } catch (error) {
-    console.error("Error resetting preferences:", error);
+    console.error("Error resetting preferences:", error.message, error.stack);
     showPreferencesStatus('Failed to reset preferences', 'error');
   }
 }
@@ -692,7 +747,7 @@ async function testCurrentPreferences() {
         message: "This is a test of my current AI preferences",
         user_id: getUserId(),
         ai_preferences: userPreferences,
-        is_test: true
+        is_test: true
       }),
     });
     
@@ -704,7 +759,7 @@ async function testCurrentPreferences() {
     }
     
   } catch (error) {
-    console.error("Error testing preferences:", error);
+    console.error("Error testing preferences:", error.message, error.stack);
     showPreferencesStatus('Test failed. Please try again.', 'error');
   }
 }
@@ -778,271 +833,292 @@ function applyPreferencesToResponse(response, preferences) {
 
 // Authentication and chat form submission
 document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🔥 DOM loaded, setting up Firebase auth observer');
+  console.log('🔥 DOM loaded, waiting for Firebase initialization');
   
-  // Load preferences for all pages
-  await loadUserPreferences();
-  
-  // Set up auth observer directly
-  firebase.auth().onAuthStateChanged(async function(user) {
-    console.log('Auth state changed:', user ? user.email : 'No user');
+  try {
+    // Wait for Firebase to be ready
+    await waitForFirebase();
+    console.log('✅ Firebase initialized');
     
-    try {
-      if (user && !user.isAnonymous) {
-        console.log('User authenticated:', user.email);
-        const authorized = await checkUserAuthorization(user);
-        if (authorized) {
-          isAuthorized = true;
-          await initializeApp(user);
-        } else {
-          const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
-          if (!userDoc.exists || !userDoc.data().emailVerified) {
-            redirectToAuth('email_verification');
-          } else {
-            redirectToAuth('onboarding_incomplete');
-          }
-        }
-      } else {
-        redirectToAuth('not_signed_in');
-      }
-    } catch (error) {
-      console.error('Auth state observer error:', error);
-      redirectToAuth('auth_error');
-    }
-  });
-  
-  const input = document.getElementById("message");
-  const form = document.getElementById("chat-form");
-  
-  // Only set up chat form listeners if on chat page
-  if (form) {
-    const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
-    if (savedDraft) {
-      input.value = savedDraft;
-      appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
-    }
-
-    setInterval(() => {
-      if (!input) return;
-      const draft = input.value;
-      if (draft.length > 3) {
-        localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
-      } else {
-        localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
-      }
-    }, 2000);
-
-    input?.addEventListener('keyup', () => {
-      setTimeout(() => {
-        const pauseDuration = Date.now() - lastKeystroke;
-        if (pauseDuration > 5000 && input.value.length > 10) {
-          showGentleEncouragement();
-        }
-      }, 5000);
-      lastKeystroke = Date.now();
-    });
-
-    window.addEventListener('offline', () => {
-      appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
-      setFormEnabled(false);
-    });
-
-    window.addEventListener('online', () => {
-      appendMessage("cael", `We're reconnected, ${currentUser?.displayName || 'friend'}. How are you feeling?`);
-      setFormEnabled(true);
-    });
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    // Set up auth observer
+    firebase.auth().onAuthStateChanged(async function(user) {
+      console.log('Auth state changed:', user ? user.email : 'No user');
       
-      if (!isAuthorized) {
-        alert('You are not authorized to chat. Please sign in and complete onboarding.');
+      if (isInitializing) {
+        console.warn('Already handling auth state, skipping...');
         return;
       }
       
-      const message = input.value.trim();
-      if (!message || isTyping) return;
-      
-      appendMessage("user", message);
-      input.value = "";
-      localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
-      
-      setFormEnabled(false);
-      showTypingIndicator();
-      
-      let attempt = 1;
-      const maxAttempts = 3;
-      let success = false;
-      
-      // Load current user preferences
-      await loadUserPreferences();
-      
-      // Check for military context based on user preferences
-      let militaryResponse = null;
-      let country = null;
-      
-      // Only check military context if user allows it
-      if (userPreferences.military_context !== 'never') {
-        // Detect country context
-        const messageLower = message.toLowerCase();
-        if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
-          country = 'uk';
-        } else if (messageLower.includes('us') || messageLower.includes('marine corps') || messageLower.includes('semper fi') || messageLower.includes('fort bragg')) {
-          country = 'us';
-        } else if (messageLower.includes('canada') || messageLower.includes('van doos') || messageLower.includes('ppcli') || messageLower.includes('peacekeeping')) {
-          country = 'ca';
-        } else if (messageLower.includes('australia') || messageLower.includes('anzac') || messageLower.includes('digger') || messageLower.includes('sasr')) {
-          country = 'au';
-        } else if (messageLower.includes('new zealand') || messageLower.includes('kiwi') || messageLower.includes('nzsas') || messageLower.includes('māori battalion')) {
-          country = 'nz';
+      try {
+        if (user && !user.isAnonymous) {
+          console.log('User authenticated:', user.email);
+          const authorized = await checkUserAuthorization(user);
+          if (authorized) {
+            isAuthorized = true;
+            await initializeApp(user);
+          } else {
+            const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
+            if (!userDoc.exists) {
+              console.warn('User document does not exist, redirecting to auth');
+              redirectToAuth('email_verification');
+            } else {
+              const userData = userDoc.data();
+              if (!userData.emailVerified) {
+                redirectToAuth('email_verification');
+              } else if (!userData.onboardingComplete) {
+                redirectToAuth('onboarding_incomplete');
+              } else {
+                redirectToAuth('authorization_failed');
+              }
+            }
+          }
+        } else {
+          console.warn('No user or anonymous user detected');
+          redirectToAuth('not_signed_in');
+        }
+      } catch (error) {
+        console.error('Auth state observer error:', error.message, error.stack);
+        redirectToAuth('auth_error');
+      }
+    });
+    
+    // Load preferences only after auth is confirmed
+    const input = document.getElementById("message");
+    const form = document.getElementById("chat-form");
+    
+    // Only set up chat form listeners if on chat page
+    if (form) {
+      const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
+      if (savedDraft && currentUser) {
+        input.value = savedDraft;
+        appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
+      }
+
+      setInterval(() => {
+        if (!input || !currentUser) return;
+        const draft = input.value;
+        if (draft.length > 3) {
+          localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
+        } else {
+          localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        }
+      }, 2000);
+
+      input?.addEventListener('keyup', () => {
+        setTimeout(() => {
+          const pauseDuration = Date.now() - lastKeystroke;
+          if (pauseDuration > 5000 && input.value.length > 10) {
+            showGentleEncouragement();
+          }
+        }, 5000);
+        lastKeystroke = Date.now();
+      });
+
+      window.addEventListener('offline', () => {
+        appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
+        setFormEnabled(false);
+      });
+
+      window.addEventListener('online', () => {
+        appendMessage("cael", `We're reconnected, ${currentUser?.displayName || 'friend'}. How are you feeling?`);
+        setFormEnabled(true);
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        if (!isAuthorized) {
+          alert('You are not authorized to chat. Please sign in and complete onboarding.');
+          return;
         }
         
-        // Apply military knowledge based on detected country
-        if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
-          const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
-          const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
-          if (regimentInfo) {
-            militaryResponse = window.UKMilitaryKnowledge.getMilitaryResponse(message, regimentInfo);
-          } else if (opContext) {
-            militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more about your experience?`;
+        const message = input.value.trim();
+        if (!message || isTyping) return;
+        
+        appendMessage("user", message);
+        input.value = "";
+        localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        
+        setFormEnabled(false);
+        showTypingIndicator();
+        
+        let attempt = 1;
+        const maxAttempts = 3;
+        let success = false;
+        
+        // Load current user preferences
+        await loadUserPreferences();
+        
+        // Check for military context based on user preferences
+        let militaryResponse = null;
+        let country = null;
+        
+        // Only check military context if user allows it
+        if (userPreferences.military_context !== 'never') {
+          // Detect country context
+          const messageLower = message.toLowerCase();
+          if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
+            country = 'uk';
+          } else if (messageLower.includes('us') || messageLower.includes('marine corps') || messageLower.includes('semper fi') || messageLower.includes('fort bragg')) {
+            country = 'us';
+          } else if (messageLower.includes('canada') || messageLower.includes('van doos') || messageLower.includes('ppcli') || messageLower.includes('peacekeeping')) {
+            country = 'ca';
+          } else if (messageLower.includes('australia') || messageLower.includes('anzac') || messageLower.includes('digger') || messageLower.includes('sasr')) {
+            country = 'au';
+          } else if (messageLower.includes('new zealand') || messageLower.includes('kiwi') || messageLower.includes('nzsas') || messageLower.includes('māori battalion')) {
+            country = 'nz';
           }
-        } else if (country === 'us' && window.USMilitaryKnowledge?.detectMilitaryService(message)) {
-          const unitInfo = window.USMilitaryKnowledge.getUnitInfo(message);
-          const opContext = window.USMilitaryKnowledge.getOperationContext(message);
-          if (unitInfo) {
-            militaryResponse = window.USMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-          } else if (opContext) {
-            militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a defining moment for many. Want to share more?`;
-          }
-        } else if (country === 'ca' && window.CAMilitaryKnowledge?.detectMilitaryService(message)) {
-          const unitInfo = window.CAMilitaryKnowledge.getUnitInfo(message);
-          const opContext = window.CAMilitaryKnowledge.getOperationContext(message);
-          const isFrench = window.CAMilitaryKnowledge.detectLanguage(message) === 'french';
-          if (unitInfo) {
-            militaryResponse = window.CAMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-          } else if (opContext) {
-            militaryResponse = isFrench
-              ? `Vous avez mentionné ${opContext.context} (${opContext.period}). C'était une période importante. Voulez-vous en dire plus?`
-              : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
-          }
-        } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
-          const unitInfo = window.AUMilitaryKnowledge.getUnitInfo(message);
-          const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
-          if (unitInfo) {
-            militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-          } else if (opContext) {
-            militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That's part of the ANZAC legacy. Want to share more, mate?`;
-          }
-        } else if (country === 'nz' && window.NZMilitaryKnowledge?.detectMilitaryService(message)) {
-          const unitInfo = window.NZMilitaryKnowledge.getUnitInfo(message);
-          const opContext = window.NZMilitaryKnowledge.getOperationContext(message);
-          const isMaori = window.NZMilitaryKnowledge.detectMaoriHeritage(message);
-          if (unitInfo) {
-            militaryResponse = window.NZMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-          } else if (opContext) {
-            militaryResponse = isMaori
-              ? `You mentioned ${opContext.context} (${opContext.period}). That's tied to Māori warrior pride. Ake Ake Kia Kaha! Want to share more?`
-              : `You mentioned ${opContext.context} (${opContext.period}). That's part of the Kiwi legacy. Want to share more, mate?`;
+          
+          // Apply military knowledge based on detected country
+          if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
+            const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
+            const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
+            if (regimentInfo) {
+              militaryResponse = window.UKMilitaryKnowledge.getMilitaryResponse(message, regimentInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more about your experience?`;
+            }
+          } else if (country === 'us' && window.USMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.USMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.USMilitaryKnowledge.getOperationContext(message);
+            if (unitInfo) {
+              militaryResponse = window.USMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a defining moment for many. Want to share more?`;
+            }
+          } else if (country === 'ca' && window.CAMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.CAMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.CAMilitaryKnowledge.getOperationContext(message);
+            const isFrench = window.CAMilitaryKnowledge.detectLanguage(message) === 'french';
+            if (unitInfo) {
+              militaryResponse = window.CAMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = isFrench
+                ? `Vous avez mentionné ${opContext.context} (${opContext.period}). C'était une période importante. Voulez-vous en dire plus?`
+                : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
+            }
+          } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.AUMilitaryKnowledge Roku, like Gecko
+            const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
+            if (unitInfo) {
+              militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That's part of the ANZAC legacy. Want to share more, mate?`;
+            }
+          } else if (country === 'nz' && window.NZMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.NZMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.NZMilitaryKnowledge.getOperationContext(message);
+            const isMaori = window.NZMilitaryKnowledge.detectMaoriHeritage(message);
+            if (unitInfo) {
+              militaryResponse = window.NZMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = isMaori
+                ? `You mentioned ${opContext.context} (${opContext.period}). That's tied to Māori warrior pride. Ake Ake Kia Kaha! Want to share more?`
+                : `You mentioned ${opContext.context} (${opContext.period}). That's part of the Kiwi legacy. Want to share more, mate?`;
+            }
           }
         }
-      }
-      
-      while (attempt <= maxAttempts && !success) {
-        try {
-          console.log(`Attempt ${attempt} for message: "${message}"`);
-          
-          const res = await fetch(`${BACKEND_URL}/index`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              message: message,
-              user_id: getUserId(),
-              ai_preferences: userPreferences,
-              military_context: militaryResponse ? { detected: true, response: militaryResponse, country } : null
-            }),
-          });
-          
-          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          
-          const data = await res.json();
-          console.log(`Response received on attempt ${attempt}:`, data);
-          
-          if (data.redirect_url) {
-            console.log('Crisis detected - redirecting to support');
-            hideTypingIndicator();
+        
+        while (attempt <= maxAttempts && !success) {
+          try {
+            console.log(`Attempt ${attempt} for message: "${message}"`);
+            
+            const res = await fetch(`${BACKEND_URL}/index`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: message,
+                user_id: getUserId(),
+                ai_preferences: userPreferences,
+                military_context: militaryResponse ? { detected: true, response: militaryResponse, country } : null
+              }),
+            });
+            
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            
+            const data = await res.json();
+            console.log(`Response received on attempt ${attempt}:`, data);
+            
+            if (data.redirect_url) {
+              console.log('Crisis detected - redirecting to support');
+              hideTypingIndicator();
+              if (data.response && data.response.trim()) {
+                // Apply user preferences to the response
+                const processedResponse = applyPreferencesToResponse(data.response, userPreferences);
+                await appendMessage("cael", processedResponse, true);
+              }
+              setTimeout(() => {
+                window.location.href = data.redirect_url;
+              }, 2000);
+              success = true;
+              break;
+            }
+            
             if (data.response && data.response.trim()) {
+              hideTypingIndicator();
+              
               // Apply user preferences to the response
-              const processedResponse = applyPreferencesToResponse(data.response, userPreferences);
-              await appendMessage("cael", processedResponse, true);
-            }
-            setTimeout(() => {
-              window.location.href = data.redirect_url;
-            }, 2000);
-            success = true;
-            break;
-          }
-          
-          if (data.response && data.response.trim()) {
-            hideTypingIndicator();
-            
-            // Apply user preferences to the response
-            let finalResponse = applyPreferencesToResponse(data.response, userPreferences);
-            
-            // Combine with military response if detected
-            if (militaryResponse && userPreferences.military_context === 'always') {
-              finalResponse = `${militaryResponse} ${finalResponse}`;
-            } else if (militaryResponse && userPreferences.military_context === 'auto') {
-              // Only add military context if it's relevant to the conversation
-              finalResponse = militaryResponse.includes('Want to share more') ? 
-                `${militaryResponse} ${finalResponse}` : finalResponse;
+              let finalResponse = applyPreferencesToResponse(data.response, userPreferences);
+              
+              // Combine with military response if detected
+              if (militaryResponse && userPreferences.military_context === 'always') {
+                finalResponse = `${militaryResponse} ${finalResponse}`;
+              } else if (militaryResponse && userPreferences.military_context === 'auto') {
+                // Only add military context if it's relevant to the conversation
+                finalResponse = militaryResponse.includes('Want to share more') ? 
+                  `${militaryResponse} ${finalResponse}` : finalResponse;
+              }
+              
+              await appendMessage("cael", finalResponse, true);
+              success = true;
+              console.log(`✅ Success on attempt ${attempt}`);
+              break;
+            } else {
+              throw new Error('Empty or invalid response from server');
             }
             
-            await appendMessage("cael", finalResponse, true);
-            success = true;
-            console.log(`✅ Success on attempt ${attempt}`);
-            break;
-          } else {
-            throw new Error('Empty or invalid response from server');
-          }
-          
-        } catch (error) {
-          console.error(`❌ Attempt ${attempt} failed:`, error);
-          
-          if (attempt < maxAttempts) {
-            const retryMessages = [
-              `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
-              `Sorry about that - sometimes I need a moment to find the right words.`,
-              `Technical hiccup on my end. Give me one more try?`
-            ];
+          } catch (error) {
+            console.error(`❌ Attempt ${attempt} failed:`, error.message, error.stack);
             
-            await appendMessage("cael", retryMessages[attempt - 1], true);
+            if (attempt < maxAttempts) {
+              const retryMessages = [
+                `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
+                `Sorry about that - sometimes I need a moment to find the right words.`,
+                `Technical hiccup on my end. Give me one more try?`
+              ];
+              
+              await appendMessage("cael", retryMessages[attempt - 1], true);
+              
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
             
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            attempt++;
           }
-          
-          attempt++;
         }
-      }
-      
-      if (!success) {
-        hideTypingIndicator();
-        await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
-      }
-      
-      setFormEnabled(true);
-      document.getElementById("message")?.focus();
-    });
-  }
-  
-  // Only run preferences initialization if we're on a page with preferences
-  if (document.getElementById('language-style')) {
-    await loadUserPreferences();
-    loadPreferencesIntoForm();
+        
+        if (!success) {
+          hideTypingIndicator();
+          await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
+        }
+        
+        setFormEnabled(true);
+        document.getElementById("message")?.focus();
+      });
+    }
     
-    // Set up event listeners
-    document.getElementById('save-preferences')?.addEventListener('click', saveUserPreferences);
-    document.getElementById('reset-preferences')?.addEventListener('click', resetUserPreferences);
-    document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
+    // Only run preferences initialization if we're on a page with preferences
+    if (document.getElementById('language-style')) {
+      await loadUserPreferences();
+      loadPreferencesIntoForm();
+      
+      // Set up event listeners
+      document.getElementById('save-preferences')?.addEventListener('click', saveUserPreferences);
+      document.getElementById('reset-preferences')?.addEventListener('click', resetUserPreferences);
+      document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
+    }
+  } catch (error) {
+    console.error('DOMContentLoaded error:', error.message, error.stack);
+    redirectToAuth('firebase_init_error');
   }
 });
 
