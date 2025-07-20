@@ -346,7 +346,11 @@ function generateUniqueUserId() {
 }
 
 function getUserId() {
-  return generateUniqueUserId();
+  if (!currentUser || !currentUser.uid) {
+    console.error('❌ No authenticated user found');
+    throw new Error('User not authenticated');
+  }
+  return currentUser.uid;
 }
 
 function showTypingIndicator() {
