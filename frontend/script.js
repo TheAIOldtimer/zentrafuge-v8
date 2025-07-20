@@ -998,7 +998,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
             }
           } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
-            const unitInfo = window.AUMilitaryKnowledge Roku, like Gecko
+            const unitInfo = window.AUMilitaryKnowledge.getUnitInfo(message);
             const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
             if (unitInfo) {
               militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
