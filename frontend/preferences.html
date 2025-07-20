@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zentrafuge × Preferences</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="auth-loading" id="auth-loading" style="display: block;">
+    <div class="loading-spinner"></div>
+    <div class="auth-message">Verifying access...</div>
+  </div>
+  
+  <header id="main-header" style="display: none;">
+    <div class="header-left">
+      <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo"
+           onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Preferences</h1>');" />
+      <span id="user-info">Welcome, [User]</span>
+    </div>
+  
+    <div class="header-center">
+      <nav class="main-nav">
+        <button onclick="window.location.href='chat.html'" class="nav-btn">Chat</button>
+        <button onclick="window.location.href='dashboard.html'" class="nav-btn">Dashboard</button>
+        <button onclick="window.location.href='preferences.html'" class="nav-btn active">Preferences</button>
+        <button onclick="showChartsModal()" class="nav-btn">Charts</button>
+      </nav>
+    </div>
+  
+    <div class="header-right">
+      <button onclick="window.location.href='donate.html'" class="donate-btn">Donate</button>
+      <button onclick="handleLogout()" class="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <div id="preferences" style="display: none;">
+    <div class="preferences-container">
+      <div class="preferences-header">
+        <h2>🎯 AI Communication Preferences</h2>
+        <p>Customize how Cael interacts with you. These settings help create a more personalized and comfortable experience.</p>
+      </div>
+
+      <div class="preferences-grid">
+        <!-- Language Style -->
+        <div class="preference-group">
+          <label for="language-style">
+            <span class="preference-icon">💬</span>
+            <strong>Language Style</strong>
+          </label>
+          <select id="language-style" class="preference-select">
+            <option value="direct">Direct & Straightforward</option>
+            <option value="warm">Warm & Supportive</option>
+            <option value="formal">Formal & Professional</option>
+            <option value="casual">Casual & Friendly</option>
+          </select>
+          <small class="preference-description">How would you like Cael to communicate with you?</small>
+        </div>
+
+        <!-- Response Length -->
+        <div class="preference-group">
+          <label for="response-length">
+            <span class="preference-icon">📏</span>
+            <strong>Response Length</strong>
+          </label>
+          <select id="response-length" class="preference-select">
+            <option value="brief">Brief responses</option>
+            <option value="moderate">Moderate detail</option>
+            <option value="detailed">Detailed responses</option>
+          </select>
+          <small class="preference-description">How much detail do you prefer in responses?</small>
+        </div>
+
+        <!-- Military Context -->
+        <div class="preference-group">
+          <label for="military-context">
+            <span class="preference-icon">🎖️</span>
+            <strong>Military Recognition</strong>
+          </label>
+          <select id="military-context" class="preference-select">
+            <option value="auto">Auto-detect when mentioned</option>
+            <option value="always">Always acknowledge my service</option>
+            <option value="never">Keep conversations general</option>
+          </select>
+          <small class="preference-description">How should Cael handle military context?</small>
+        </div>
+
+        <!-- Emotional Pacing -->
+        <div class="preference-group">
+          <label for="emotional-pacing">
+            <span class="preference-icon">⏱️</span>
+            <strong>Emotional Pacing</strong>
+          </label>
+          <select id="emotional-pacing" class="preference-select">
+            <option value="gentle">Take things slowly</option>
+            <option value="moderate">Balanced approach</option>
+            <option value="direct">Address things head-on</option>
+          </select>
+          <small class="preference-description">How quickly should conversations deepen?</small>
+        </div>
+
+        <!-- Memory Preferences -->
+        <div class="preference-group">
+          <label for="memory-usage">
+            <span class="preference-icon">🧠</span>
+            <strong>Memory Usage</strong>
+          </label>
+          <select id="memory-usage" class="preference-select">
+            <option value="contextual">Reference past conversations naturally</option>
+            <option value="minimal">Keep conversations fresh</option>
+            <option value="detailed">Remember everything we discuss</option>
+          </select>
+          <small class="preference-description">How should Cael use conversation history?</small>
+        </div>
+
+        <!-- Session Preferences -->
+        <div class="preference-group">
+          <label for="session-reminders">
+            <span class="preference-icon">⏰</span>
+            <strong>Session Reminders</strong>
+          </label>
+          <select id="session-reminders" class="preference-select">
+            <option value="gentle">Gentle check-ins after long chats</option>
+            <option value="none">No time reminders</option>
+            <option value="regular">Regular pause suggestions</option>
+          </select>
+          <small class="preference-description">Should Cael remind you to take breaks?</small>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="preferences-actions">
+        <button id="save-preferences" class="save-btn">
+          Save Preferences
+        </button>
+        <button id="reset-preferences" class="reset-btn">
+          Reset to Defaults
+        </button>
+        <button id="test-preferences" class="test-btn">
+          Test Current Settings
+        </button>
+      </div>
+
+      <!-- Status Message -->
+      <div id="preferences-status" class="preferences-status" style="display: none;">
+        <span id="status-message"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase v8 scripts and required scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="firebases-init.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
+<style>
+.preferences-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.preferences-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.preferences-header h2 {
+  color: #0055aa;
+  margin-bottom: 0.5rem;
+}
+
+.preferences-header p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.preference-group {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.2s ease;
+}
+
+.preference-group:hover {
+  box-shadow: 0 2px 8px rgba(0, 85, 170, 0.1);
+}
+
+.preference-group label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.preference-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.preference-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.preference-select:focus {
+  outline: none;
+  border-color: #0055aa;
+  box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
+}
+
+.preference-description {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+.preferences-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.save-btn, .reset-btn, .test-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.save-btn {
+  background: #0055aa;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #004494;
+  transform: translateY(-1px);
+}
+
+.reset-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.reset-btn:hover {
+  background: #5a6268;
+}
+
+.test-btn {
+  background: #28a745;
+  color: white;
+}
+
+.test-btn:hover {
+  background: #218838;
+}
+
+.preferences-status {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.preferences-status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.preferences-status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+  .preferences-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .preferences-actions {
+    flex-direction: column;
+  }
+  
+  .save-btn, .reset-btn, .test-btn {
+    width: 100%;
+  }
+}
+</style>
