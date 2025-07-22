@@ -669,10 +669,16 @@
       const loginBtn = document.getElementById('login-button');
       const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
       
+      if (!email || !password) {
+        showAlert('Please enter both email and password', 'error');
+        return;
+      }
+      
       try {
         loginBtn.disabled = true;
         loginBtn.textContent = t.signingIn;
         isLoggingIn = true;
+        console.log('🔄 User clicked login for:', email);
 
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
@@ -684,20 +690,10 @@
           return;
         }
 
-        const authResult = await checkUserAuthorization(user);
-        if (!authResult.authorized) {
-          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
-                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
-                   t.loginFailed, 'error');
-          await firebase.auth().signOut();
-          isLoggingIn = false;
-          return;
-        }
-
         showAlert(t.welcomeBack, 'success');
       } catch (error) {
-        console.error('Email login error:', error);
-        showAlert(getErrorMessage(error.code));
+        console.error('❌ Email login error:', error);
+        showAlert(getErrorMessage(error.code), 'error');
         isLoggingIn = false;
       } finally {
         loginBtn.disabled = false;
@@ -713,25 +709,19 @@
         googleBtn.disabled = true;
         document.getElementById('google-btn-text').textContent = t.signingInGoogle;
         isLoggingIn = true;
+        console.log('🔄 User clicked Google login');
 
         const provider = new firebase.auth.GoogleAuthProvider();
-        provider.addScope('email profile');
+        provider.addScope('email');
+        provider.addScope('profile');
+        
         const result = await firebase.auth().signInWithPopup(provider);
-        const user = result.user;
-
-        const authResult = await checkUserAuthorization(user);
-        if (!authResult.authorized) {
-          showAlert(authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
-                   t.loginFailed, 'error');
-          await firebase.auth().signOut();
-          isLoggingIn = false;
-          return;
-        }
-
         showAlert(t.welcome, 'success');
       } catch (error) {
-        console.error('Google login error:', error);
-        showAlert(getErrorMessage(error.code));
+        console.error('❌ Google login error:', error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+          showAlert(getErrorMessage(error.code), 'error');
+        }
         isLoggingIn = false;
       } finally {
         googleBtn.disabled = false;
@@ -765,51 +755,32 @@
       console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
       console.log('🔥 isLoggingIn flag:', isLoggingIn);
       
-      if (!user) {
-        console.log('🔥 No user signed in');
-        isLoggingIn = false;
-        return;
-      }
-
-      console.log('👤 User details:', {
-        email: user.email,
-        uid: user.uid,
-        emailVerified: user.emailVerified
-      });
-
-      if (isLoggingIn) {
-        console.log('🔄 Processing NEW LOGIN for:', user.email);
+      if (user && isLoggingIn) {
+        console.log('🔄 Processing fresh login for:', user.email);
+        
         const authResult = await checkUserAuthorization(user);
+        console.log('📋 Authorization result:', authResult);
+        
         if (authResult.authorized) {
-          console.log('✅ User authorized! Preparing redirect to chat...');
-          console.log('🚀 REDIRECTING NOW to chat.html');
+          console.log('✅ User authorized! Redirecting to chat...');
           setTimeout(() => {
             window.location.href = 'chat.html';
           }, 1500);
         } else {
-          console.warn('❌ User not authorized:', authResult.reason);
+          console.warn('❌ Authorization failed:', authResult.reason);
           const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
           showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
                    authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
                    t.loginFailed, 'error');
           await firebase.auth().signOut();
-          isLoggingIn = false;
         }
+        
+        isLoggingIn = false;
+      } else if (user && !isLoggingIn) {
+        console.log('🔄 Existing user session detected for:', user.email);
+        console.log('ℹ️ Not redirecting - waiting for user to click login');
       } else {
-        console.log('🔄 Processing EXISTING SESSION for:', user.email);
-        const authResult = await checkUserAuthorization(user);
-        if (authResult.authorized) {
-          console.log('✅ Existing session authorized! Preparing redirect to chat...');
-          console.log('🚀 REDIRECTING NOW to chat.html');
-          window.location.href = 'chat.html';
-        } else {
-          console.warn('❌ Existing session not authorized:', authResult.reason);
-          const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
-          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
-                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
-                   t.loginFailed, 'error');
-          await firebase.auth().signOut();
-        }
+        console.log('🔄 No user signed in');
       }
     });
 
