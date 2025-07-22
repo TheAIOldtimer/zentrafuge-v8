@@ -1,4 +1,4 @@
-import { waitForFirebase, checkUserAuthorization, initializeApp, getUserId } from './auth.js';
+import { waitForFirebase, getUserId } from './auth.js';
 import { showAlert, setFormEnabled, appendMessage } from './ui.js';
 import { loadUserPreferences, loadPreferencesIntoForm, saveUserPreferences, resetUserPreferences, testCurrentPreferences } from './preferences.js';
 import { currentUser, isAuthorized, lastKeystroke, setLastKeystroke } from './config.js';
@@ -10,67 +10,26 @@ document.addEventListener('DOMContentLoaded', async function() {
   console.log('🔥 DOM loaded, waiting for Firebase initialization');
   
   try {
+    // Initialize Firebase and wait for auth state to be determined
     await waitForFirebase();
     console.log('✅ Firebase initialized');
     
-    firebase.auth().onAuthStateChanged(async function(user) {
-      const t = window.zentrafugeIntl?.translations[window.zentrafugeIntl?.selectedLanguage] || {
-        verifyEmail: 'Please verify your email before logging in.',
-        onboardingIncomplete: 'Please complete onboarding to access the app.',
-        loginFailed: 'Failed to log in. Please try again.',
-        welcomeBack: 'Welcome back! Redirecting to chat...'
-      };
-      console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
-
-      if (user) {
-        try {
-          console.log('🔍 Checking user authorization...');
-          const isAuthorizedResult = await checkUserAuthorization(user);
-          if (!isAuthorizedResult) {
-            console.log('❌ User not authorized, redirecting to login');
-            showAlert(
-              user.emailVerified ? t.onboardingIncomplete : t.verifyEmail,
-              'error'
-            );
-            await firebase.auth().signOut();
-            redirectToAuth(user.emailVerified ? 'onboarding_incomplete' : 'email_not_verified');
-            return;
-          }
-
-          console.log('✅ User authorized');
-          await initializeApp(user);
-          
-          if (window.location.pathname.includes('index.html')) {
-            console.log('➡️ On index.html, redirecting to chat.html');
-            showAlert(t.welcomeBack, 'success');
-            setTimeout(() => {
-              window.location.assign('/chat.html');
-            }, 1500);
-          }
-        } catch (err) {
-          console.error('❌ Auth check failed:', err);
-          showAlert(t.loginFailed, 'error');
-          await firebase.auth().signOut();
-          redirectToAuth('auth_check_failed');
-        }
-      } else {
-        console.log('🔄 No user signed in');
-        if (!window.location.pathname.includes('index.html')) {
-          redirectToAuth('no_user');
-        }
-      }
-    });
+    // NOTE: Auth state is now handled in auth.js - no need for onAuthStateChanged here
+    // The waitForFirebase() function sets up the auth listener and handles all auth state changes
     
+    // Set up chat functionality
     const input = document.getElementById("message");
     const form = document.getElementById("chat-form");
     
     if (form) {
+      // Draft saving functionality
       const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
       if (savedDraft && currentUser) {
         input.value = savedDraft;
         appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
       }
 
+      // Auto-save drafts
       setInterval(() => {
         if (!input || !currentUser) return;
         const draft = input.value;
@@ -81,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
       }, 2000);
 
+      // Keystroke tracking for encouragement
       input?.addEventListener('keyup', () => {
         setTimeout(() => {
           const pauseDuration = Date.now() - lastKeystroke;
@@ -91,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         setLastKeystroke(Date.now());
       });
 
+      // Network status handling
       window.addEventListener('offline', () => {
         appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
         setFormEnabled(false);
@@ -101,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         setFormEnabled(true);
       });
 
+      // Chat form submission
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         
@@ -128,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         let militaryResponse = null;
         let country = null;
         
+        // Military context detection
         if (userPreferences.military_context !== 'never') {
           const messageLower = message.toLowerCase();
           if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
@@ -142,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             country = 'nz';
           }
           
+          // Country-specific military knowledge
           if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
             const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
             const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
@@ -191,6 +155,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           }
         }
         
+        // Retry logic for backend communication
         while (attempt <= maxAttempts && !success) {
           try {
             console.log(`📤 Attempt ${attempt} for message: "${message}"`);
@@ -211,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const data = await res.json();
             console.log(`📬 Response received on attempt ${attempt}:`, data);
             
+            // Handle crisis detection
             if (data.redirect_url) {
               console.log('🚨 Crisis detected - redirecting to support');
               hideTypingIndicator();
@@ -225,15 +191,19 @@ document.addEventListener('DOMContentLoaded', async function() {
               break;
             }
             
+            // Handle normal response
             if (data.response && data.response.trim()) {
               hideTypingIndicator();
               let finalResponse = applyPreferencesToResponse(data.response, userPreferences);
+              
+              // Apply military context if appropriate
               if (militaryResponse && userPreferences.military_context === 'always') {
                 finalResponse = `${militaryResponse} ${finalResponse}`;
               } else if (militaryResponse && userPreferences.military_context === 'auto') {
                 finalResponse = militaryResponse.includes('Want to share more') ? 
                   `${militaryResponse} ${finalResponse}` : finalResponse;
               }
+              
               await appendMessage("cael", finalResponse, true);
               success = true;
               console.log(`✅ Success on attempt ${attempt}`);
@@ -256,6 +226,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           }
         }
         
+        // Handle complete failure
         if (!success) {
           hideTypingIndicator();
           await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
@@ -266,6 +237,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     }
     
+    // Set up preferences page if present
     if (document.getElementById('language-style')) {
       await loadUserPreferences();
       loadPreferencesIntoForm();
@@ -273,8 +245,25 @@ document.addEventListener('DOMContentLoaded', async function() {
       document.getElementById('reset-preferences')?.addEventListener('click', resetUserPreferences);
       document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
     }
+    
   } catch (error) {
     console.error('❌ DOMContentLoaded error:', error.message, error.stack);
     redirectToAuth('firebase_init_error');
   }
 });
+
+/**
+ * Show gentle encouragement when user pauses typing
+ */
+function showGentleEncouragement() {
+  if (!currentUser) return;
+  
+  const encouragements = [
+    `Take your time, ${currentUser.displayName || 'friend'}. I'm here when you're ready.`,
+    `No rush - I'm listening whenever you want to share.`,
+    `I'm here with you. Share what feels right.`
+  ];
+  
+  const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+  appendMessage("cael", randomEncouragement, true);
+}
