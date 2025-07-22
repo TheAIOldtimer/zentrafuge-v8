@@ -8,31 +8,49 @@
   <!-- Firebase v8 scripts -->
   <!-- CORRECT script loading order -->
 
-<!-- 1. Firebase SDK (must load first) -->
+<!-- 1. Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-<!-- 2. Firebase configuration (must load after SDK, before modules) -->
+<!-- 2. Firebase Configuration -->
 <script src="firebases-init.js"></script>
 
-<!-- 3. Non-module utility scripts (load before modules that might use them) -->
-<script src="js/military-knowledge.js"></script>
+<!-- 3. Debug script (TEMPORARY) -->
+<script>
+console.log('🔍 DEBUG: Starting authentication debug...');
 
-<!-- 4. Module scripts (load LAST, in dependency order) -->
-<!-- Note: auth.js must load before main.js since main.js imports from auth.js -->
-<script type="module" src="auth.js"></script>
+if (typeof firebase === 'undefined') {
+    console.error('❌ Firebase not loaded');
+} else {
+    console.log('✅ Firebase loaded');
+}
+
+// Track auth listener registrations
+let listenerCount = 0;
+const originalOnAuthStateChanged = firebase.auth().onAuthStateChanged;
+firebase.auth().onAuthStateChanged = function(...args) {
+    listenerCount++;
+    console.warn(`🚨 Auth listener #${listenerCount} being registered!`);
+    if (listenerCount > 1) {
+        console.error('❌ MULTIPLE AUTH LISTENERS DETECTED - THIS CAUSES THE LOOP!');
+        console.trace('Multiple listener trace:');
+    }
+    return originalOnAuthStateChanged.apply(this, args);
+};
+</script>
+
+<!-- 4. Military knowledge scripts -->
+<script src="utils/military_knowledge/uk_military_data.js"></script>
+<script src="utils/military_knowledge/us_military_data.js"></script>
+<script src="utils/military_knowledge/ca_military_data.js"></script>
+<script src="utils/military_knowledge/au_military_data.js"></script>
+<script src="utils/military_knowledge/nz_military_data.js"></script>
+
+<!-- 5. Your modular scripts -->
+<script type="module" src="js/auth.js"></script>
 <script type="module" src="js/main.js"></script>
-
-<!-- 
-IMPORTANT NOTES:
-1. Firebase SDK must load first
-2. firebases-init.js must load after Firebase SDK but before your modules
-3. Non-module scripts (like military-knowledge.js) should load before modules
-4. auth.js must load before main.js (because main.js imports from auth.js)
-5. Both auth.js and main.js should be type="module" since they use imports/exports
--->
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
