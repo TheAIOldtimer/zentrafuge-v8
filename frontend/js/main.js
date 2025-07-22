@@ -1,4 +1,4 @@
-import { waitForFirebase, getUserId } from './auth.js';
+import { waitForFirebase, getUserId, redirectToAuth } from './auth.js';  // Added redirectToAuth
 import { showAlert, setFormEnabled, appendMessage } from './ui.js';
 import { loadUserPreferences, loadPreferencesIntoForm, saveUserPreferences, resetUserPreferences, testCurrentPreferences } from './preferences.js';
 import { currentUser, isAuthorized, lastKeystroke, setLastKeystroke } from './config.js';
