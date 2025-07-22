@@ -29,38 +29,19 @@
   </header>
 
   <main id="chat-container" style="display: none;">
-    <!-- Chat UI will go here -->
     <div id="chat-box">
-      <!-- Dynamic messages -->
+      <div id="chat"></div>
     </div>
-    <form id="chat-form">
-      <input type="text" id="user-input" placeholder="Type your message..." />
-      <button type="submit">Send</button>
+    <form id="chat-form" style="display: none;">
+      <input type="text" id="message" placeholder="Type your message..." />
+      <button type="submit" id="send-button">Send</button>
     </form>
   </main>
 
-  <!-- Firebase v8 scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebases-init.js"></script>
-
-  <script>
-    firebase.auth().onAuthStateChanged(async function(user) {
-      if (user && user.emailVerified) {
-        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
-        const data = doc.exists ? doc.data() : null;
-        if (data && data.onboardingComplete) {
-          document.getElementById('auth-loading').style.display = 'none';
-          document.getElementById('main-header').style.display = 'flex';
-          document.getElementById('chat-container').style.display = 'block';
-          document.getElementById('user-info').innerText = `Welcome, ${data.name || 'Friend'}`;
-          return;
-        }
-      }
-      // Not allowed
-      window.location.href = 'index.html?reason=unauthorized';
-    });
-  </script>
+  <script src="js/script.js"></script>
 </body>
 </html>
