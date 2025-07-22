@@ -296,6 +296,21 @@
     </form>
   </main>
 
+<script>
+// Quick fixes for missing references
+window.setSessionWarningShown = function(value) { 
+  console.log('setSessionWarningShown:', value); 
+};
+window.checkSessionDuration = function() { 
+  console.log('checkSessionDuration called'); 
+};
+window.sessionDurationInterval = null;
+window.setSessionDurationInterval = function(interval) { 
+  window.sessionDurationInterval = interval; 
+};
+window.isTyping = false;
+</script>
+  
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
