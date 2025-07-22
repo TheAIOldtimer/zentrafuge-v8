@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <style>
-    /* All your existing CSS stays the same */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -16,8 +15,6 @@
       flex-direction: column;
       min-height: 100vh;
     }
-
-    /* Language Selector at Top */
     .top-language-bar {
       width: 100%;
       background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
@@ -29,14 +26,12 @@
       gap: 1rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
     .language-dropdown-container {
       position: relative;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
-
     .language-dropdown-label {
       font-size: 0.9rem;
       color: rgba(255, 255, 255, 0.9);
@@ -44,7 +39,6 @@
       align-items: center;
       gap: 0.5rem;
     }
-
     .language-dropdown {
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -59,22 +53,18 @@
       gap: 0.5rem;
       min-width: 140px;
     }
-
     .language-dropdown:hover {
       background: rgba(255, 255, 255, 0.25);
       border-color: rgba(255, 255, 255, 0.5);
     }
-
     .language-dropdown-arrow {
       margin-left: auto;
       transform: rotate(0deg);
       transition: transform 0.2s ease;
     }
-
     .language-dropdown.open .language-dropdown-arrow {
       transform: rotate(180deg);
     }
-
     .language-options-dropdown {
       position: absolute;
       top: 100%;
@@ -91,13 +81,11 @@
       transition: all 0.2s ease;
       margin-top: 0.5rem;
     }
-
     .language-options-dropdown.open {
       opacity: 1;
       transform: translateY(0);
       pointer-events: all;
     }
-
     .language-option-dropdown {
       padding: 0.8rem 1rem;
       cursor: pointer;
@@ -108,35 +96,28 @@
       gap: 0.8rem;
       color: #333;
     }
-
     .language-option-dropdown:last-child {
       border-bottom: none;
     }
-
     .language-option-dropdown:hover {
       background: #f8f9ff;
     }
-
     .language-option-dropdown.selected {
       background: #eef2ff;
       color: #0055aa;
       font-weight: 500;
     }
-
     .language-flag {
       font-size: 1.1rem;
     }
-
     .language-name {
       flex: 1;
     }
-
     .language-detected {
       font-size: 0.75rem;
       color: #0055aa;
       font-style: italic;
     }
-
     header {
       text-align: center;
       padding: 2rem 1rem 1rem;
@@ -144,7 +125,6 @@
     header img {
       max-width: 260px;
     }
-    
     .login-box {
       background: white;
       padding: 2rem;
@@ -154,7 +134,6 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
-    
     .login-box input {
       width: 100%;
       padding: 0.75rem;
@@ -164,13 +143,11 @@
       font-size: 1rem;
       box-sizing: border-box;
     }
-    
     .login-box input:focus {
       outline: none;
       border-color: #0055aa;
       box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
     }
-    
     .btn {
       width: 100%;
       padding: 0.75rem;
@@ -182,30 +159,25 @@
       margin-bottom: 1rem;
       font-weight: 500;
     }
-    
     .btn-primary {
       background-color: #003366;
       color: white;
     }
-    
     .btn-primary:hover:not(:disabled) {
       background-color: #0055aa;
       transform: translateY(-1px);
     }
-    
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
-    
     .divider {
       margin: 1.5rem 0;
       text-align: center;
       color: #999;
       position: relative;
     }
-
     .divider::before {
       content: '';
       position: absolute;
@@ -215,12 +187,10 @@
       height: 1px;
       background: #ddd;
     }
-
     .divider span {
       background: white;
       padding: 0 1rem;
     }
-    
     .google-btn {
       background: white;
       color: #333;
@@ -230,50 +200,41 @@
       justify-content: center;
       gap: 0.5rem;
     }
-
     .google-btn:hover:not(:disabled) {
       background: #f8f9fa;
       border-color: #0055aa;
       transform: translateY(-1px);
     }
-    
     .register-link {
       text-align: center;
       margin-top: 1rem;
       font-size: 0.95rem;
     }
-    
     .register-link a {
       color: #003366;
       text-decoration: none;
     }
-    
     .register-link a:hover {
       text-decoration: underline;
     }
-    
     .error-message, .success-message {
       padding: 0.8rem;
       border-radius: 8px;
       margin-bottom: 1rem;
       display: none;
     }
-
     .error-message {
       background: #f8d7da;
       color: #721c24;
     }
-
     .success-message {
       background: #d4edda;
       color: #155724;
     }
-    
     .donate {
       text-align: center;
       margin: 1rem;
     }
-    
     .donate a {
       padding: 0.5rem 1rem;
       background: green;
@@ -283,11 +244,9 @@
       font-weight: bold;
       transition: background-color 0.2s ease;
     }
-    
     .donate a:hover {
       background: darkgreen;
     }
-    
     .about {
       background: white;
       padding: 2rem;
@@ -296,7 +255,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-radius: 12px;
     }
-    
     footer {
       text-align: center;
       padding: 1rem;
@@ -304,23 +262,19 @@
       color: #777;
       margin-top: auto;
     }
-
     @media (max-width: 600px) {
       .top-language-bar {
         padding: 1rem;
         flex-direction: column;
         gap: 0.5rem;
       }
-
       .language-dropdown-label {
         font-size: 0.8rem;
       }
-
       .login-box {
         margin: 1rem;
         padding: 1.5rem;
       }
-
       .about {
         margin: 1rem;
         padding: 1.5rem;
@@ -329,7 +283,6 @@
   </style>
 </head>
 <body>
-  <!-- Top Language Selector Bar -->
   <div class="top-language-bar">
     <div class="language-dropdown-container">
       <div class="language-dropdown-label">
@@ -342,7 +295,6 @@
         <span class="language-dropdown-arrow">▼</span>
       </div>
       <div class="language-options-dropdown" id="language-dropdown">
-        <!-- Language options will be populated by JavaScript -->
       </div>
     </div>
   </div>
@@ -388,10 +340,9 @@
   </div>
   
   <footer id="footer-text">
-    &copy; 2025 Zentrafuge. All rights reserved.
+    © 2025 Zentrafuge. All rights reserved.
   </footer>
 
-  <!-- Firebase scripts at bottom -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -399,410 +350,475 @@
   <script src="firebases-init.js"></script>
 
   <script>
-    // All your existing JavaScript stays exactly the same
-    // Enhanced International System for Index Page
+    // Enhanced checkUserAuthorization with detailed debug logging
+    async function checkUserAuthorization(user) {
+      console.log('🔍 === AUTHORIZATION CHECK START ===');
+      try {
+        if (!user) {
+          console.warn('❌ No user provided to checkUserAuthorization');
+          return { authorized: false, reason: 'No user provided' };
+        }
+        
+        console.log('🔍 Checking authorization for user:', user.email, 'UID:', user.uid);
+        
+        const db = firebase.firestore();
+        console.log('🔍 Accessing Firestore for user document...');
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+          console.warn('❌ User document not found for:', user.email);
+          return { authorized: false, reason: 'User document not found' };
+        }
+        
+        const userData = userDoc.data();
+        console.log('📄 Full user document data:', JSON.stringify(userData, null, 2));
+        
+        if (!userData.emailVerified) {
+          console.warn('❌ Email not verified in Firestore for:', user.email);
+          return { authorized: false, reason: 'Email not verified' };
+        }
+        
+        if (!userData.onboardingComplete) {
+          console.warn('❌ Onboarding not completed for:', user.email);
+          return { authorized: false, reason: 'Onboarding not completed' };
+        }
+        
+        console.log('✅ Authorization succeeded for:', user.email);
+        return { authorized: true };
+      } catch (error) {
+        console.error('❌ Authorization check failed:', error.message);
+        console.error('Stack trace:', error.stack);
+        return { authorized: false, reason: error.message };
+      } finally {
+        console.log('🔍 === AUTHORIZATION CHECK END ===');
+      }
+    }
+
     class ZentrafugeInternational {
-        constructor() {
-            this.supportedLanguages = {
-                'en': { name: 'English', flag: '🇬🇧' },
-                'de': { name: 'Deutsch', flag: '🇩🇪' },
-                'fr': { name: 'Français', flag: '🇫🇷' },
-                'es': { name: 'Español', flag: '🇪🇸' },
-                'it': { name: 'Italiano', flag: '🇮🇹' },
-                'nl': { name: 'Nederlands', flag: '🇳🇱' },
-                'pt': { name: 'Português', flag: '🇵🇹' }
-            };
-            
-            this.detectedLanguage = this.detectUserLanguage();
-            this.selectedLanguage = this.loadSavedLanguage() || this.detectedLanguage;
-            this.translations = this.getTranslations();
-            
-            this.initializeLanguageSelector();
-            this.updatePageContent();
+      constructor() {
+        this.supportedLanguages = {
+          'en': { name: 'English', flag: '🇬🇧' },
+          'de': { name: 'Deutsch', flag: '🇩🇪' },
+          'fr': { name: 'Français', flag: '🇫🇷' },
+          'es': { name: 'Español', flag: '🇪🇸' },
+          'it': { name: 'Italiano', flag: '🇮🇹' },
+          'nl': { name: 'Nederlands', flag: '🇳🇱' },
+          'pt': { name: 'Português', flag: '🇵🇹' }
+        };
+        this.detectedLanguage = this.detectUserLanguage();
+        this.selectedLanguage = this.loadSavedLanguage() || this.detectedLanguage;
+        this.translations = this.getTranslations();
+        this.initializeLanguageSelector();
+        this.updatePageContent();
+      }
+      detectUserLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage;
+        const langCode = browserLang.split('-')[0];
+        return this.supportedLanguages[langCode] ? langCode : 'en';
+      }
+      loadSavedLanguage() {
+        try {
+          return localStorage.getItem('zentrafuge_language');
+        } catch (e) {
+          return null;
         }
-
-        detectUserLanguage() {
-            const browserLang = navigator.language || navigator.userLanguage;
-            const langCode = browserLang.split('-')[0];
-            return this.supportedLanguages[langCode] ? langCode : 'en';
+      }
+      saveLanguage(langCode) {
+        try {
+          localStorage.setItem('zentrafuge_language', langCode);
+        } catch (e) {
+          console.log('Could not save language preference');
         }
-
-        loadSavedLanguage() {
-            try {
-                return localStorage.getItem('zentrafuge_language');
-            } catch (e) {
-                return null;
-            }
+      }
+      getTranslations() {
+        return {
+          'en': {
+            languageLabel: 'Language / Langue / Sprache',
+            emailPlaceholder: 'Email',
+            passwordPlaceholder: 'Password',
+            loginButton: 'Log In',
+            dividerText: 'or',
+            googleBtnText: 'Continue with Google',
+            registerText: 'Not registered yet?',
+            registerLink: 'Register here',
+            donateButton: 'Donate',
+            aboutTitle: 'What is Zentrafuge?',
+            aboutDescription: 'Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it\'s your safe space to reflect, reconnect, and remember who you are. 🌀',
+            footerText: '© 2025 Zentrafuge. All rights reserved.',
+            loginFailed: 'Login failed',
+            verifyEmail: 'Please verify your email before logging in.',
+            onboardingIncomplete: 'Please complete onboarding before logging in.',
+            signingIn: 'Signing in...',
+            welcomeBack: 'Welcome back! Redirecting...',
+            signingInGoogle: 'Signing in with Google...',
+            welcome: 'Welcome! Redirecting...'
+          },
+          'de': {
+            languageLabel: 'Sprache / Language / Langue',
+            emailPlaceholder: 'E-Mail',
+            passwordPlaceholder: 'Passwort',
+            loginButton: 'Anmelden',
+            dividerText: 'oder',
+            googleBtnText: 'Mit Google fortfahren',
+            registerText: 'Noch nicht registriert?',
+            registerLink: 'Hier registrieren',
+            donateButton: 'Spenden',
+            aboutTitle: 'Was ist Zentrafuge?',
+            aboutDescription: 'Zentrafuge ist ein warmherziger, emotional intelligenter KI-Begleiter namens Cael. Entwickelt für Sinnsucher, Kreative in der Genesung und neurodivergente Erwachsene, die nach ruhiger Struktur suchen. Es ist dein sicherer Raum zum Reflektieren, Wiederfinden und Erinnern daran, wer du bist. 🌀',
+            footerText: '© 2025 Zentrafuge. Alle Rechte vorbehalten.',
+            loginFailed: 'Anmeldung fehlgeschlagen',
+            verifyEmail: 'Bitte verifiziere deine E-Mail vor der Anmeldung.',
+            onboardingIncomplete: 'Bitte schließe das Onboarding ab, bevor du dich anmeldest.',
+            signingIn: 'Anmelden...',
+            welcomeBack: 'Willkommen zurück! Weiterleitung...',
+            signingInGoogle: 'Mit Google anmelden...',
+            welcome: 'Willkommen! Weiterleitung...'
+          },
+          'fr': {
+            languageLabel: 'Langue / Language / Sprache',
+            emailPlaceholder: 'E-mail',
+            passwordPlaceholder: 'Mot de passe',
+            loginButton: 'Se connecter',
+            dividerText: 'ou',
+            googleBtnText: 'Continuer avec Google',
+            registerText: 'Pas encore inscrit?',
+            registerLink: 'S\'inscrire ici',
+            donateButton: 'Faire un don',
+            aboutTitle: 'Qu\'est-ce que Zentrafuge?',
+            aboutDescription: 'Zentrafuge est un compagnon IA chaleureux et émotionnellement intelligent nommé Cael. Conçu pour les chercheurs de sens, les créateurs en rétablissement et les adultes neurodivergents recherchant une structure calme. C\'est votre espace sûr pour réfléchir, vous reconnecter et vous souvenir de qui vous êtes. 🌀',
+            footerText: '© 2025 Zentrafuge. Tous droits réservés.',
+            loginFailed: 'Échec de la connexion',
+            verifyEmail: 'Veuillez vérifier votre e-mail avant de vous connecter.',
+            onboardingIncomplete: 'Veuillez compléter l\'onboarding avant de vous connecter.',
+            signingIn: 'Connexion...',
+            welcomeBack: 'Bon retour! Redirection...',
+            signingInGoogle: 'Connexion avec Google...',
+            welcome: 'Bienvenue! Redirection...'
+          },
+          'es': {
+            languageLabel: 'Idioma / Language / Langue',
+            emailPlaceholder: 'Correo electrónico',
+            passwordPlaceholder: 'Contraseña',
+            loginButton: 'Iniciar sesión',
+            dividerText: 'o',
+            googleBtnText: 'Continuar con Google',
+            registerText: '¿Aún no estás registrado?',
+            registerLink: 'Regístrate aquí',
+            donateButton: 'Donar',
+            aboutTitle: '¿Qué es Zentrafuge?',
+            aboutDescription: 'Zentrafuge es un compañero de IA cálido y emocionalmente inteligente llamado Cael. Construido para buscadores de significado, creativos en recuperación y adultos neurodivergentes que anhelan estructura tranquila. Es tu espacio seguro para reflexionar, reconectarte y recordar quién eres. 🌀',
+            footerText: '© 2025 Zentrafuge. Todos los derechos reservados.',
+            loginFailed: 'Error de inicio de sesión',
+            verifyEmail: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
+            onboardingIncomplete: 'Por favor completa el onboarding antes de iniciar sesión.',
+            signingIn: 'Iniciando sesión...',
+            welcomeBack: '¡Bienvenido de vuelta! Redirigiendo...',
+            signingInGoogle: 'Iniciando sesión con Google...',
+            welcome: '¡Bienvenido! Redirigiendo...'
+          },
+          'it': {
+            languageLabel: 'Lingua / Language / Langue',
+            emailPlaceholder: 'Email',
+            passwordPlaceholder: 'Password',
+            loginButton: 'Accedi',
+            dividerText: 'o',
+            googleBtnText: 'Continua con Google',
+            registerText: 'Non ancora registrato?',
+            registerLink: 'Registrati qui',
+            donateButton: 'Dona',
+            aboutTitle: 'Cos\'è Zentrafuge?',
+            aboutDescription: 'Zentrafuge è un compagno IA caloroso ed emotivamente intelligente chiamato Cael. Costruito per ricercatori di significato, creativi in recupero e adulti neurodivergenti che desiderano una struttura calma. È il tuo spazio sicuro per riflettere, riconnetterti e ricordare chi sei. 🌀',
+            footerText: '© 2025 Zentrafuge. Tutti i diritti riservati.',
+            loginFailed: 'Accesso fallito',
+            verifyEmail: 'Verifica la tua email prima di accedere.',
+            onboardingIncomplete: 'Completa l\'onboarding prima di accedere.',
+            signingIn: 'Accesso...',
+            welcomeBack: 'Bentornato! Reindirizzamento...',
+            signingInGoogle: 'Accesso con Google...',
+            welcome: 'Benvenuto! Reindirizzamento...'
+          },
+          'nl': {
+            languageLabel: 'Taal / Language / Langue',
+            emailPlaceholder: 'E-mail',
+            passwordPlaceholder: 'Wachtwoord',
+            loginButton: 'Inloggen',
+            dividerText: 'of',
+            googleBtnText: 'Doorgaan met Google',
+            registerText: 'Nog niet geregistreerd?',
+            registerLink: 'Registreer hier',
+            donateButton: 'Doneren',
+            aboutTitle: 'Wat is Zentrafuge?',
+            aboutDescription: 'Zentrafuge is een warme, emotioneel intelligente AI-metgezel genaamd Cael. Gebouwd voor betekeniszoekers, creativen in herstel en neurodivergente volwassenen die verlangen naar rustige structuur. Het is jouw veilige ruimte om te reflecteren, je te herverbinden en te herinneren wie je bent. 🌀',
+            footerText: '© 2025 Zentrafuge. Alle rechten voorbehouden.',
+            loginFailed: 'Inloggen mislukt',
+            verifyEmail: 'Verifieer je e-mail voordat je inlogt.',
+            onboardingIncomplete: 'Voltooi het onboardingproces voordat je inlogt.',
+            signingIn: 'Inloggen...',
+            welcomeBack: 'Welkom terug! Doorverwijzen...',
+            signingInGoogle: 'Inloggen met Google...',
+            welcome: 'Welkom! Doorverwijzen...'
+          },
+          'pt': {
+            languageLabel: 'Idioma / Language / Langue',
+            emailPlaceholder: 'Email',
+            passwordPlaceholder: 'Palavra-passe',
+            loginButton: 'Entrar',
+            dividerText: 'ou',
+            googleBtnText: 'Continuar com Google',
+            registerText: 'Ainda não registado?',
+            registerLink: 'Registar aqui',
+            donateButton: 'Doar',
+            aboutTitle: 'O que é o Zentrafuge?',
+            aboutDescription: 'Zentrafuge é um companheiro IA caloroso e emocionalmente inteligente chamado Cael. Construído para buscadores de significado, criativos em recuperação e adultos neurodivergentes que anseiam por estrutura calma. É o teu espaço seguro para refletir, reconectar e lembrar quem és. 🌀',
+            footerText: '© 2025 Zentrafuge. Todos os direitos reservados.',
+            loginFailed: 'Falha no login',
+            verifyEmail: 'Por favor verifica o teu email antes de fazer login.',
+            onboardingIncomplete: 'Por favor completa o onboarding antes de fazer login.',
+            signingIn: 'Entrando...',
+            welcomeBack: 'Bem-vindo de volta! Redirecionando...',
+            signingInGoogle: 'Entrando com Google...',
+            welcome: 'Bem-vindo! Redirecionando...'
+          }
+        };
+      }
+      initializeLanguageSelector() {
+        const dropdown = document.getElementById('language-dropdown');
+        dropdown.innerHTML = Object.entries(this.supportedLanguages).map(([code, lang]) => `
+          <div class="language-option-dropdown ${code === this.selectedLanguage ? 'selected' : ''}" 
+               onclick="window.zentrafugeIntl.setLanguage('${code}')">
+            <span class="language-flag">${lang.flag}</span>
+            <span class="language-name">${lang.name}</span>
+            ${code === this.detectedLanguage ? '<span class="language-detected">(detected)</span>' : ''}
+          </div>
+        `).join('');
+        const selectedLang = this.supportedLanguages[this.selectedLanguage];
+        document.getElementById('selected-flag').textContent = selectedLang.flag;
+        document.getElementById('selected-language').textContent = selectedLang.name;
+      }
+      setLanguage(langCode) {
+        this.selectedLanguage = langCode;
+        this.saveLanguage(langCode);
+        this.updatePageContent();
+        this.initializeLanguageSelector();
+        this.closeLanguageDropdown();
+      }
+      updatePageContent() {
+        const t = this.translations[this.selectedLanguage];
+        document.getElementById('language-label').textContent = t.languageLabel;
+        document.getElementById('login-email').placeholder = t.emailPlaceholder;
+        document.getElementById('login-password').placeholder = t.passwordPlaceholder;
+        document.getElementById('login-button').textContent = t.loginButton;
+        document.getElementById('divider-text').textContent = t.dividerText;
+        document.getElementById('google-btn-text').textContent = t.googleBtnText;
+        document.getElementById('register-text').textContent = t.registerText;
+        document.getElementById('register-link').textContent = t.registerLink;
+        document.getElementById('donate-button').textContent = t.donateButton;
+        document.getElementById('about-title').textContent = t.aboutTitle;
+        document.getElementById('about-description').textContent = t.aboutDescription;
+        document.getElementById('footer-text').textContent = t.footerText;
+        document.documentElement.lang = this.selectedLanguage;
+        this.storeLanguageForOnboarding();
+      }
+      storeLanguageForOnboarding() {
+        try {
+          sessionStorage.setItem('zentrafuge_selected_language', this.selectedLanguage);
+        } catch (e) {
+          console.log('Could not store language for onboarding');
         }
-
-        saveLanguage(langCode) {
-            try {
-                localStorage.setItem('zentrafuge_language', langCode);
-            } catch (e) {
-                console.log('Could not save language preference');
-            }
-        }
-
-        getTranslations() {
-            return {
-                'en': {
-                    languageLabel: 'Language / Langue / Sprache',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password',
-                    loginButton: 'Log In',
-                    dividerText: 'or',
-                    googleBtnText: 'Continue with Google',
-                    registerText: 'Not registered yet?',
-                    registerLink: 'Register here',
-                    donateButton: 'Donate',
-                    aboutTitle: 'What is Zentrafuge?',
-                    aboutDescription: 'Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it\'s your safe space to reflect, reconnect, and remember who you are. 🌀',
-                    footerText: '© 2025 Zentrafuge. All rights reserved.',
-                    loginFailed: 'Login failed',
-                    verifyEmail: 'Please verify your email before logging in.',
-                    signingIn: 'Signing in...',
-                    welcomeBack: 'Welcome back! Redirecting...',
-                    signingInGoogle: 'Signing in with Google...',
-                    welcome: 'Welcome! Redirecting...'
-                },
-                'de': {
-                    languageLabel: 'Sprache / Language / Langue',
-                    emailPlaceholder: 'E-Mail',
-                    passwordPlaceholder: 'Passwort',
-                    loginButton: 'Anmelden',
-                    dividerText: 'oder',
-                    googleBtnText: 'Mit Google fortfahren',
-                    registerText: 'Noch nicht registriert?',
-                    registerLink: 'Hier registrieren',
-                    donateButton: 'Spenden',
-                    aboutTitle: 'Was ist Zentrafuge?',
-                    aboutDescription: 'Zentrafuge ist ein warmherziger, emotional intelligenter KI-Begleiter namens Cael. Entwickelt für Sinnsucher, Kreative in der Genesung und neurodivergente Erwachsene, die nach ruhiger Struktur suchen. Es ist dein sicherer Raum zum Reflektieren, Wiederfinden und Erinnern daran, wer du bist. 🌀',
-                    footerText: '© 2025 Zentrafuge. Alle Rechte vorbehalten.',
-                    loginFailed: 'Anmeldung fehlgeschlagen',
-                    verifyEmail: 'Bitte verifiziere deine E-Mail vor der Anmeldung.',
-                    signingIn: 'Anmelden...',
-                    welcomeBack: 'Willkommen zurück! Weiterleitung...',
-                    signingInGoogle: 'Mit Google anmelden...',
-                    welcome: 'Willkommen! Weiterleitung...'
-                },
-                'fr': {
-                    languageLabel: 'Langue / Language / Sprache',
-                    emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Mot de passe',
-                    loginButton: 'Se connecter',
-                    dividerText: 'ou',
-                    googleBtnText: 'Continuer avec Google',
-                    registerText: 'Pas encore inscrit?',
-                    registerLink: 'S\'inscrire ici',
-                    donateButton: 'Faire un don',
-                    aboutTitle: 'Qu\'est-ce que Zentrafuge?',
-                    aboutDescription: 'Zentrafuge est un compagnon IA chaleureux et émotionnellement intelligent nommé Cael. Conçu pour les chercheurs de sens, les créateurs en rétablissement et les adultes neurodivergents recherchant une structure calme. C\'est votre espace sûr pour réfléchir, vous reconnecter et vous souvenir de qui vous êtes. 🌀',
-                    footerText: '© 2025 Zentrafuge. Tous droits réservés.',
-                    loginFailed: 'Échec de la connexion',
-                    verifyEmail: 'Veuillez vérifier votre e-mail avant de vous connecter.',
-                    signingIn: 'Connexion...',
-                    welcomeBack: 'Bon retour! Redirection...',
-                    signingInGoogle: 'Connexion avec Google...',
-                    welcome: 'Bienvenue! Redirection...'
-                },
-                'es': {
-                    languageLabel: 'Idioma / Language / Langue',
-                    emailPlaceholder: 'Correo electrónico',
-                    passwordPlaceholder: 'Contraseña',
-                    loginButton: 'Iniciar sesión',
-                    dividerText: 'o',
-                    googleBtnText: 'Continuar con Google',
-                    registerText: '¿Aún no estás registrado?',
-                    registerLink: 'Regístrate aquí',
-                    donateButton: 'Donar',
-                    aboutTitle: '¿Qué es Zentrafuge?',
-                    aboutDescription: 'Zentrafuge es un compañero de IA cálido y emocionalmente inteligente llamado Cael. Construido para buscadores de significado, creativos en recuperación y adultos neurodivergentes que anhelan estructura tranquila. Es tu espacio seguro para reflexionar, reconectarte y recordar quién eres. 🌀',
-                    footerText: '© 2025 Zentrafuge. Todos los derechos reservados.',
-                    loginFailed: 'Error de inicio de sesión',
-                    verifyEmail: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
-                    signingIn: 'Iniciando sesión...',
-                    welcomeBack: '¡Bienvenido de vuelta! Redirigiendo...',
-                    signingInGoogle: 'Iniciando sesión con Google...',
-                    welcome: '¡Bienvenido! Redirigiendo...'
-                },
-                'it': {
-                    languageLabel: 'Lingua / Language / Langue',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password',
-                    loginButton: 'Accedi',
-                    dividerText: 'o',
-                    googleBtnText: 'Continua con Google',
-                    registerText: 'Non ancora registrato?',
-                    registerLink: 'Registrati qui',
-                    donateButton: 'Dona',
-                    aboutTitle: 'Cos\'è Zentrafuge?',
-                    aboutDescription: 'Zentrafuge è un compagno IA caloroso ed emotivamente intelligente chiamato Cael. Costruito per ricercatori di significato, creativi in recupero e adulti neurodivergenti che desiderano una struttura calma. È il tuo spazio sicuro per riflettere, riconnetterti e ricordare chi sei. 🌀',
-                    footerText: '© 2025 Zentrafuge. Tutti i diritti riservati.',
-                    loginFailed: 'Accesso fallito',
-                    verifyEmail: 'Verifica la tua email prima di accedere.',
-                    signingIn: 'Accesso...',
-                    welcomeBack: 'Bentornato! Reindirizzamento...',
-                    signingInGoogle: 'Accesso con Google...',
-                    welcome: 'Benvenuto! Reindirizzamento...'
-                },
-                'nl': {
-                    languageLabel: 'Taal / Language / Langue',
-                    emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Wachtwoord',
-                    loginButton: 'Inloggen',
-                    dividerText: 'of',
-                    googleBtnText: 'Doorgaan met Google',
-                    registerText: 'Nog niet geregistreerd?',
-                    registerLink: 'Registreer hier',
-                    donateButton: 'Doneren',
-                    aboutTitle: 'Wat is Zentrafuge?',
-                    aboutDescription: 'Zentrafuge is een warme, emotioneel intelligente AI-metgezel genaamd Cael. Gebouwd voor betekeniszoekers, creativen in herstel en neurodivergente volwassenen die verlangen naar rustige structuur. Het is jouw veilige ruimte om te reflecteren, je te herverbinden en te herinneren wie je bent. 🌀',
-                    footerText: '© 2025 Zentrafuge. Alle rechten voorbehouden.',
-                    loginFailed: 'Inloggen mislukt',
-                    verifyEmail: 'Verifieer je e-mail voordat je inlogt.',
-                    signingIn: 'Inloggen...',
-                    welcomeBack: 'Welkom terug! Doorverwijzen...',
-                    signingInGoogle: 'Inloggen met Google...',
-                    welcome: 'Welkom! Doorverwijzen...'
-                },
-                'pt': {
-                    languageLabel: 'Idioma / Language / Langue',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Palavra-passe',
-                    loginButton: 'Entrar',
-                    dividerText: 'ou',
-                    googleBtnText: 'Continuar com Google',
-                    registerText: 'Ainda não registado?',
-                    registerLink: 'Registar aqui',
-                    donateButton: 'Doar',
-                    aboutTitle: 'O que é o Zentrafuge?',
-                    aboutDescription: 'Zentrafuge é um companheiro IA caloroso e emocionalmente inteligente chamado Cael. Construído para buscadores de significado, criativos em recuperação e adultos neurodivergentes que anseiam por estrutura calma. É o teu espaço seguro para refletir, reconectar e lembrar quem és. 🌀',
-                    footerText: '© 2025 Zentrafuge. Todos os direitos reservados.',
-                    loginFailed: 'Falha no login',
-                    verifyEmail: 'Por favor verifica o teu email antes de fazer login.',
-                    signingIn: 'Entrando...',
-                    welcomeBack: 'Bem-vindo de volta! Redirecionando...',
-                    signingInGoogle: 'Entrando com Google...',
-                    welcome: 'Bem-vindo! Redirecionando...'
-                }
-            };
-        }
-
-        initializeLanguageSelector() {
-            const dropdown = document.getElementById('language-dropdown');
-            dropdown.innerHTML = Object.entries(this.supportedLanguages).map(([code, lang]) => `
-                <div class="language-option-dropdown ${code === this.selectedLanguage ? 'selected' : ''}" 
-                     onclick="window.zentrafugeIntl.setLanguage('${code}')">
-                    <span class="language-flag">${lang.flag}</span>
-                    <span class="language-name">${lang.name}</span>
-                    ${code === this.detectedLanguage ? '<span class="language-detected">(detected)</span>' : ''}
-                </div>
-            `).join('');
-
-            // Update selected language display
-            const selectedLang = this.supportedLanguages[this.selectedLanguage];
-            document.getElementById('selected-flag').textContent = selectedLang.flag;
-            document.getElementById('selected-language').textContent = selectedLang.name;
-        }
-
-        setLanguage(langCode) {
-            this.selectedLanguage = langCode;
-            this.saveLanguage(langCode);
-            this.updatePageContent();
-            this.initializeLanguageSelector();
-            this.closeLanguageDropdown();
-        }
-
-        updatePageContent() {
-            const t = this.translations[this.selectedLanguage];
-            
-            // Update all translatable elements
-            document.getElementById('language-label').textContent = t.languageLabel;
-            document.getElementById('login-email').placeholder = t.emailPlaceholder;
-            document.getElementById('login-password').placeholder = t.passwordPlaceholder;
-            document.getElementById('login-button').textContent = t.loginButton;
-            document.getElementById('divider-text').textContent = t.dividerText;
-            document.getElementById('google-btn-text').textContent = t.googleBtnText;
-            document.getElementById('register-text').textContent = t.registerText;
-            document.getElementById('register-link').textContent = t.registerLink;
-            document.getElementById('donate-button').textContent = t.donateButton;
-            document.getElementById('about-title').textContent = t.aboutTitle;
-            document.getElementById('about-description').textContent = t.aboutDescription;
-            document.getElementById('footer-text').textContent = t.footerText;
-            
-            // Update page language attribute
-            document.documentElement.lang = this.selectedLanguage;
-            
-            // Store language for onboarding page
-            this.storeLanguageForOnboarding();
-        }
-
-        storeLanguageForOnboarding() {
-            try {
-                sessionStorage.setItem('zentrafuge_selected_language', this.selectedLanguage);
-            } catch (e) {
-                console.log('Could not store language for onboarding');
-            }
-        }
-
-        closeLanguageDropdown() {
-            document.getElementById('language-dropdown').classList.remove('open');
-            document.querySelector('.language-dropdown').classList.remove('open');
-        }
-
-        getSelectedLanguage() {
-            return this.selectedLanguage;
-        }
+      }
+      closeLanguageDropdown() {
+        document.getElementById('language-dropdown').classList.remove('open');
+        document.querySelector('.language-dropdown').classList.remove('open');
+      }
+      getSelectedLanguage() {
+        return this.selectedLanguage;
+      }
     }
 
     function toggleLanguageDropdown() {
-        const dropdown = document.getElementById('language-dropdown');
-        const button = document.querySelector('.language-dropdown');
-        
-        dropdown.classList.toggle('open');
-        button.classList.toggle('open');
+      const dropdown = document.getElementById('language-dropdown');
+      const button = document.querySelector('.language-dropdown');
+      dropdown.classList.toggle('open');
+      button.classList.toggle('open');
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        const container = document.querySelector('.language-dropdown-container');
-        if (!container.contains(e.target)) {
-            document.getElementById('language-dropdown').classList.remove('open');
-            document.querySelector('.language-dropdown').classList.remove('open');
-        }
+      const container = document.querySelector('.language-dropdown-container');
+      if (!container.contains(e.target)) {
+        document.getElementById('language-dropdown').classList.remove('open');
+        document.querySelector('.language-dropdown').classList.remove('open');
+      }
     });
 
-    // Initialize international system
     window.zentrafugeIntl = new ZentrafugeInternational();
 
-    // Alert functions
     function showAlert(message, type = 'error') {
-        const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
-        const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
-        
-        // Hide other alert
-        otherAlert.style.display = 'none';
-        
-        // Show current alert
-        alertElement.textContent = message;
-        alertElement.style.display = 'block';
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            alertElement.style.display = 'none';
-        }, 5000);
+      const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
+      const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
+      otherAlert.style.display = 'none';
+      alertElement.textContent = message;
+      alertElement.style.display = 'block';
+      setTimeout(() => {
+        alertElement.style.display = 'none';
+      }, 5000);
     }
 
-    // Email/Password Sign In
     async function emailLogin() {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        const loginBtn = document.getElementById('login-button');
-        const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const loginBtn = document.getElementById('login-button');
+      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+      
+      try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = t.signingIn;
+        isLoggingIn = true;
+
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
         
-        try {
-            loginBtn.disabled = true;
-            loginBtn.textContent = t.signingIn;
-            isLoggingIn = true; // Set flag for new login
-
-            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-            
-            // Check if email is verified
-            if (!userCredential.user.emailVerified) {
-                showAlert(t.verifyEmail);
-                await firebase.auth().signOut();
-                isLoggingIn = false;
-                return;
-            }
-
-            showAlert(t.welcomeBack, 'success');
-            
-            // Don't manually redirect - let onAuthStateChanged handle it
-
-        } catch (error) {
-            console.error('Login error:', error);
-            showAlert(getErrorMessage(error.code));
-            isLoggingIn = false; // Reset flag on error
-        } finally {
-            loginBtn.disabled = false;
-            loginBtn.textContent = t.loginButton;
+        if (!user.emailVerified) {
+          showAlert(t.verifyEmail, 'error');
+          await firebase.auth().signOut();
+          isLoggingIn = false;
+          return;
         }
+
+        const authResult = await checkUserAuthorization(user);
+        if (!authResult.authorized) {
+          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
+                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
+                   t.loginFailed, 'error');
+          await firebase.auth().signOut();
+          isLoggingIn = false;
+          return;
+        }
+
+        showAlert(t.welcomeBack, 'success');
+      } catch (error) {
+        console.error('Email login error:', error);
+        showAlert(getErrorMessage(error.code));
+        isLoggingIn = false;
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = t.loginButton;
+      }
     }
 
-    // Google Sign In
     async function googleLogin() {
-        const googleBtn = document.getElementById('google-login-btn');
-        const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
-        
-        try {
-            googleBtn.disabled = true;
-            document.getElementById('google-btn-text').textContent = t.signingInGoogle;
-            isLoggingIn = true; // Set flag for new login
+      const googleBtn = document.getElementById('google-login-btn');
+      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+      
+      try {
+        googleBtn.disabled = true;
+        document.getElementById('google-btn-text').textContent = t.signingInGoogle;
+        isLoggingIn = true;
 
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.addScope('email');
-            provider.addScope('profile');
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email profile');
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
 
-            const result = await firebase.auth().signInWithPopup(provider);
-            
-            showAlert(t.welcome, 'success');
-            
-            // Don't manually redirect - let onAuthStateChanged handle it
-
-        } catch (error) {
-            console.error('Google login error:', error);
-            showAlert(getErrorMessage(error.code));
-            isLoggingIn = false; // Reset flag on error
-        } finally {
-            googleBtn.disabled = false;
-            document.getElementById('google-btn-text').textContent = t.googleBtnText;
+        const authResult = await checkUserAuthorization(user);
+        if (!authResult.authorized) {
+          showAlert(authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
+                   t.loginFailed, 'error');
+          await firebase.auth().signOut();
+          isLoggingIn = false;
+          return;
         }
+
+        showAlert(t.welcome, 'success');
+      } catch (error) {
+        console.error('Google login error:', error);
+        showAlert(getErrorMessage(error.code));
+        isLoggingIn = false;
+      } finally {
+        googleBtn.disabled = false;
+        document.getElementById('google-btn-text').textContent = t.googleBtnText;
+      }
     }
 
-    // Error message handler
     function getErrorMessage(errorCode) {
-        const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
-        switch (errorCode) {
-            case 'auth/user-not-found':
-                return 'No account found with this email. Please create an account first.';
-            case 'auth/wrong-password':
-                return 'Incorrect password. Please try again.';
-            case 'auth/invalid-email':
-                return 'Please enter a valid email address.';
-            case 'auth/user-disabled':
-                return 'This account has been disabled. Please contact support.';
-            case 'auth/too-many-requests':
-                return 'Too many failed attempts. Please try again later.';
-            case 'auth/popup-closed-by-user':
-                return 'Sign-in was cancelled. Please try again.';
-            default:
-                return t.loginFailed + ': ' + errorCode;
-        }
+      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+      switch (errorCode) {
+        case 'auth/user-not-found':
+          return 'No account found with this email. Please create an account first.';
+        case 'auth/wrong-password':
+          return 'Incorrect password. Please try again.';
+        case 'auth/invalid-email':
+          return 'Please enter a valid email address.';
+        case 'auth/user-disabled':
+          return 'This account has been disabled. Please contact support.';
+        case 'auth/too-many-requests':
+          return 'Too many failed attempts. Please try again later.';
+        case 'auth/popup-closed-by-user':
+          return 'Sign-in was cancelled. Please try again.';
+        default:
+          return t.loginFailed + ': ' + errorCode;
+      }
     }
 
-    // Track if this is a fresh login or existing session
     let isLoggingIn = false;
 
-    // SIMPLE AUTH STATE OBSERVER - FIXED VERSION
     firebase.auth().onAuthStateChanged(async function(user) {
-        if (user && user.emailVerified && isLoggingIn) {
-            console.log('User authenticated, redirecting to chat...');
-            setTimeout(() => {
-                window.location.href = 'chat.html';
-            }, 1500);
-            isLoggingIn = false;
-        } else if (user && user.emailVerified) {
-            console.log('User already logged in from previous session');
+      console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
+      console.log('🔥 isLoggingIn flag:', isLoggingIn);
+      
+      if (!user) {
+        console.log('🔥 No user signed in');
+        isLoggingIn = false;
+        return;
+      }
+
+      console.log('👤 User details:', {
+        email: user.email,
+        uid: user.uid,
+        emailVerified: user.emailVerified
+      });
+
+      if (isLoggingIn) {
+        console.log('🔄 Processing NEW LOGIN for:', user.email);
+        const authResult = await checkUserAuthorization(user);
+        if (authResult.authorized) {
+          console.log('✅ User authorized! Preparing redirect to chat...');
+          console.log('🚀 REDIRECTING NOW to chat.html');
+          setTimeout(() => {
+            window.location.href = 'chat.html';
+          }, 1500);
+        } else {
+          console.warn('❌ User not authorized:', authResult.reason);
+          const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
+                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
+                   t.loginFailed, 'error');
+          await firebase.auth().signOut();
+          isLoggingIn = false;
         }
+      } else {
+        console.log('🔄 Processing EXISTING SESSION for:', user.email);
+        const authResult = await checkUserAuthorization(user);
+        if (authResult.authorized) {
+          console.log('✅ Existing session authorized! Preparing redirect to chat...');
+          console.log('🚀 REDIRECTING NOW to chat.html');
+          window.location.href = 'chat.html';
+        } else {
+          console.warn('❌ Existing session not authorized:', authResult.reason);
+          const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
+                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
+                   t.loginFailed, 'error');
+          await firebase.auth().signOut();
+        }
+      }
     });
 
-    // Handle Enter key in password field
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('login-password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                emailLogin();
-            }
-        });
+      document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          emailLogin();
+        }
+      });
     });
   </script>
 </body>
