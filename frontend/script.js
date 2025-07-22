@@ -1,4 +1,3 @@
-```javascript
 const BACKEND_URL = "https://zentrafuge-v8.onrender.com";
 let isTyping = false;
 let currentUser = null;
@@ -1232,4 +1231,3 @@ document.addEventListener('DOMContentLoaded', async function() {
     redirectToAuth('firebase_init_error');
   }
 });
-```
