@@ -19,41 +19,48 @@
            onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × Cael</h1>');" />
       <span id="user-info">Welcome, [User]</span>
     </div>
-  
+
     <div class="header-center">
       <nav class="main-nav">
         <button onclick="window.location.href='chat.html'" class="nav-btn active">Chat</button>
-        <button onclick="window.location.href='dashboard.html'" class="nav-btn">Dashboard</button>
-        <button onclick="window.location.href='preferences.html'" class="nav-btn">Preferences</button>
-        <button onclick="showChartsModal()" class="nav-btn">Charts</button>
+        <button onclick="firebase.auth().signOut().then(()=>window.location.href='index.html')">Logout</button>
       </nav>
-    </div>
-  
-    <div class="header-right">
-      <button onclick="window.location.href='donate.html'" class="donate-btn">Donate</button>
-      <button onclick="handleLogout()" class="logout-btn">Logout</button>
     </div>
   </header>
 
-  <div id="chat" style="display: none;"></div>
-  
-  <form id="chat-form" style="display: none;">
-    <input type="text" id="message" placeholder="Ask Cael something..." autocomplete="off" />
-    <button type="submit" id="send-button">Send</button>
-  </form>
+  <main id="chat-container" style="display: none;">
+    <!-- Chat UI will go here -->
+    <div id="chat-box">
+      <!-- Dynamic messages -->
+    </div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button type="submit">Send</button>
+    </form>
+  </main>
 
-  <!-- Firebase v8 scripts and military data scripts -->
+  <!-- Firebase v8 scripts -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="firebases-init.js"></script>
-  <script src="uk_military_data.js"></script>
-  <script src="us_military_data.js"></script>
-  <script src="ca_military_data.js"></script>
-  <script src="au_military_data.js"></script>
-  <script src="nz_military_data.js"></script>
-  <script src="script.js"></script>
+
+  <script>
+    firebase.auth().onAuthStateChanged(async function(user) {
+      if (user && user.emailVerified) {
+        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+        const data = doc.exists ? doc.data() : null;
+        if (data && data.onboardingComplete) {
+          document.getElementById('auth-loading').style.display = 'none';
+          document.getElementById('main-header').style.display = 'flex';
+          document.getElementById('chat-container').style.display = 'block';
+          document.getElementById('user-info').innerText = `Welcome, ${data.name || 'Friend'}`;
+          return;
+        }
+      }
+      // Not allowed
+      window.location.href = 'index.html?reason=unauthorized';
+    });
+  </script>
 </body>
 </html>
