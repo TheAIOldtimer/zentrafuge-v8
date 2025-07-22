@@ -1,14 +1,14 @@
+```javascript
 const BACKEND_URL = "https://zentrafuge-v8.onrender.com";
 let isTyping = false;
 let currentUser = null;
 let isAuthorized = false;
-let aiName = "Cael"; // Default AI name
+let aiName = "Cael";
 let lastKeystroke = Date.now();
 let sessionDurationInterval = null;
 let sessionWarningShown = false;
-let isInitializing = false; // Prevent multiple initializations
+let isInitializing = false;
 
-// Default preferences
 const DEFAULT_PREFERENCES = {
   language_style: 'direct',
   response_length: 'moderate',
@@ -18,10 +18,8 @@ const DEFAULT_PREFERENCES = {
   session_reminders: 'gentle'
 };
 
-// Current user preferences
 let userPreferences = { ...DEFAULT_PREFERENCES };
 
-// Wait for Firebase to initialize
 async function waitForFirebase() {
   return new Promise((resolve, reject) => {
     if (typeof firebase === 'undefined' || !firebase.apps.length) {
@@ -29,7 +27,7 @@ async function waitForFirebase() {
       reject(new Error('Firebase SDK not loaded or initialized'));
     }
     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
-      unsubscribe(); // Clean up immediately
+      unsubscribe();
       resolve();
     }, error => {
       unsubscribe();
@@ -39,7 +37,6 @@ async function waitForFirebase() {
   });
 }
 
-// Stream text character by character with pauses and cursor
 function streamTextAdvanced(text, targetElement, speed = 30) {
   return new Promise((resolve) => {
     let index = 0;
@@ -54,33 +51,27 @@ function streamTextAdvanced(text, targetElement, speed = 30) {
     function typeNextCharacter() {
       if (index < text.length) {
         const char = text[index];
-        
         let delay = speed;
         if (char === '.' || char === '!' || char === '?') {
-          delay = speed * 3; // 90ms for sentence endings
+          delay = speed * 3;
         } else if (char === ',' || char === ';') {
-          delay = speed * 2; // 60ms for commas
+          delay = speed * 2;
         }
-        
         targetElement.textContent = text.slice(0, index + 1);
         targetElement.appendChild(cursor);
         index++;
-        
         const chat = document.getElementById("chat");
         if (chat) chat.scrollTop = chat.scrollHeight;
-        
         setTimeout(typeNextCharacter, delay);
       } else {
         cursor.remove();
         resolve();
       }
     }
-    
     typeNextCharacter();
   });
 }
 
-// Get AI name from Firestore
 async function getAiName(userId) {
   try {
     const db = firebase.firestore();
@@ -98,7 +89,6 @@ async function getAiName(userId) {
   }
 }
 
-// Fetch last session context
 async function getLastSessionContext(userId) {
   try {
     const res = await fetch(`${BACKEND_URL}/context`, {
@@ -116,7 +106,6 @@ async function getLastSessionContext(userId) {
   }
 }
 
-// Fetch mood data for dashboard
 async function getMoodData(userId) {
   try {
     const res = await fetch(`${BACKEND_URL}/mood_data`, {
@@ -134,7 +123,6 @@ async function getMoodData(userId) {
   }
 }
 
-// Render mood chart using Chart.js
 async function renderMoodChart(userId) {
   const moodData = await getMoodData(userId);
   const ctx = document.getElementById('moodChart')?.getContext('2d');
@@ -144,7 +132,6 @@ async function renderMoodChart(userId) {
   const scores = moodData.map(m => m.score);
   const moods = moodData.map(m => m.mood);
 
-  // Calculate trend for summary
   let trend = 'stable';
   if (moodData.length >= 2) {
     const recentScore = scores[scores.length - 1];
@@ -152,7 +139,6 @@ async function renderMoodChart(userId) {
     trend = recentScore > prevScore ? 'improving' : recentScore < prevScore ? 'declining' : 'stable';
   }
 
-  // Update summary
   const summaryDiv = document.getElementById('moodSummary');
   if (summaryDiv) {
     summaryDiv.textContent = moodData.length > 0
@@ -201,7 +187,6 @@ async function renderMoodChart(userId) {
   });
 }
 
-// Dynamic user greetings
 async function getNewUserGreetings() {
   return [
     `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
@@ -213,7 +198,6 @@ async function getNewUserGreetings() {
   ];
 }
 
-// Auth Guard
 async function checkUserAuthorization(user) {
   try {
     if (!user) {
@@ -243,7 +227,6 @@ async function checkUserAuthorization(user) {
   }
 }
 
-// Redirect to auth
 function redirectToAuth(reason = 'unauthorized') {
   if (isInitializing) {
     console.warn('Preventing redirect loop during initialization:', reason);
@@ -254,7 +237,6 @@ function redirectToAuth(reason = 'unauthorized') {
   window.location.href = `index.html?${params}`;
 }
 
-// Initialize app
 async function initializeApp(user) {
   if (isInitializing) {
     console.warn('Already initializing, skipping...');
@@ -266,7 +248,6 @@ async function initializeApp(user) {
     aiName = await getAiName(user.uid);
     console.log(`Setting AI name to: ${aiName}`);
     
-    // Update title and header based on page
     const isDashboard = window.location.pathname.includes('dashboard.html');
     const isPreferences = window.location.pathname.includes('preferences.html');
     const pageTitle = isDashboard ? 'Dashboard' : isPreferences ? 'Preferences' : aiName;
@@ -278,13 +259,11 @@ async function initializeApp(user) {
       );
     }
     
-    // Update user info
     const userInfo = document.getElementById('user-info');
     if (userInfo) {
       userInfo.textContent = `Welcome, ${user.displayName || user.email}`;
     }
     
-    // Show main content
     const authLoading = document.getElementById('auth-loading');
     if (authLoading) authLoading.style.display = 'none';
     const mainHeader = document.getElementById('main-header');
@@ -310,17 +289,14 @@ async function initializeApp(user) {
       }
       await loadPreviousMessages();
       
-      // Set session start time and begin monitoring
       sessionStorage.setItem('session_start', Date.now());
       sessionWarningShown = false;
       
-      // Clear any existing interval before setting a new one
       if (sessionDurationInterval) {
         clearInterval(sessionDurationInterval);
       }
       
-      // Set up session monitoring
-      sessionDurationInterval = setInterval(checkSessionDuration, 60000); // Check every minute
+      sessionDurationInterval = setInterval(checkSessionDuration, 60000);
     }
   } catch (error) {
     console.error('Error initializing app:', error.message, error.stack);
@@ -330,7 +306,6 @@ async function initializeApp(user) {
   }
 }
 
-// Logout handler
 async function handleLogout() {
   try {
     await firebase.auth().signOut();
@@ -388,7 +363,6 @@ function showGentleEncouragement() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-// Dynamic Welcome System
 function getTimeOfDay() {
   const hour = new Date().getHours();
   if (hour < 6) return 'late night';
@@ -493,7 +467,6 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
     greeting = greeting.replace(/^(Hey|Hi|Good|Morning|Afternoon|Evening)/i, `$1, ${userName}`);
   }
   
-  // Apply user preferences to welcome message
   let finalGreeting = greeting;
   if (userPreferences.language_style === 'direct') {
     finalGreeting = finalGreeting.replace(/like a (.*?) (blooming|sprouting|growing)/gi, '')
@@ -618,7 +591,6 @@ function checkSessionDuration() {
   const sessionStartTime = parseInt(sessionStorage.getItem('session_start'), 10) || Date.now();
   const duration = Date.now() - sessionStartTime;
   
-  // Check if 45 minutes have passed and warning hasn't been shown yet
   if (duration > 45 * 60 * 1000 && !sessionWarningShown) {
     sessionWarningShown = true;
     let reminderMessage = `We've been talking for a while, ${currentUser?.displayName || 'friend'}. How are you feeling? Sometimes it helps to take a pause.`;
@@ -631,22 +603,19 @@ function checkSessionDuration() {
     
     appendMessage("cael", reminderMessage);
     
-    // Clear the interval to prevent repetition
     if (sessionDurationInterval) {
       clearInterval(sessionDurationInterval);
       sessionDurationInterval = null;
     }
     
-    // Optional: Set up a longer interval for additional check-ins
     setTimeout(() => {
-      if (Date.now() - sessionStartTime > 90 * 60 * 1000) { // 90 minutes
+      if (Date.now() - sessionStartTime > 90 * 60 * 1000) {
         appendMessage("cael", `You've been here a while now. Remember to take care of yourself - I'll be here when you get back.`);
       }
-    }, 45 * 60 * 1000); // Check again in 45 minutes
+    }, 45 * 60 * 1000);
   }
 }
 
-// Load user preferences from Firestore
 async function loadUserPreferences() {
   try {
     if (!currentUser) {
@@ -672,7 +641,6 @@ async function loadUserPreferences() {
   }
 }
 
-// Save user preferences to Firestore
 async function saveUserPreferences() {
   try {
     if (!currentUser) {
@@ -680,7 +648,6 @@ async function saveUserPreferences() {
       return;
     }
     
-    // Get current form values
     const preferences = {
       language_style: document.getElementById('language-style')?.value || 'direct',
       response_length: document.getElementById('response-length')?.value || 'moderate',
@@ -700,14 +667,12 @@ async function saveUserPreferences() {
     
     showPreferencesStatus('Preferences saved successfully!', 'success');
     console.log('User preferences saved:', preferences);
-    
   } catch (error) {
     console.error("Error saving preferences:", error.message, error.stack);
     showPreferencesStatus('Failed to save preferences. Please try again.', 'error');
   }
 }
 
-// Load preferences into form
 function loadPreferencesIntoForm() {
   try {
     document.getElementById('language-style').value = userPreferences.language_style || 'direct';
@@ -721,7 +686,6 @@ function loadPreferencesIntoForm() {
   }
 }
 
-// Reset preferences to defaults
 async function resetUserPreferences() {
   try {
     if (confirm('Are you sure you want to reset all preferences to defaults?')) {
@@ -736,14 +700,12 @@ async function resetUserPreferences() {
   }
 }
 
-// Test current preferences with a sample message
 async function testCurrentPreferences() {
   try {
     const testMessage = generateTestMessage();
     
     showPreferencesStatus('Testing current settings...', 'info');
     
-    // Simulate sending a test message
     const testResponse = await fetch(`${BACKEND_URL}/index`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -761,14 +723,12 @@ async function testCurrentPreferences() {
     } else {
       showPreferencesStatus('Test failed. Please check your connection.', 'error');
     }
-    
   } catch (error) {
     console.error("Error testing preferences:", error.message, error.stack);
     showPreferencesStatus('Test failed. Please try again.', 'error');
   }
 }
 
-// Generate test message based on preferences
 function generateTestMessage() {
   const style = userPreferences.language_style;
   const testMessages = {
@@ -781,7 +741,6 @@ function generateTestMessage() {
   return testMessages[style] || testMessages.direct;
 }
 
-// Show status message
 function showPreferencesStatus(message, type) {
   const statusDiv = document.getElementById('preferences-status');
   const statusMessage = document.getElementById('status-message');
@@ -791,41 +750,33 @@ function showPreferencesStatus(message, type) {
     statusDiv.className = `preferences-status ${type}`;
     statusDiv.style.display = 'block';
     
-    // Hide after 5 seconds
     setTimeout(() => {
       statusDiv.style.display = 'none';
     }, 5000);
   }
 }
 
-// Apply preferences to chat responses
 function applyPreferencesToResponse(response, preferences) {
   if (!preferences || !response) return response;
   
   let modifiedResponse = response;
   
-  // Apply language style modifications
   switch (preferences.language_style) {
     case 'direct':
-      // Remove flowery language, keep it straightforward
       modifiedResponse = modifiedResponse
         .replace(/like a (.*?) (blooming|sprouting|growing)/gi, '')
         .replace(/much like (.*?),/gi, '')
         .replace(/it's like (.*?),/gi, '');
       break;
     case 'formal':
-      // Make it more formal
       modifiedResponse = modifiedResponse.replace(/\b(hey|hi)\b/gi, 'Good day');
       break;
     case 'casual':
-      // Make it more casual
       modifiedResponse = modifiedResponse.replace(/\bGood (morning|afternoon|evening)\b/gi, 'Hey');
       break;
   }
   
-  // Apply response length modifications
   if (preferences.response_length === 'brief') {
-    // Truncate longer responses
     const sentences = modifiedResponse.split('. ');
     if (sentences.length > 2) {
       modifiedResponse = sentences.slice(0, 2).join('. ') + '.';
@@ -835,296 +786,21 @@ function applyPreferencesToResponse(response, preferences) {
   return modifiedResponse;
 }
 
-// Authentication and chat form submission
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('🔥 DOM loaded, waiting for Firebase initialization');
-  
-  try {
-    // Wait for Firebase to be ready
-    await waitForFirebase();
-    console.log('✅ Firebase initialized');
-    
-    // Set up auth observer
-    firebase.auth().onAuthStateChanged(async function(user) {
-      console.log('Auth state changed:', user ? user.email : 'No user');
-      
-      if (isInitializing) {
-        console.warn('Already handling auth state, skipping...');
-        return;
-      }
-      
-      try {
-        if (user && !user.isAnonymous) {
-          console.log('User authenticated:', user.email);
-          const authorized = await checkUserAuthorization(user);
-          if (authorized) {
-            isAuthorized = true;
-            await initializeApp(user);
-          } else {
-            const userDoc = await firebase.firestore().collection("users").doc(user.uid).get();
-            if (!userDoc.exists) {
-              console.warn('User document does not exist, redirecting to auth');
-              redirectToAuth('email_verification');
-            } else {
-              const userData = userDoc.data();
-              if (!userData.emailVerified) {
-                redirectToAuth('email_verification');
-              } else if (!userData.onboardingComplete) {
-                redirectToAuth('onboarding_incomplete');
-              } else {
-                redirectToAuth('authorization_failed');
-              }
-            }
-          }
-        } else {
-          console.warn('No user or anonymous user detected');
-          redirectToAuth('not_signed_in');
-        }
-      } catch (error) {
-        console.error('Auth state observer error:', error.message, error.stack);
-        redirectToAuth('auth_error');
-      }
-    });
-    
-    // Load preferences only after auth is confirmed
-    const input = document.getElementById("message");
-    const form = document.getElementById("chat-form");
-    
-    // Only set up chat form listeners if on chat page
-    if (form) {
-      const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
-      if (savedDraft && currentUser) {
-        input.value = savedDraft;
-        appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
-      }
-
-      setInterval(() => {
-        if (!input || !currentUser) return;
-        const draft = input.value;
-        if (draft.length > 3) {
-          localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
-        } else {
-          localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
-        }
-      }, 2000);
-
-      input?.addEventListener('keyup', () => {
-        setTimeout(() => {
-          const pauseDuration = Date.now() - lastKeystroke;
-          if (pauseDuration > 5000 && input.value.length > 10) {
-            showGentleEncouragement();
-          }
-        }, 5000);
-        lastKeystroke = Date.now();
-      });
-
-      window.addEventListener('offline', () => {
-        appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
-        setFormEnabled(false);
-      });
-
-      window.addEventListener('online', () => {
-        appendMessage("cael", `We're reconnected, ${currentUser?.displayName || 'friend'}. How are you feeling?`);
-        setFormEnabled(true);
-      });
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        
-        if (!isAuthorized) {
-          alert('You are not authorized to chat. Please sign in and complete onboarding.');
-          return;
-        }
-        
-        const message = input.value.trim();
-        if (!message || isTyping) return;
-        
-        appendMessage("user", message);
-        input.value = "";
-        localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
-        
-        setFormEnabled(false);
-        showTypingIndicator();
-        
-        let attempt = 1;
-        const maxAttempts = 3;
-        let success = false;
-        
-        // Load current user preferences
-        await loadUserPreferences();
-        
-        // Check for military context based on user preferences
-        let militaryResponse = null;
-        let country = null;
-        
-        // Only check military context if user allows it
-        if (userPreferences.military_context !== 'never') {
-          // Detect country context
-          const messageLower = message.toLowerCase();
-          if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
-            country = 'uk';
-          } else if (messageLower.includes('us') || messageLower.includes('marine corps') || messageLower.includes('semper fi') || messageLower.includes('fort bragg')) {
-            country = 'us';
-          } else if (messageLower.includes('canada') || messageLower.includes('van doos') || messageLower.includes('ppcli') || messageLower.includes('peacekeeping')) {
-            country = 'ca';
-          } else if (messageLower.includes('australia') || messageLower.includes('anzac') || messageLower.includes('digger') || messageLower.includes('sasr')) {
-            country = 'au';
-          } else if (messageLower.includes('new zealand') || messageLower.includes('kiwi') || messageLower.includes('nzsas') || messageLower.includes('māori battalion')) {
-            country = 'nz';
-          }
-          
-          // Apply military knowledge based on detected country
-          if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
-            const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
-            const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
-            if (regimentInfo) {
-              militaryResponse = window.UKMilitaryKnowledge.getMilitaryResponse(message, regimentInfo);
-            } else if (opContext) {
-              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more about your experience?`;
-            }
-          } else if (country === 'us' && window.USMilitaryKnowledge?.detectMilitaryService(message)) {
-            const unitInfo = window.USMilitaryKnowledge.getUnitInfo(message);
-            const opContext = window.USMilitaryKnowledge.getOperationContext(message);
-            if (unitInfo) {
-              militaryResponse = window.USMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-            } else if (opContext) {
-              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a defining moment for many. Want to share more?`;
-            }
-          } else if (country === 'ca' && window.CAMilitaryKnowledge?.detectMilitaryService(message)) {
-            const unitInfo = window.CAMilitaryKnowledge.getUnitInfo(message);
-            const opContext = window.CAMilitaryKnowledge.getOperationContext(message);
-            const isFrench = window.CAMilitaryKnowledge.detectLanguage(message) === 'french';
-            if (unitInfo) {
-              militaryResponse = window.CAMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-            } else if (opContext) {
-              militaryResponse = isFrench
-                ? `Vous avez mentionné ${opContext.context} (${opContext.period}). C'était une période importante. Voulez-vous en dire plus?`
-                : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
-            }
-          } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
-            const unitInfo = window.AUMilitaryKnowledge.getUnitInfo(message);
-            const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
-            if (unitInfo) {
-              militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-            } else if (opContext) {
-              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That's part of the ANZAC legacy. Want to share more, mate?`;
-            }
-          } else if (country === 'nz' && window.NZMilitaryKnowledge?.detectMilitaryService(message)) {
-            const unitInfo = window.NZMilitaryKnowledge.getUnitInfo(message);
-            const opContext = window.NZMilitaryKnowledge.getOperationContext(message);
-            const isMaori = window.NZMilitaryKnowledge.detectMaoriHeritage(message);
-            if (unitInfo) {
-              militaryResponse = window.NZMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
-            } else if (opContext) {
-              militaryResponse = isMaori
-                ? `You mentioned ${opContext.context} (${opContext.period}). That's tied to Māori warrior pride. Ake Ake Kia Kaha! Want to share more?`
-                : `You mentioned ${opContext.context} (${opContext.period}). That's part of the Kiwi legacy. Want to share more, mate?`;
-            }
-          }
-        }
-        
-        while (attempt <= maxAttempts && !success) {
-          try {
-            console.log(`Attempt ${attempt} for message: "${message}"`);
-            
-            const res = await fetch(`${BACKEND_URL}/index`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: message,
-                user_id: getUserId(),
-                ai_preferences: userPreferences,
-                military_context: militaryResponse ? { detected: true, response: militaryResponse, country } : null
-              }),
-            });
-            
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            
-            const data = await res.json();
-            console.log(`Response received on attempt ${attempt}:`, data);
-            
-            if (data.redirect_url) {
-              console.log('Crisis detected - redirecting to support');
-              hideTypingIndicator();
-              if (data.response && data.response.trim()) {
-                // Apply user preferences to the response
-                const processedResponse = applyPreferencesToResponse(data.response, userPreferences);
-                await appendMessage("cael", processedResponse, true);
-              }
-              setTimeout(() => {
-                window.location.href = data.redirect_url;
-              }, 2000);
-              success = true;
-              break;
-            }
-            
-            if (data.response && data.response.trim()) {
-              hideTypingIndicator();
-              
-              // Apply user preferences to the response
-              let finalResponse = applyPreferencesToResponse(data.response, userPreferences);
-              
-              // Combine with military response if detected
-              if (militaryResponse && userPreferences.military_context === 'always') {
-                finalResponse = `${militaryResponse} ${finalResponse}`;
-              } else if (militaryResponse && userPreferences.military_context === 'auto') {
-                // Only add military context if it's relevant to the conversation
-                finalResponse = militaryResponse.includes('Want to share more') ? 
-                  `${militaryResponse} ${finalResponse}` : finalResponse;
-              }
-              
-              await appendMessage("cael", finalResponse, true);
-              success = true;
-              console.log(`✅ Success on attempt ${attempt}`);
-              break;
-            } else {
-              throw new Error('Empty or invalid response from server');
-            }
-            
-          } catch (error) {
-            console.error(`❌ Attempt ${attempt} failed:`, error.message, error.stack);
-            
-            if (attempt < maxAttempts) {
-              const retryMessages = [
-                `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
-                `Sorry about that - sometimes I need a moment to find the right words.`,
-                `Technical hiccup on my end. Give me one more try?`
-              ];
-              
-              await appendMessage("cael", retryMessages[attempt - 1], true);
-              
-              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            }
-            
-            attempt++;
-          }
-        }
-        
-        if (!success) {
-          hideTypingIndicator();
-          await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
-        }
-        
-        setFormEnabled(true);
-        document.getElementById("message")?.focus();
-      });
-    }
-    
-    // Only run preferences initialization if we're on a page with preferences
-    if (document.getElementById('language-style')) {
-      await loadUserPreferences();
-      loadPreferencesIntoForm();
-      
-      // Set up event listeners
-      document.getElementById('save-preferences')?.addEventListener('click', saveUserPreferences);
-      document.getElementById('reset-preferences')?.addEventListener('click', resetUserPreferences);
-      document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
-    }
-  } catch (error) {
-    console.error('DOMContentLoaded error:', error.message, error.stack);
-    redirectToAuth('firebase_init_error');
-  }
-});
+function showAlert(message, type = 'error') {
+  const chat = document.getElementById("chat");
+  if (!chat) return;
+  const alertDiv = document.createElement("div");
+  alertDiv.className = `message ${type}-message`;
+  alertDiv.textContent = message;
+  alertDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+  alertDiv.style.color = type === 'error' ? '#721c24' : '#155724';
+  alertDiv.style.alignSelf = 'center';
+  alertDiv.style.maxWidth = '90%';
+  alertDiv.style.textAlign = 'center';
+  chat.appendChild(alertDiv);
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => alertDiv.remove(), 5000);
+}
 
 function showChartsModal() {
   if (!currentUser) {
@@ -1297,3 +973,263 @@ async function renderModalMoodChart(userId) {
     }
   });
 }
+
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('🔥 DOM loaded, waiting for Firebase initialization');
+  
+  try {
+    await waitForFirebase();
+    console.log('✅ Firebase initialized');
+    
+    firebase.auth().onAuthStateChanged(async function(user) {
+      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage] || {
+        verifyEmail: 'Please verify your email before logging in.',
+        onboardingIncomplete: 'Please complete onboarding to access the app.',
+        loginFailed: 'Failed to log in. Please try again.'
+      };
+      console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
+
+      if (user) {
+        try {
+          const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+          const data = doc.exists ? doc.data() : null;
+
+          if (!user.emailVerified) {
+            showAlert(t.verifyEmail, 'error');
+            await firebase.auth().signOut();
+            return;
+          }
+
+          if (!data || !data.onboardingComplete) {
+            showAlert(t.onboardingIncomplete, 'error');
+            await firebase.auth().signOut();
+            return;
+          }
+
+          console.log('✅ Authorized user - redirecting to chat.html');
+          window.location.href = 'chat.html';
+        } catch (err) {
+          console.error('❌ Auth check failed:', err);
+          showAlert(t.loginFailed, 'error');
+        }
+      }
+    });
+    
+    const input = document.getElementById("message");
+    const form = document.getElementById("chat-form");
+    
+    if (form) {
+      const savedDraft = localStorage.getItem(`zentrafuge_draft_${getUserId()}`);
+      if (savedDraft && currentUser) {
+        input.value = savedDraft;
+        appendMessage("cael", `I saved what you were writing, ${currentUser?.displayName || 'friend'} - want to continue?`);
+      }
+
+      setInterval(() => {
+        if (!input || !currentUser) return;
+        const draft = input.value;
+        if (draft.length > 3) {
+          localStorage.setItem(`zentrafuge_draft_${getUserId()}`, draft);
+        } else {
+          localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        }
+      }, 2000);
+
+      input?.addEventListener('keyup', () => {
+        setTimeout(() => {
+          const pauseDuration = Date.now() - lastKeystroke;
+          if (pauseDuration > 5000 && input.value.length > 10) {
+            showGentleEncouragement();
+          }
+        }, 5000);
+        lastKeystroke = Date.now();
+      });
+
+      window.addEventListener('offline', () => {
+        appendMessage("cael", `I notice we've lost connection, ${currentUser?.displayName || 'friend'}. Your thoughts are safe with me - I'll be here when you're back online.`);
+        setFormEnabled(false);
+      });
+
+      window.addEventListener('online', () => {
+        appendMessage("cael", `We're reconnected, ${currentUser?.displayName || 'friend'}. How are you feeling?`);
+        setFormEnabled(true);
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        if (!isAuthorized) {
+          alert('You are not authorized to chat. Please sign in and complete onboarding.');
+          return;
+        }
+        
+        const message = input.value.trim();
+        if (!message || isTyping) return;
+        
+        appendMessage("user", message);
+        input.value = "";
+        localStorage.removeItem(`zentrafuge_draft_${getUserId()}`);
+        
+        setFormEnabled(false);
+        showTypingIndicator();
+        
+        let attempt = 1;
+        const maxAttempts = 3;
+        let success = false;
+        
+        await loadUserPreferences();
+        
+        let militaryResponse = null;
+        let country = null;
+        
+        if (userPreferences.military_context !== 'never') {
+          const messageLower = message.toLowerCase();
+          if (messageLower.includes('uk') || messageLower.includes('british') || messageLower.includes('guards') || messageLower.includes('paras')) {
+            country = 'uk';
+          } else if (messageLower.includes('us') || messageLower.includes('marine corps') || messageLower.includes('semper fi') || messageLower.includes('fort bragg')) {
+            country = 'us';
+          } else if (messageLower.includes('canada') || messageLower.includes('van doos') || messageLower.includes('ppcli') || messageLower.includes('peacekeeping')) {
+            country = 'ca';
+          } else if (messageLower.includes('australia') || messageLower.includes('anzac') || messageLower.includes('digger') || messageLower.includes('sasr')) {
+            country = 'au';
+          } else if (messageLower.includes('new zealand') || messageLower.includes('kiwi') || messageLower.includes('nzsas') || messageLower.includes('māori battalion')) {
+            country = 'nz';
+          }
+          
+          if (country === 'uk' && window.UKMilitaryKnowledge?.detectMilitaryService(message)) {
+            const regimentInfo = window.UKMilitaryKnowledge.getRegimentInfo(message);
+            const opContext = window.UKMilitaryKnowledge.getOperationContext(message);
+            if (regimentInfo) {
+              militaryResponse = window.UKMilitaryKnowledge.getMilitaryResponse(message, regimentInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more about your experience?`;
+            }
+          } else if (country === 'us' && window.USMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.USMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.USMilitaryKnowledge.getOperationContext(message);
+            if (unitInfo) {
+              militaryResponse = window.USMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That was a defining moment for many. Want to share more?`;
+            }
+          } else if (country === 'ca' && window.CAMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.CAMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.CAMilitaryKnowledge.getOperationContext(message);
+            const isFrench = window.CAMilitaryKnowledge.detectLanguage(message) === 'french';
+            if (unitInfo) {
+              militaryResponse = window.CAMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = isFrench
+                ? `Vous avez mentionné ${opContext.context} (${opContext.period}). C'était une période importante. Voulez-vous en dire plus?`
+                : `You mentioned ${opContext.context} (${opContext.period}). That was a significant time for many. Want to share more?`;
+            }
+          } else if (country === 'au' && window.AUMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.AUMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.AUMilitaryKnowledge.getOperationContext(message);
+            if (unitInfo) {
+              militaryResponse = window.AUMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = `You mentioned ${opContext.context} (${opContext.period}). That's part of the ANZAC legacy. Want to share more, mate?`;
+            }
+          } else if (country === 'nz' && window.NZMilitaryKnowledge?.detectMilitaryService(message)) {
+            const unitInfo = window.NZMilitaryKnowledge.getUnitInfo(message);
+            const opContext = window.NZMilitaryKnowledge.getOperationContext(message);
+            const isMaori = window.NZMilitaryKnowledge.detectMaoriHeritage(message);
+            if (unitInfo) {
+              militaryResponse = window.NZMilitaryKnowledge.getMilitaryResponse(message, unitInfo);
+            } else if (opContext) {
+              militaryResponse = isMaori
+                ? `You mentioned ${opContext.context} (${opContext.period}). That's tied to Māori warrior pride. Ake Ake Kia Kaha! Want to share more?`
+                : `You mentioned ${opContext.context} (${opContext.period}). That's part of the Kiwi legacy. Want to share more, mate?`;
+            }
+          }
+        }
+        
+        while (attempt <= maxAttempts && !success) {
+          try {
+            console.log(`Attempt ${attempt} for message: "${message}"`);
+            
+            const res = await fetch(`${BACKEND_URL}/index`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: message,
+                user_id: getUserId(),
+                ai_preferences: userPreferences,
+                military_context: militaryResponse ? { detected: true, response: militaryResponse, country } : null
+              }),
+            });
+            
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            
+            const data = await res.json();
+            console.log(`Response received on attempt ${attempt}:`, data);
+            
+            if (data.redirect_url) {
+              console.log('Crisis detected - redirecting to support');
+              hideTypingIndicator();
+              if (data.response && data.response.trim()) {
+                const processedResponse = applyPreferencesToResponse(data.response, userPreferences);
+                await appendMessage("cael", processedResponse, true);
+              }
+              setTimeout(() => {
+                window.location.href = data.redirect_url;
+              }, 2000);
+              success = true;
+              break;
+            }
+            
+            if (data.response && data.response.trim()) {
+              hideTypingIndicator();
+              let finalResponse = applyPreferencesToResponse(data.response, userPreferences);
+              if (militaryResponse && userPreferences.military_context === 'always') {
+                finalResponse = `${militaryResponse} ${finalResponse}`;
+              } else if (militaryResponse && userPreferences.military_context === 'auto') {
+                finalResponse = militaryResponse.includes('Want to share more') ? 
+                  `${militaryResponse} ${finalResponse}` : finalResponse;
+              }
+              await appendMessage("cael", finalResponse, true);
+              success = true;
+              console.log(`✅ Success on attempt ${attempt}`);
+              break;
+            } else {
+              throw new Error('Empty or invalid response from server');
+            }
+          } catch (error) {
+            console.error(`❌ Attempt ${attempt} failed:`, error.message, error.stack);
+            if (attempt < maxAttempts) {
+              const retryMessages = [
+                `I'm still here, ${currentUser?.displayName || 'friend'}. Let me try to respond to that again.`,
+                `Sorry about that - sometimes I need a moment to find the right words.`,
+                `Technical hiccup on my end. Give me one more try?`
+              ];
+              await appendMessage("cael", retryMessages[attempt - 1], true);
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
+            attempt++;
+          }
+        }
+        
+        if (!success) {
+          hideTypingIndicator();
+          await appendMessage("cael", `I'm really sorry, I'm struggling to connect right now, ${currentUser?.displayName || 'friend'}. Please try again soon—I'm here for you.`, true);
+        }
+        
+        setFormEnabled(true);
+        document.getElementById("message")?.focus();
+      });
+    }
+    
+    if (document.getElementById('language-style')) {
+      await loadUserPreferences();
+      loadPreferencesIntoForm();
+      document.getElementById('save-preferences')?.addEventListener('click', saveUserPreferences);
+      document.getElementById('reset-preferences')?.addEventListener('click', resetUserPreferences);
+      document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
+    }
+  } catch (error) {
+    console.error('DOMContentLoaded error:', error.message, error.stack);
+    redirectToAuth('firebase_init_error');
+  }
+});
+```
