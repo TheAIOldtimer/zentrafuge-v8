@@ -142,6 +142,25 @@ function showAlert(message, type = 'error') {
   }
 }
 
+function showPreferencesStatus(message, type) {
+  // Try to find preferences status elements first
+  const statusDiv = document.getElementById('preferences-status');
+  const statusMessage = document.getElementById('status-message');
+  
+  if (statusDiv && statusMessage) {
+    statusMessage.textContent = message;
+    statusDiv.className = `preferences-status ${type}`;
+    statusDiv.style.display = 'block';
+    
+    setTimeout(() => {
+      statusDiv.style.display = 'none';
+    }, 5000);
+  } else {
+    // Fall back to showAlert if preferences elements don't exist
+    showAlert(message, type);
+  }
+}
+
 async function checkUserAuthorization(user) {
   console.log('🔍 === AUTHORIZATION CHECK START ===');
   try {
