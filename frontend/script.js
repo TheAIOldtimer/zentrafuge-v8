@@ -19,6 +19,80 @@ const DEFAULT_PREFERENCES = {
 
 let userPreferences = { ...DEFAULT_PREFERENCES };
 
+async function getAiName(userId) {
+  try {
+    const db = firebase.firestore();
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      console.log(`Fetched user document for ${userId}:`, userData);
+      return userData.ai_name || "Cael";
+    }
+    console.warn(`User document not found for ${userId}`);
+    return "Cael";
+  } catch (error) {
+    console.error("Error fetching AI name:", error);
+    return "Cael";
+  }
+}
+
+async function getLastSessionContext(userId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/context`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+    console.log('Last session context:', data);
+    return data.context || { mood: null, theme: null };
+  } catch (error) {
+    console.error("Error fetching session context:", error);
+    return { mood: null, theme: null };
+  }
+}
+
+function streamTextAdvanced(text, targetElement, speed = 30) {
+  return new Promise((resolve) => {
+    let index = 0;
+    targetElement.textContent = '';
+    
+    const cursor = document.createElement('span');
+    cursor.textContent = '▋';
+    cursor.style.opacity = '0.7';
+    cursor.style.animation = 'blink 1s infinite';
+    targetElement.appendChild(cursor);
+    
+    function typeNextCharacter() {
+      if (index < text.length) {
+        const char = text[index];
+        
+        let delay = speed;
+        if (char === '.' || char === '!' || char === '?') {
+          delay = speed * 3;
+        } else if (char === ',' || char === ';') {
+          delay = speed * 2;
+        }
+        
+        targetElement.textContent = text.slice(0, index + 1);
+        targetElement.appendChild(cursor);
+        index++;
+        
+        const chat = document.getElementById("chat");
+        if (chat) chat.scrollTop = chat.scrollHeight;
+        
+        setTimeout(typeNextCharacter, delay);
+      } else {
+        cursor.remove();
+        resolve();
+      }
+    }
+    
+    typeNextCharacter();
+  });
+}
+
 async function waitForFirebase() {
   console.log('🔍 Waiting for Firebase SDK to load...');
   return new Promise((resolve, reject) => {
@@ -700,23 +774,6 @@ function generateTestMessage() {
   return testMessages[style] || testMessages.direct;
 }
 
-function showPreferencesStatus(message, type) {
-  const statusDiv = document.getElementById('preferences-status');
-  const statusMessage = document.getElementById('status-message');
-  
-  if (statusDiv && statusMessage) {
-    statusMessage.textContent = message;
-    statusDiv.className = `preferences-status ${type}`;
-    statusDiv.style.display = 'block';
-    
-    setTimeout(() => {
-      statusDiv.style.display = 'none';
-    }, 5000);
-  } else {
-    showAlert(message, type);
-  }
-}
-
 function applyPreferencesToResponse(response, preferences) {
   if (!preferences || !response) return response;
   
@@ -871,7 +928,7 @@ async function renderModalMoodChart(userId) {
       : 'No mood data available yet. Chat with Cael to start tracking your emotional journey!';
   }
 
-  if (moodData.length === 0) {
+  if (moodData.length == 0) {
     ctx.canvas.style.display = 'none';
     return;
   }
