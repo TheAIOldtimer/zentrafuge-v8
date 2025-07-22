@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <style>
+    /* Existing styles unchanged */
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -348,52 +349,9 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
   <script src="firebases-init.js"></script>
+  <script src="js/script.js"></script>
 
   <script>
-    // Enhanced checkUserAuthorization with detailed debug logging
-    async function checkUserAuthorization(user) {
-      console.log('🔍 === AUTHORIZATION CHECK START ===');
-      try {
-        if (!user) {
-          console.warn('❌ No user provided to checkUserAuthorization');
-          return { authorized: false, reason: 'No user provided' };
-        }
-        
-        console.log('🔍 Checking authorization for user:', user.email, 'UID:', user.uid);
-        
-        const db = firebase.firestore();
-        console.log('🔍 Accessing Firestore for user document...');
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        
-        if (!userDoc.exists) {
-          console.warn('❌ User document not found for:', user.email);
-          return { authorized: false, reason: 'User document not found' };
-        }
-        
-        const userData = userDoc.data();
-        console.log('📄 Full user document data:', JSON.stringify(userData, null, 2));
-        
-        if (!userData.emailVerified) {
-          console.warn('❌ Email not verified in Firestore for:', user.email);
-          return { authorized: false, reason: 'Email not verified' };
-        }
-        
-        if (!userData.onboardingComplete) {
-          console.warn('❌ Onboarding not completed for:', user.email);
-          return { authorized: false, reason: 'Onboarding not completed' };
-        }
-        
-        console.log('✅ Authorization succeeded for:', user.email);
-        return { authorized: true };
-      } catch (error) {
-        console.error('❌ Authorization check failed:', error.message);
-        console.error('Stack trace:', error.stack);
-        return { authorized: false, reason: error.message };
-      } finally {
-        console.log('🔍 === AUTHORIZATION CHECK END ===');
-      }
-    }
-
     class ZentrafugeInternational {
       constructor() {
         this.supportedLanguages = {
@@ -677,7 +635,6 @@
       try {
         loginBtn.disabled = true;
         loginBtn.textContent = t.signingIn;
-        isLoggingIn = true;
         console.log('🔄 User clicked login for:', email);
 
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -686,7 +643,8 @@
         if (!user.emailVerified) {
           showAlert(t.verifyEmail, 'error');
           await firebase.auth().signOut();
-          isLoggingIn = false;
+          loginBtn.disabled = false;
+          loginBtn.textContent = t.loginButton;
           return;
         }
 
@@ -694,7 +652,6 @@
       } catch (error) {
         console.error('❌ Email login error:', error);
         showAlert(getErrorMessage(error.code), 'error');
-        isLoggingIn = false;
       } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = t.loginButton;
@@ -708,7 +665,6 @@
       try {
         googleBtn.disabled = true;
         document.getElementById('google-btn-text').textContent = t.signingInGoogle;
-        isLoggingIn = true;
         console.log('🔄 User clicked Google login');
 
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -722,7 +678,6 @@
         if (error.code !== 'auth/popup-closed-by-user') {
           showAlert(getErrorMessage(error.code), 'error');
         }
-        isLoggingIn = false;
       } finally {
         googleBtn.disabled = false;
         document.getElementById('google-btn-text').textContent = t.googleBtnText;
@@ -749,41 +704,6 @@
       }
     }
 
-    let isLoggingIn = false;
-
-    firebase.auth().onAuthStateChanged(async function(user) {
-      console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
-      console.log('🔥 isLoggingIn flag:', isLoggingIn);
-      
-      if (user && isLoggingIn) {
-        console.log('🔄 Processing fresh login for:', user.email);
-        
-        const authResult = await checkUserAuthorization(user);
-        console.log('📋 Authorization result:', authResult);
-        
-        if (authResult.authorized) {
-          console.log('✅ User authorized! Redirecting to chat...');
-          setTimeout(() => {
-            window.location.href = 'chat.html';
-          }, 1500);
-        } else {
-          console.warn('❌ Authorization failed:', authResult.reason);
-          const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
-          showAlert(authResult.reason === 'Email not verified' ? t.verifyEmail : 
-                   authResult.reason === 'Onboarding not completed' ? t.onboardingIncomplete : 
-                   t.loginFailed, 'error');
-          await firebase.auth().signOut();
-        }
-        
-        isLoggingIn = false;
-      } else if (user && !isLoggingIn) {
-        console.log('🔄 Existing user session detected for:', user.email);
-        console.log('ℹ️ Not redirecting - waiting for user to click login');
-      } else {
-        console.log('🔄 No user signed in');
-      }
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('login-password').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -794,3 +714,4 @@
   </script>
 </body>
 </html>
+```
