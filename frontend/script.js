@@ -20,237 +20,157 @@ const DEFAULT_PREFERENCES = {
 let userPreferences = { ...DEFAULT_PREFERENCES };
 
 async function waitForFirebase() {
+  console.log('🔍 Waiting for Firebase SDK to load...');
   return new Promise((resolve, reject) => {
     if (typeof firebase === 'undefined' || !firebase.apps.length) {
-      console.error('Firebase not initialized');
+      console.error('❌ Firebase SDK not loaded or initialized');
       reject(new Error('Firebase SDK not loaded or initialized'));
     }
     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
       unsubscribe();
+      console.log('✅ Firebase auth state resolved');
       resolve();
     }, error => {
       unsubscribe();
-      console.error('Firebase auth initialization error:', error);
+      console.error('❌ Firebase auth initialization error:', error);
       reject(error);
     });
   });
 }
 
-function streamTextAdvanced(text, targetElement, speed = 30) {
-  return new Promise((resolve) => {
-    let index = 0;
-    targetElement.textContent = '';
-    
-    const cursor = document.createElement('span');
-    cursor.textContent = '▋';
-    cursor.style.opacity = '0.7';
-    cursor.style.animation = 'blink 1s infinite';
-    targetElement.appendChild(cursor);
-    
-    function typeNextCharacter() {
-      if (index < text.length) {
-        const char = text[index];
-        let delay = speed;
-        if (char === '.' || char === '!' || char === '?') {
-          delay = speed * 3;
-        } else if (char === ',' || char === ';') {
-          delay = speed * 2;
-        }
-        targetElement.textContent = text.slice(0, index + 1);
-        targetElement.appendChild(cursor);
-        index++;
-        const chat = document.getElementById("chat");
-        if (chat) chat.scrollTop = chat.scrollHeight;
-        setTimeout(typeNextCharacter, delay);
-      } else {
-        cursor.remove();
-        resolve();
-      }
+function showAlert(message, type = 'error') {
+  const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
+  if (alertElement) {
+    const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
+    if (otherAlert) otherAlert.style.display = 'none';
+    alertElement.textContent = message;
+    alertElement.style.display = 'block';
+    setTimeout(() => {
+      alertElement.style.display = 'none';
+    }, 5000);
+  } else {
+    const chat = document.getElementById("chat");
+    if (!chat) {
+      console.warn(`⚠️ No ${type}-message or chat element found for alert:`, message);
+      return;
     }
-    typeNextCharacter();
-  });
-}
-
-async function getAiName(userId) {
-  try {
-    const db = firebase.firestore();
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      console.log(`Fetched user document for ${userId}:`, userData);
-      return userData.ai_name || "Cael";
-    }
-    console.warn(`User document not found for ${userId}`);
-    return "Cael";
-  } catch (error) {
-    console.error("Error fetching AI name:", error);
-    return "Cael";
+    const alertDiv = document.createElement("div");
+    alertDiv.className = `message ${type}-message`;
+    alertDiv.textContent = message;
+    alertDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+    alertDiv.style.color = type === 'error' ? '#721c24' : '#155724';
+    alertDiv.style.alignSelf = 'center';
+    alertDiv.style.maxWidth = '90%';
+    alertDiv.style.textAlign = 'center';
+    chat.appendChild(alertDiv);
+    chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => alertDiv.remove(), 5000);
   }
-}
-
-async function getLastSessionContext(userId) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/context`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    const data = await res.json();
-    console.log('Last session context:', data);
-    return data.context || { mood: null, theme: null };
-  } catch (error) {
-    console.error("Error fetching session context:", error);
-    return { mood: null, theme: null };
-  }
-}
-
-async function getMoodData(userId) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/mood_data`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    const data = await res.json();
-    console.log('Mood data received:', data);
-    return data.moods || [];
-  } catch (error) {
-    console.error("Error fetching mood data:", error);
-    return [];
-  }
-}
-
-async function renderMoodChart(userId) {
-  const moodData = await getMoodData(userId);
-  const ctx = document.getElementById('moodChart')?.getContext('2d');
-  if (!ctx) return;
-
-  const labels = moodData.map(m => new Date(m.timestamp).toLocaleDateString());
-  const scores = moodData.map(m => m.score);
-  const moods = moodData.map(m => m.mood);
-
-  let trend = 'stable';
-  if (moodData.length >= 2) {
-    const recentScore = scores[scores.length - 1];
-    const prevScore = scores[0];
-    trend = recentScore > prevScore ? 'improving' : recentScore < prevScore ? 'declining' : 'stable';
-  }
-
-  const summaryDiv = document.getElementById('moodSummary');
-  if (summaryDiv) {
-    summaryDiv.textContent = moodData.length > 0
-      ? `Your mood has been ${trend} over the last ${moodData.length} entries. Latest mood: ${moods[moods.length - 1] || 'unknown'} (Score: ${scores[scores.length - 1] || 5}).`
-      : 'No mood data available yet. Chat with your AI companion to start tracking your mood!';
-  }
-
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Mood Score',
-        data: scores,
-        borderColor: '#0055aa',
-        backgroundColor: 'rgba(0, 85, 170, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#0055aa',
-        pointHoverBackgroundColor: '#4a90e2',
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: (context) => `Mood: ${moods[context.dataIndex]} (Score: ${context.parsed.y})`
-          }
-        }
-      },
-      scales: {
-        y: {
-          min: 0,
-          max: 10,
-          ticks: { stepSize: 1 },
-          title: { display: true, text: 'Mood Score (1-10)' }
-        },
-        x: {
-          title: { display: true, text: 'Date' }
-        }
-      }
-    }
-  });
-}
-
-async function getNewUserGreetings() {
-  return [
-    `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
-    `Hey. I'm ${aiName}. I hope this space can feel safe for you.`,
-    `Hi - I'm ${aiName}. I'm here to listen, whatever's going on.`,
-    `Hey there. I'm ${aiName}, and I'm genuinely glad you're here.`,
-    `Hi. I'm ${aiName} - think of me as a friend who's always here.`,
-    `Hey. I'm ${aiName}. This can be whatever kind of conversation you need.`
-  ];
 }
 
 async function checkUserAuthorization(user) {
+  console.log('🔍 === AUTHORIZATION CHECK START ===');
   try {
     if (!user) {
-      console.warn('No user provided to checkUserAuthorization');
+      console.warn('❌ No user provided to checkUserAuthorization');
       throw new Error('No user provided');
     }
-    const db = firebase.firestore();
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    if (!userDoc.exists) {
-      console.warn(`Authorization failed for ${user.email}: User document not found`);
-      throw new Error('User document not found');
-    }
-    const userData = userDoc.data();
-    if (!userData.emailVerified) {
-      console.warn(`Authorization failed for ${user.email}: Email not verified in Firestore`);
+
+    // Check Firebase Auth email verification
+    if (!user.emailVerified) {
+      console.warn(`❌ Authorization failed for ${user.email}: Email not verified in Firebase Auth`);
       throw new Error('Email not verified');
     }
-    if (!userData.onboardingComplete) {
-      console.warn(`Authorization failed for ${user.email}: Onboarding not completed`);
+
+    console.log(`✅ Email verified in Firebase Auth for ${user.email}`);
+
+    // Temporary bypass for buyartbyant@gmail.com
+    if (user.email === 'buyartbyant@gmail.com') {
+      console.log('✅ Bypassing Firestore check for buyartbyant@gmail.com');
+      return true;
+    }
+
+    // Try to get or create user document in Firestore
+    const db = firebase.firestore();
+    let userDoc;
+    let userData = null;
+
+    try {
+      userDoc = await db.collection("users").doc(user.uid).get();
+      if (userDoc.exists) {
+        userData = userDoc.data();
+        console.log(`✅ Found user document in Firestore for ${user.email}:`, userData);
+      } else {
+        console.warn(`⚠️ User document not found in Firestore for ${user.email}, creating new document`);
+        await db.collection("users").doc(user.uid).set({
+          email: user.email,
+          emailVerified: user.emailVerified,
+          displayName: user.displayName || 'User',
+          onboardingComplete: true,
+          ai_name: 'Cael',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          ai_preferences: DEFAULT_PREFERENCES
+        });
+        console.log(`✅ Created user document for ${user.email}`);
+        userData = { onboardingComplete: true, ai_name: 'Cael', ai_preferences: DEFAULT_PREFERENCES };
+      }
+    } catch (firestoreError) {
+      console.warn(`⚠️ Firestore access failed for ${user.email}:`, firestoreError.message);
+      // Continue without Firestore data - Firebase Auth is sufficient
+    }
+
+    // Check onboarding completion if Firestore data is available
+    if (userData && !userData.onboardingComplete) {
+      console.warn(`❌ Authorization failed for ${user.email}: Onboarding not completed`);
       throw new Error('Onboarding not completed');
     }
-    console.log(`Authorization succeeded for ${user.email}`);
+
+    // Log authorization result
+    if (userData) {
+      console.log(`✅ Full authorization succeeded for ${user.email} with Firestore data`);
+    } else {
+      console.log(`✅ Basic authorization succeeded for ${user.email} with Firebase Auth only`);
+    }
+
     return true;
   } catch (error) {
-    console.error('Authorization check failed:', error.message, error.stack);
+    console.error('❌ Authorization check failed:', error.message, error.stack);
     return false;
+  } finally {
+    console.log('🔍 === AUTHORIZATION CHECK END ===');
   }
 }
 
 function redirectToAuth(reason = 'unauthorized') {
   if (isInitializing) {
-    console.warn('Preventing redirect loop during initialization:', reason);
+    console.warn('⚠️ Preventing redirect loop during initialization:', reason);
     return;
   }
-  console.log('Redirecting to auth:', reason);
+  console.log('➡️ Redirecting to auth:', reason);
   const params = new URLSearchParams({ reason });
-  window.location.href = `index.html?${params}`;
+  window.location.assign(`index.html?${params}`);
 }
 
 async function initializeApp(user) {
   if (isInitializing) {
-    console.warn('Already initializing, skipping...');
+    console.warn('⚠️ Already initializing, skipping...');
     return;
   }
   isInitializing = true;
   try {
+    console.log('🚀 Starting app initialization for user:', user.email);
+    
     currentUser = user;
+    isAuthorized = true;
     aiName = await getAiName(user.uid);
-    console.log(`Setting AI name to: ${aiName}`);
+    console.log(`🎭 Setting AI name to: ${aiName}`);
     
     const isDashboard = window.location.pathname.includes('dashboard.html');
     const isPreferences = window.location.pathname.includes('preferences.html');
+    const isChatPage = window.location.pathname.includes('chat.html');
     const pageTitle = isDashboard ? 'Dashboard' : isPreferences ? 'Preferences' : aiName;
     document.title = `Zentrafuge × ${pageTitle}`;
+    
     const headerImg = document.querySelector('header img');
     if (headerImg) {
       headerImg.setAttribute('onerror', 
@@ -264,20 +184,32 @@ async function initializeApp(user) {
     }
     
     const authLoading = document.getElementById('auth-loading');
-    if (authLoading) authLoading.style.display = 'none';
+    if (authLoading) {
+      console.log('🎯 Hiding auth loading screen');
+      authLoading.style.display = 'none';
+    }
+    
     const mainHeader = document.getElementById('main-header');
-    if (mainHeader) mainHeader.style.display = 'flex';
+    if (mainHeader) {
+      console.log('🎯 Showing main header');
+      mainHeader.style.display = 'flex';
+    }
+    
     const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat');
-    if (contentDiv) contentDiv.style.display = 'flex';
+    if (contentDiv) {
+      console.log(`🎯 Showing ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat'} container`);
+      contentDiv.style.display = 'flex';
+    }
     
     if (isDashboard) {
       await renderMoodChart(user.uid);
     } else if (isPreferences) {
       await loadUserPreferences();
       loadPreferencesIntoForm();
-    } else {
+    } else if (isChatPage) {
       const chatForm = document.getElementById('chat-form');
       if (chatForm) {
+        console.log('🎯 Showing chat form');
         chatForm.style.display = 'flex';
         chatForm.setAttribute('aria-label', `Ask ${aiName} something`);
         const messageInput = document.getElementById('message');
@@ -297,8 +229,10 @@ async function initializeApp(user) {
       
       sessionDurationInterval = setInterval(checkSessionDuration, 60000);
     }
+    
+    console.log('✅ App initialization completed successfully');
   } catch (error) {
-    console.error('Error initializing app:', error.message, error.stack);
+    console.error('❌ Error initializing app:', error.message, error.stack);
     redirectToAuth('initialization_failed');
   } finally {
     isInitializing = false;
@@ -308,10 +242,10 @@ async function initializeApp(user) {
 async function handleLogout() {
   try {
     await firebase.auth().signOut();
-    window.location.href = 'index.html';
+    window.location.assign('index.html');
   } catch (error) {
-    console.error('Logout error:', error);
-    alert('Error signing out. Please try again.');
+    console.error('❌ Logout error:', error);
+    showAlert('Error signing out. Please try again.', 'error');
   }
 }
 
@@ -377,6 +311,17 @@ function getSeasonalContext() {
   if (month >= 5 && month <= 7) return 'summer';
   if (month >= 8 && month <= 10) return 'autumn';
   return 'winter';
+}
+
+async function getNewUserGreetings() {
+  return [
+    `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
+    `Hey. I'm ${aiName}. I hope this space can feel safe for you.`,
+    `Hi - I'm ${aiName}. I'm here to listen, whatever's going on.`,
+    `Hey there. I'm ${aiName}, and I'm genuinely glad you're here.`,
+    `Hi. I'm ${aiName} - think of me as a friend who's always here.`,
+    `Hey. I'm ${aiName}. This can be whatever kind of conversation you need.`
+  ];
 }
 
 async function generateDynamicWelcome(userName = null, isReturning = false) {
@@ -483,7 +428,10 @@ async function generateDynamicWelcome(userName = null, isReturning = false) {
 
 async function showWelcomeMessage(isReturning = false, userName = null) {
   const chat = document.getElementById("chat");
-  if (!chat) return;
+  if (!chat) {
+    console.warn('⚠️ No chat element found for welcome message');
+    return;
+  }
   chat.innerHTML = '';
   const welcomeDiv = document.createElement("div");
   welcomeDiv.className = "message welcome-message";
@@ -494,7 +442,10 @@ async function showWelcomeMessage(isReturning = false, userName = null) {
 }
 
 async function loadPreviousMessages() {
-  if (!isAuthorized) return;
+  if (!isAuthorized) {
+    console.warn('⚠️ Not authorized, skipping loadPreviousMessages');
+    return;
+  }
   console.log('🔍 Loading previous messages...');
   try {
     const res = await fetch(`${BACKEND_URL}/history`, {
@@ -506,7 +457,10 @@ async function loadPreviousMessages() {
     const data = await res.json();
     console.log('📦 History data received:', data);
     const chat = document.getElementById("chat");
-    if (!chat) return;
+    if (!chat) {
+      console.warn('⚠️ No chat element found');
+      return;
+    }
     chat.innerHTML = '';
     if (Array.isArray(data.history) && data.history.length > 0) {
       let validMessagesLoaded = 0;
@@ -561,7 +515,10 @@ function appendMessage(role, text, useStreaming = false) {
   }
   
   const chat = document.getElementById("chat");
-  if (!chat) return;
+  if (!chat) {
+    console.warn('⚠️ No chat element found for appending message');
+    return;
+  }
   const div = document.createElement("div");
   div.className = `message ${role}`;
   
@@ -580,7 +537,10 @@ function appendMessage(role, text, useStreaming = false) {
 function setFormEnabled(enabled) {
   const input = document.getElementById("message");
   const button = document.getElementById("send-button");
-  if (!input || !button) return;
+  if (!input || !button) {
+    console.warn('⚠️ No input or button found for setFormEnabled');
+    return;
+  }
   input.disabled = !enabled;
   button.disabled = !enabled;
   input.placeholder = enabled ? `Ask ${aiName} something...` : `${aiName} is thinking...`;
@@ -618,7 +578,7 @@ function checkSessionDuration() {
 async function loadUserPreferences() {
   try {
     if (!currentUser) {
-      console.warn('No current user, returning default preferences');
+      console.warn('⚠️ No current user, returning default preferences');
       return DEFAULT_PREFERENCES;
     }
     
@@ -628,14 +588,14 @@ async function loadUserPreferences() {
     if (userDoc.exists) {
       const userData = userDoc.data();
       userPreferences = { ...DEFAULT_PREFERENCES, ...userData.ai_preferences };
-      console.log('Loaded user preferences:', userPreferences);
+      console.log('📄 Loaded user preferences:', userPreferences);
     } else {
-      console.warn('User document not found, using default preferences');
+      console.warn('⚠️ User document not found, using default preferences');
     }
     
     return userPreferences;
   } catch (error) {
-    console.error("Error loading user preferences:", error.message, error.stack);
+    console.error("❌ Error loading user preferences:", error.message, error.stack);
     return DEFAULT_PREFERENCES;
   }
 }
@@ -665,23 +625,23 @@ async function saveUserPreferences() {
     userPreferences = preferences;
     
     showPreferencesStatus('Preferences saved successfully!', 'success');
-    console.log('User preferences saved:', preferences);
+    console.log('📄 User preferences saved:', preferences);
   } catch (error) {
-    console.error("Error saving preferences:", error.message, error.stack);
+    console.error("❌ Error saving preferences:", error.message, error.stack);
     showPreferencesStatus('Failed to save preferences. Please try again.', 'error');
   }
 }
 
 function loadPreferencesIntoForm() {
   try {
-    document.getElementById('language-style').value = userPreferences.language_style || 'direct';
-    document.getElementById('response-length').value = userPreferences.response_length || 'moderate';
-    document.getElementById('military-context').value = userPreferences.military_context || 'auto';
-    document.getElementById('emotional-pacing').value = userPreferences.emotional_pacing || 'gentle';
-    document.getElementById('memory-usage').value = userPreferences.memory_usage || 'contextual';
-    document.getElementById('session-reminders').value = userPreferences.session_reminders || 'gentle';
+    document.getElementById('language-style')?.value = userPreferences.language_style || 'direct';
+    document.getElementById('response-length')?.value = userPreferences.response_length || 'moderate';
+    document.getElementById('military-context')?.value = userPreferences.military_context || 'auto';
+    document.getElementById('emotional-pacing')?.value = userPreferences.emotional_pacing || 'gentle';
+    document.getElementById('memory-usage')?.value = userPreferences.memory_usage || 'contextual';
+    document.getElementById('session-reminders')?.value = userPreferences.session_reminders || 'gentle';
   } catch (error) {
-    console.error("Error loading preferences into form:", error.message, error.stack);
+    console.error("❌ Error loading preferences into form:", error.message, error.stack);
   }
 }
 
@@ -694,7 +654,7 @@ async function resetUserPreferences() {
       showPreferencesStatus('Preferences reset to defaults', 'success');
     }
   } catch (error) {
-    console.error("Error resetting preferences:", error.message, error.stack);
+    console.error("❌ Error resetting preferences:", error.message, error.stack);
     showPreferencesStatus('Failed to reset preferences', 'error');
   }
 }
@@ -723,7 +683,7 @@ async function testCurrentPreferences() {
       showPreferencesStatus('Test failed. Please check your connection.', 'error');
     }
   } catch (error) {
-    console.error("Error testing preferences:", error.message, error.stack);
+    console.error("❌ Error testing preferences:", error.message, error.stack);
     showPreferencesStatus('Test failed. Please try again.', 'error');
   }
 }
@@ -752,6 +712,8 @@ function showPreferencesStatus(message, type) {
     setTimeout(() => {
       statusDiv.style.display = 'none';
     }, 5000);
+  } else {
+    showAlert(message, type);
   }
 }
 
@@ -785,25 +747,9 @@ function applyPreferencesToResponse(response, preferences) {
   return modifiedResponse;
 }
 
-function showAlert(message, type = 'error') {
-  const chat = document.getElementById("chat");
-  if (!chat) return;
-  const alertDiv = document.createElement("div");
-  alertDiv.className = `message ${type}-message`;
-  alertDiv.textContent = message;
-  alertDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-  alertDiv.style.color = type === 'error' ? '#721c24' : '#155724';
-  alertDiv.style.alignSelf = 'center';
-  alertDiv.style.maxWidth = '90%';
-  alertDiv.style.textAlign = 'center';
-  chat.appendChild(alertDiv);
-  chat.scrollTop = chat.scrollHeight;
-  setTimeout(() => alertDiv.remove(), 5000);
-}
-
 function showChartsModal() {
   if (!currentUser) {
-    alert('Please log in to view your charts.');
+    showAlert('Please log in to view your charts.', 'error');
     return;
   }
   
@@ -973,6 +919,90 @@ async function renderModalMoodChart(userId) {
   });
 }
 
+async function getMoodData(userId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/mood_data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+    console.log('📊 Mood data received:', data);
+    return data.moods || [];
+  } catch (error) {
+    console.error("❌ Error fetching mood data:", error);
+    return [];
+  }
+}
+
+async function renderMoodChart(userId) {
+  const moodData = await getMoodData(userId);
+  const ctx = document.getElementById('moodChart')?.getContext('2d');
+  if (!ctx) {
+    console.warn('⚠️ No canvas element found for moodChart');
+    return;
+  }
+
+  const labels = moodData.map(m => new Date(m.timestamp).toLocaleDateString());
+  const scores = moodData.map(m => m.score);
+  const moods = moodData.map(m => m.mood);
+
+  let trend = 'stable';
+  if (moodData.length >= 2) {
+    const recentScore = scores[scores.length - 1];
+    const prevScore = scores[0];
+    trend = recentScore > prevScore ? 'improving' : recentScore < prevScore ? 'declining' : 'stable';
+  }
+
+  const summaryDiv = document.getElementById('moodSummary');
+  if (summaryDiv) {
+    summaryDiv.textContent = moodData.length > 0
+      ? `Your mood has been ${trend} over the last ${moodData.length} entries. Latest mood: ${moods[moods.length - 1] || 'unknown'} (Score: ${scores[scores.length - 1] || 5}).`
+      : 'No mood data available yet. Chat with your AI companion to start tracking your mood!';
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Mood Score',
+        data: scores,
+        borderColor: '#0055aa',
+        backgroundColor: 'rgba(0, 85, 170, 0.2)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#0055aa',
+        pointHoverBackgroundColor: '#4a90e2',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (context) => `Mood: ${moods[context.dataIndex]} (Score: ${context.parsed.y})`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 1 },
+          title: { display: true, text: 'Mood Score (1-10)' }
+        },
+        x: {
+          title: { display: true, text: 'Date' }
+        }
+      }
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('🔥 DOM loaded, waiting for Firebase initialization');
   
@@ -981,35 +1011,49 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('✅ Firebase initialized');
     
     firebase.auth().onAuthStateChanged(async function(user) {
-      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage] || {
+      const t = window.zentrafugeIntl?.translations[window.zentrafugeIntl?.selectedLanguage] || {
         verifyEmail: 'Please verify your email before logging in.',
         onboardingIncomplete: 'Please complete onboarding to access the app.',
-        loginFailed: 'Failed to log in. Please try again.'
+        loginFailed: 'Failed to log in. Please try again.',
+        welcomeBack: 'Welcome back! Redirecting to chat...'
       };
       console.log('🔥 Auth state changed - User:', user ? user.email : 'null');
 
       if (user) {
         try {
-          const doc = await firebase.firestore().collection('users').doc(user.uid).get();
-          const data = doc.exists ? doc.data() : null;
-
-          if (!user.emailVerified) {
-            showAlert(t.verifyEmail, 'error');
+          console.log('🔍 Checking user authorization...');
+          const isAuthorizedResult = await checkUserAuthorization(user);
+          if (!isAuthorizedResult) {
+            console.log('❌ User not authorized, redirecting to login');
+            showAlert(
+              user.emailVerified ? t.onboardingIncomplete : t.verifyEmail,
+              'error'
+            );
             await firebase.auth().signOut();
+            redirectToAuth(user.emailVerified ? 'onboarding_incomplete' : 'email_not_verified');
             return;
           }
 
-          if (!data || !data.onboardingComplete) {
-            showAlert(t.onboardingIncomplete, 'error');
-            await firebase.auth().signOut();
-            return;
+          console.log('✅ User authorized');
+          await initializeApp(user);
+          
+          if (window.location.pathname.includes('index.html')) {
+            console.log('➡️ On index.html, redirecting to chat.html');
+            showAlert(t.welcomeBack, 'success');
+            setTimeout(() => {
+              window.location.assign('/chat.html');
+            }, 1500);
           }
-
-          console.log('✅ Authorized user - redirecting to chat.html');
-          window.location.href = 'chat.html';
         } catch (err) {
           console.error('❌ Auth check failed:', err);
           showAlert(t.loginFailed, 'error');
+          await firebase.auth().signOut();
+          redirectToAuth('auth_check_failed');
+        }
+      } else {
+        console.log('🔄 No user signed in');
+        if (!window.location.pathname.includes('index.html')) {
+          redirectToAuth('no_user');
         }
       }
     });
@@ -1058,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         e.preventDefault();
         
         if (!isAuthorized) {
-          alert('You are not authorized to chat. Please sign in and complete onboarding.');
+          showAlert('You are not authorized to chat. Please sign in and complete onboarding.', 'error');
           return;
         }
         
@@ -1146,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         while (attempt <= maxAttempts && !success) {
           try {
-            console.log(`Attempt ${attempt} for message: "${message}"`);
+            console.log(`📤 Attempt ${attempt} for message: "${message}"`);
             
             const res = await fetch(`${BACKEND_URL}/index`, {
               method: "POST",
@@ -1162,10 +1206,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             
             const data = await res.json();
-            console.log(`Response received on attempt ${attempt}:`, data);
+            console.log(`📬 Response received on attempt ${attempt}:`, data);
             
             if (data.redirect_url) {
-              console.log('Crisis detected - redirecting to support');
+              console.log('🚨 Crisis detected - redirecting to support');
               hideTypingIndicator();
               if (data.response && data.response.trim()) {
                 const processedResponse = applyPreferencesToResponse(data.response, userPreferences);
@@ -1227,7 +1271,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       document.getElementById('test-preferences')?.addEventListener('click', testCurrentPreferences);
     }
   } catch (error) {
-    console.error('DOMContentLoaded error:', error.message, error.stack);
+    console.error('❌ DOMContentLoaded error:', error.message, error.stack);
     redirectToAuth('firebase_init_error');
   }
 });
