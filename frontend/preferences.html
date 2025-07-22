@@ -150,13 +150,33 @@
   </div>
 
   <!-- Firebase v8 scripts and required scripts -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="firebases-init.js"></script>
-  <script type="module" src="js/main.js"></script>
+  <!-- CORRECT script loading order -->
+
+<!-- 1. Firebase SDK (must load first) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+
+<!-- 2. Firebase configuration (must load after SDK, before modules) -->
+<script src="firebases-init.js"></script>
+
+<!-- 3. Non-module utility scripts (load before modules that might use them) -->
+<script src="js/military-knowledge.js"></script>
+
+<!-- 4. Module scripts (load LAST, in dependency order) -->
+<!-- Note: auth.js must load before main.js since main.js imports from auth.js -->
+<script type="module" src="auth.js"></script>
+<script type="module" src="js/main.js"></script>
+
+<!-- 
+IMPORTANT NOTES:
+1. Firebase SDK must load first
+2. firebases-init.js must load after Firebase SDK but before your modules
+3. Non-module scripts (like military-knowledge.js) should load before modules
+4. auth.js must load before main.js (because main.js imports from auth.js)
+5. Both auth.js and main.js should be type="module" since they use imports/exports
+-->
 </body>
 </html>
 
