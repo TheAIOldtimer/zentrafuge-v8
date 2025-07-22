@@ -265,7 +265,8 @@
   </style>
 </head>
 <body>
-  <div class="auth-loading" id="auth-loading" style="display: block;">
+  <!-- CHANGED: Set initial display to none to prevent the "verifying" from showing -->
+  <div class="auth-loading" id="auth-loading" style="display: none;">
     <div class="loading-spinner"></div>
     <div class="auth-message">Verifying access...</div>
   </div>
@@ -295,148 +296,65 @@
     </form>
   </main>
 
-  <!-- CORRECT script loading order -->
-<!-- 1. Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-<!-- 2. Firebase Configuration -->
-<script src="firebases-init.js"></script>
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
 
-<// SYSTEMATIC DEBUGGING - Add this to chat.html RIGHT AFTER Firebase scripts
-// This will help us find exactly where "verifying access" is coming from
-
-console.log('🔍 SYSTEMATIC DEBUG: Starting comprehensive debug...');
-
-// 1. First, let's see what's actually displayed to the user
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM LOADED - Checking visible elements...');
+  <!-- Debug Script (PROPERLY WRAPPED) -->
+  <script>
+    console.log('🔍 SIMPLIFIED DEBUG: Checking auth loading behavior...');
     
-    // Find all elements that might contain "verifying" text
-    const allElements = document.querySelectorAll('*');
-    const verifyingElements = [];
-    
-    allElements.forEach(element => {
-        if (element.textContent && element.textContent.toLowerCase().includes('verifying')) {
-            verifyingElements.push({
-                element: element,
-                text: element.textContent,
-                id: element.id,
-                class: element.className,
-                display: window.getComputedStyle(element).display
-            });
-        }
-    });
-    
-    console.log('🔍 Elements containing "verifying":', verifyingElements);
-    
-    // Check for loading screens
+    // Monitor the auth-loading element
     const authLoading = document.getElementById('auth-loading');
-    const loadingScreen = document.querySelector('.loading, #loading, [class*="loading"]');
+    console.log('🎯 Auth loading element found:', !!authLoading);
+    console.log('🎯 Initial display:', authLoading ? authLoading.style.display : 'element not found');
     
-    console.log('🎯 Auth loading element:', authLoading);
-    console.log('🎯 Generic loading elements:', document.querySelectorAll('.loading, #loading, [class*="loading"]'));
-    
-    // Check main content visibility
-    const chatContainer = document.getElementById('chat-container');
-    const mainContent = document.getElementById('main-content');
-    const mainHeader = document.getElementById('main-header');
-    
-    console.log('📦 Content elements:');
-    console.log('- chat-container:', chatContainer ? 'exists' : 'missing', chatContainer?.style.display);
-    console.log('- main-content:', mainContent ? 'exists' : 'missing', mainContent?.style.display);
-    console.log('- main-header:', mainHeader ? 'exists' : 'missing', mainHeader?.style.display);
-});
-
-// 2. Monitor DOM changes for "verifying" text
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        // Check for text changes
-        if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.toLowerCase().includes('verifying')) {
-                    console.warn('🚨 FOUND IT! "Verifying" text added:', node.textContent);
-                    console.warn('🚨 Parent element:', node.parentElement);
-                    console.trace('🚨 Call stack when verifying text was added');
-                }
-                if (node.nodeType === Node.ELEMENT_NODE && node.textContent.toLowerCase().includes('verifying')) {
-                    console.warn('🚨 FOUND IT! Element with "verifying" added:', node);
-                    console.trace('🚨 Call stack when verifying element was added');
-                }
-            });
-        }
-        
-        // Check for attribute changes that might hide/show elements
+    // Track when it gets hidden/shown
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-            const element = mutation.target;
-            if (element.textContent && element.textContent.toLowerCase().includes('verifying')) {
-                console.warn('🔄 "Verifying" element style changed:', element);
-                console.warn('🔄 New style:', element.style.cssText);
+          const element = mutation.target;
+          if (element.id === 'auth-loading') {
+            console.log('🔄 Auth loading display changed to:', element.style.display);
+            if (element.style.display === 'block' || element.style.display === '') {
+              console.warn('🚨 Auth loading is being SHOWN again!');
+              console.trace('🚨 Call stack when auth loading shown');
             }
+          }
         }
+      });
     });
-});
-
-// Start observing the entire document
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['style', 'class']
-});
-
-// 3. Override common UI functions that might be causing the loop
-const originalSetTimeout = window.setTimeout;
-window.setTimeout = function(callback, delay, ...args) {
-    // Log any timeouts that might be causing repeated checks
-    if (callback.toString().toLowerCase().includes('verifying') || 
-        callback.toString().toLowerCase().includes('auth') ||
-        callback.toString().toLowerCase().includes('check')) {
-        console.warn('⏰ Timeout set with auth-related callback:', callback.toString());
-        console.trace('⏰ Timeout call stack');
-    }
-    return originalSetTimeout.call(this, callback, delay, ...args);
-};
-
-// 4. Track Firebase auth state changes
-let authChangeCount = 0;
-firebase.auth().onAuthStateChanged(function(user) {
-    authChangeCount++;
-    console.log(`🔥 Auth state change #${authChangeCount}:`, user ? `User: ${user.uid}` : 'No user');
     
-    if (authChangeCount > 3) {
-        console.error('🚨 TOO MANY AUTH STATE CHANGES! This might be the loop source.');
-        console.trace('🚨 Excessive auth state change trace');
+    if (authLoading) {
+      observer.observe(authLoading, { attributes: true, attributeFilter: ['style'] });
     }
-});
+    
+    // Track Firebase auth changes
+    let authCount = 0;
+    firebase.auth().onAuthStateChanged(function(user) {
+      authCount++;
+      console.log(`🔥 Auth change #${authCount}:`, user ? 'User found' : 'No user');
+      
+      if (user) {
+        console.log('✅ User authenticated, auth loading should be hidden now');
+      }
+    });
+  </script>
 
-// 5. Check for any intervals that might be causing repeated checks
-const originalSetInterval = window.setInterval;
-window.setInterval = function(callback, delay, ...args) {
-    console.warn('🔄 Interval set:', callback.toString());
-    if (callback.toString().toLowerCase().includes('verifying') || 
-        callback.toString().toLowerCase().includes('auth') ||
-        callback.toString().toLowerCase().includes('check')) {
-        console.error('🚨 SUSPICIOUS INTERVAL:', callback.toString());
-        console.trace('🚨 Interval call stack');
-    }
-    return originalSetInterval.call(this, callback, delay, ...args);
-};
+  <!-- Military knowledge scripts -->
+  <script src="utils/military_knowledge/uk_military_data.js"></script>
+  <script src="utils/military_knowledge/us_military_data.js"></script>
+  <script src="utils/military_knowledge/ca_military_data.js"></script>
+  <script src="utils/military_knowledge/au_military_data.js"></script>
+  <script src="utils/military_knowledge/nz_military_data.js"></script>
 
-console.log('🔍 SYSTEMATIC DEBUG: All monitors active. Watch for 🚨 alerts!');
-
-<!-- 4. Military knowledge scripts -->
-<script src="utils/military_knowledge/uk_military_data.js"></script>
-<script src="utils/military_knowledge/us_military_data.js"></script>
-<script src="utils/military_knowledge/ca_military_data.js"></script>
-<script src="utils/military_knowledge/au_military_data.js"></script>
-<script src="utils/military_knowledge/nz_military_data.js"></script>
-
-<!-- 5. Your modular scripts -->
-<script type="module" src="js/auth.js"></script>
-<script type="module" src="js/main.js"></script>
+  <!-- Your modular scripts -->
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
