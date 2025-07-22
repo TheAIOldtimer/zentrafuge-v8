@@ -269,7 +269,7 @@ async function initializeApp(user) {
       mainHeader.style.display = 'flex';
     }
     
-    const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat');
+    const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat-container');
     if (contentDiv) {
       console.log(`🎯 Showing ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat'} container`);
       contentDiv.style.display = 'flex';
