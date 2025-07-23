@@ -61,4 +61,14 @@
   "savingMessage": "Saving your preferences...",
   "errorSaving": "Error saving preferences. Continuing with local storage.",
   "successSaving": "Preferences saved successfully!"
+
+  "successTitle": "Email Verified Successfully!",
+  "successMessage": "Welcome to Zentrafuge! Your email has been verified and your account is now active. You're just one step away from meeting Cael, your AI companion.",
+  "caelWelcome": "Hi! I'm Cael, and I'm excited to meet you. Before we start our journey together, I'd love to learn a bit about you through a gentle onboarding process. This will help me understand how to support you best. Ready to begin?",
+  "startOnboarding": "Start My Journey with Cael",
+  "loginInstead": "Go to Login Instead",
+  "loadingText": "Setting up your account...",
+  "errorTitle": "Verification Error",
+  "errorMessage": "There was an issue verifying your email. Please try logging in or contact support."
 }
+
