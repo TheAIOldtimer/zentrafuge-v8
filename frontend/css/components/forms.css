@@ -1,0 +1,14 @@
+/* Form and input styles */
+.chat-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.chat-input {
+  flex-grow: 1;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
