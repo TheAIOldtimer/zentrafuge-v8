@@ -40,3 +40,38 @@
   from = "/assets/*"
   to = "/assets/:splat"
   status = 200
+
+  [[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/js/*"
+  to = "/js/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/css/*"
+  to = "/css/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/css/core/*"
+  to = "/css/core/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/css/components/*"
+  to = "/css/components/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/css/pages/*"
+  to = "/css/pages/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
