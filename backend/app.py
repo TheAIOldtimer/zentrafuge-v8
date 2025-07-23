@@ -7,6 +7,7 @@ import os
 from routes.chat_routes import chat_bp
 from routes.debug_routes import debug_bp
 from routes.auth_routes import auth_bp
+from routes.translation_routes import translation_bp
 
 # Import configuration
 from utils.config import Config
@@ -33,6 +34,7 @@ def create_app():
     app.register_blueprint(chat_bp)
     app.register_blueprint(debug_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(translation_bp)
     
     # Root endpoint
     @app.route('/')
