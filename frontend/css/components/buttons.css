@@ -1,0 +1,15 @@
+/* Button styles */
+.button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
