@@ -1,241 +1,163 @@
-import { showAlert } from './ui.js';
-import { 
-  currentUser, setCurrentUser, isAuthorized, setIsAuthorized, 
-  isInitializing, setIsInitializing, aiName, setAiName,
-  DEFAULT_PREFERENCES, sessionDurationInterval, setSessionDurationInterval,
-  setSessionWarningShown
-} from './config.js';
-import { getAiName } from './chat.js';
-import { renderMoodChart } from './mood.js';
-import { loadUserPreferences, loadPreferencesIntoForm } from './preferences.js';
-import { loadPreviousMessages } from './chat.js';
-import { checkSessionDuration } from './ui.js';
+// js/auth.js - Clean Authentication Module for Zentrafuge
+import { auth, db } from './config.js';
 
-export async function waitForFirebase() {
-  console.log('🔍 Waiting for Firebase SDK to load...');
-  return new Promise((resolve, reject) => {
-    if (typeof firebase === 'undefined' || !firebase.apps.length) {
-      console.error('❌ Firebase SDK not loaded or initialized');
-      reject(new Error('Firebase SDK not loaded or initialized'));
-      return;
-    }
-    const unsubscribe = firebase.auth().onAuthStateChanged(user => {
-      unsubscribe();
-      console.log('✅ Firebase auth state resolved');
-      resolve();
-    }, error => {
-      unsubscribe();
-      console.error('❌ Firebase auth initialization error:', error);
-      reject(error);
-    });
-  });
-}
-
-export async function checkUserAuthorization(user) {
-  console.log('🔍 === AUTHORIZATION CHECK START ===');
-  try {
-    if (!user) {
-      console.warn('❌ No user provided to checkUserAuthorization');
-      throw new Error('No user provided');
+export class AuthManager {
+    constructor() {
+        this.currentUser = null;
+        this.authStateListeners = [];
     }
 
-    if (!user.emailVerified) {
-      console.warn(`❌ Authorization failed for ${user.email}: Email not verified in Firebase Auth`);
-      throw new Error('Email not verified');
-    }
-
-    console.log(`✅ Email verified in Firebase Auth for ${user.email}`);
-
-    if (user.email === 'buyartbyant@gmail.com') {
-      console.log('✅ Bypassing Firestore check for buyartbyant@gmail.com');
-      return true;
-    }
-
-    const db = firebase.firestore();
-    let userDoc;
-    let userData = null;
-
-    try {
-      userDoc = await db.collection("users").doc(user.uid).get();
-      if (userDoc.exists) {
-        userData = userDoc.data();
-        console.log(`✅ Found user document in Firestore for ${user.email}:`, userData);
-      } else {
-        console.warn(`⚠️ User document not found in Firestore for ${user.email}, creating new document`);
-        await db.collection("users").doc(user.uid).set({
-          email: user.email,
-          emailVerified: user.emailVerified,
-          displayName: user.displayName || 'User',
-          onboardingComplete: true,
-          ai_name: 'Cael',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          ai_preferences: DEFAULT_PREFERENCES
+    // Initialize auth state monitoring
+    init() {
+        return new Promise((resolve) => {
+            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                this.currentUser = user;
+                this.notifyAuthStateListeners(user);
+                
+                if (user) {
+                    console.log('✅ User authenticated:', user.uid);
+                    // Ensure user document exists
+                    this.ensureUserDocument(user);
+                } else {
+                    console.log('❌ User not authenticated');
+                }
+                
+                resolve(user);
+            });
         });
-        console.log(`✅ Created user document for ${user.email}`);
-        userData = { onboardingComplete: true, ai_name: 'Cael', ai_preferences: DEFAULT_PREFERENCES };
-      }
-    } catch (firestoreError) {
-      console.warn(`⚠️ Firestore access failed for ${user.email}:`, firestoreError.message);
     }
 
-    if (userData && !userData.onboardingComplete) {
-      console.warn(`❌ Authorization failed for ${user.email}: Onboarding not completed`);
-      throw new Error('Onboarding not completed');
+    // Add auth state listener
+    onAuthStateChanged(callback) {
+        this.authStateListeners.push(callback);
     }
 
-    if (userData) {
-      console.log(`✅ Full authorization succeeded for ${user.email} with Firestore data`);
-    } else {
-      console.log(`✅ Basic authorization succeeded for ${user.email} with Firebase Auth only`);
+    // Notify all listeners of auth state changes
+    notifyAuthStateListeners(user) {
+        this.authStateListeners.forEach(callback => {
+            try {
+                callback(user);
+            } catch (error) {
+                console.error('Auth state listener error:', error);
+            }
+        });
     }
 
-    return true;
-  } catch (error) {
-    console.error('❌ Authorization check failed:', error.message, error.stack);
-    return false;
-  } finally {
-    console.log('🔍 === AUTHORIZATION CHECK END ===');
-  }
-}
+    // Get current user
+    getCurrentUser() {
+        return this.currentUser;
+    }
 
-export async function initializeApp(user) {
-  if (isInitializing) {
-    console.warn('⚠️ Already initializing, skipping...');
-    return;
-  }
-  setIsInitializing(true);
-  try {
-    console.log('🚀 Starting app initialization for user:', user.email);
-    
-    setCurrentUser(user);
-    setIsAuthorized(true);
-    setAiName(await getAiName(user.uid));
-    console.log(`🎭 Setting AI name to: ${aiName}`);
-    
-    const isDashboard = window.location.pathname.includes('dashboard.html');
-    const isPreferences = window.location.pathname.includes('preferences.html');
-    const isChatPage = window.location.pathname.includes('chat.html');
-    const pageTitle = isDashboard ? 'Dashboard' : isPreferences ? 'Preferences' : aiName;
-    document.title = `Zentrafuge × ${pageTitle}`;
-    
-    const headerImg = document.querySelector('header img');
-    if (headerImg) {
-      headerImg.onerror = () => {
-        console.log('⚠️ Logo failed to load, adding fallback title');
-        headerImg.style.display = 'none';
-        headerImg.insertAdjacentHTML('afterend', `<h1>Zentrafuge × ${pageTitle}</h1>`);
-      };
-    } else {
-      console.warn('⚠️ No header image found');
+    // Get current user ID
+    getCurrentUserId() {
+        return this.currentUser ? this.currentUser.uid : null;
     }
-    
-    const userInfo = document.getElementById('user-info');
-    if (userInfo) {
-      userInfo.textContent = `Welcome, ${user.displayName || user.email}`;
-      console.log('🎯 Set user-info text');
-    } else {
-      console.warn('⚠️ No user-info element found');
+
+    // Check if user is authenticated
+    isAuthenticated() {
+        return !!this.currentUser;
     }
-    
-    const authLoading = document.getElementById('auth-loading');
-    if (authLoading) {
-      console.log('🎯 Hiding auth loading screen');
-      authLoading.style.display = 'none';
-    } else {
-      console.warn('⚠️ No auth-loading element found');
-    }
-    
-    const mainHeader = document.getElementById('main-header');
-    if (mainHeader) {
-      console.log('🎯 Showing main header');
-      mainHeader.style.display = 'flex';
-    } else {
-      console.warn('⚠️ No main-header element found');
-    }
-    
-    const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat-container');
-    if (contentDiv) {
-      console.log(`🎯 Showing ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat'} container`);
-      contentDiv.style.display = 'flex';
-    } else {
-      console.error(`❌ No ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat-container'} element found`);
-    }
-    
-    if (isDashboard) {
-      console.log('🔍 Initializing dashboard');
-      await renderMoodChart(user.uid);
-    } else if (isPreferences) {
-      console.log('🔍 Initializing preferences');
-      await loadUserPreferences();
-      loadPreferencesIntoForm();
-    } else if (isChatPage) {
-      console.log('🔍 Entering chat page initialization');
-      const chatForm = document.getElementById('chat-form');
-      if (chatForm) {
-        console.log('🎯 Showing chat form');
-        chatForm.style.display = 'flex';
-        chatForm.setAttribute('aria-label', `Ask ${aiName} something`);
-        const messageInput = document.getElementById('message');
-        if (messageInput) {
-          console.log('🎯 Setting message input placeholder and focus');
-          messageInput.placeholder = `Ask ${aiName} something...`;
-          messageInput.focus();
-        } else {
-          console.error('❌ No message input found');
+
+    // Ensure user document exists in Firestore
+    async ensureUserDocument(user) {
+        try {
+            const userRef = db.collection('users').doc(user.uid);
+            const userDoc = await userRef.get();
+            
+            if (!userDoc.exists) {
+                console.log('Creating user document for:', user.uid);
+                await userRef.set({
+                    email: user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                    preferences: {
+                        theme: 'light',
+                        notifications: true
+                    }
+                }, { merge: true });
+            } else {
+                // Update last active
+                await userRef.update({
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        } catch (error) {
+            console.error('Error ensuring user document:', error);
         }
-      } else {
-        console.error('❌ No chat-form found');
-      }
-      console.log('🔍 Calling loadPreviousMessages');
-      await loadPreviousMessages();
-      
-      sessionStorage.setItem('session_start', Date.now());
-      setSessionWarningShown(false);
-      
-      if (sessionDurationInterval) {
-        clearInterval(sessionDurationInterval);
-      }
-      
-      setSessionDurationInterval(setInterval(checkSessionDuration, 60000));
     }
-    
-    console.log('✅ App initialization completed successfully');
-  } catch (error) {
-    console.error('❌ Error initializing app:', error.message, error.stack);
-    redirectToAuth('initialization_failed');
-  } finally {
-    setIsInitializing(false);
-  }
+
+    // Sign out user
+    async signOut() {
+        try {
+            await firebase.auth().signOut();
+            console.log('✅ User signed out successfully');
+            
+            // Redirect to login
+            window.location.href = '/index.html';
+        } catch (error) {
+            console.error('❌ Sign out error:', error);
+            throw error;
+        }
+    }
+
+    // Get user profile data
+    async getUserProfile() {
+        if (!this.currentUser) {
+            throw new Error('No authenticated user');
+        }
+
+        try {
+            const userDoc = await db.collection('users').doc(this.currentUser.uid).get();
+            
+            if (userDoc.exists) {
+                return {
+                    uid: this.currentUser.uid,
+                    email: this.currentUser.email,
+                    ...userDoc.data()
+                };
+            } else {
+                // Return basic profile if document doesn't exist
+                return {
+                    uid: this.currentUser.uid,
+                    email: this.currentUser.email
+                };
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            throw error;
+        }
+    }
+
+    // Update user profile
+    async updateUserProfile(profileData) {
+        if (!this.currentUser) {
+            throw new Error('No authenticated user');
+        }
+
+        try {
+            const userRef = db.collection('users').doc(this.currentUser.uid);
+            await userRef.update({
+                ...profileData,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            console.log('✅ User profile updated');
+        } catch (error) {
+            console.error('❌ Error updating user profile:', error);
+            throw error;
+        }
+    }
+
+    // Redirect unauthenticated users
+    requireAuth(redirectUrl = '/index.html') {
+        if (!this.isAuthenticated()) {
+            console.log('🔒 Authentication required, redirecting...');
+            window.location.href = redirectUrl;
+            return false;
+        }
+        return true;
+    }
 }
 
-export async function handleLogout() {
-  try {
-    await firebase.auth().signOut();
-    window.location.assign('index.html');
-  } catch (error) {
-    console.error('❌ Logout error:', error);
-    showAlert('Error signing out. Please try again.', 'error');
-  }
-}
-
-export function generateUniqueUserId() {
-  return currentUser ? currentUser.uid : `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-export function getUserId() {
-  if (!currentUser || !currentUser.uid) {
-    console.error('❌ No authenticated user found');
-    throw new Error('User not authenticated');
-  }
-  return currentUser.uid;
-}
-
-export function redirectToAuth(reason = 'unauthorized') {
-  if (isInitializing) {
-    console.warn('⚠️ Preventing redirect loop during initialization:', reason);
-    return;
-  }
-  console.log('➡️ Redirecting to auth:', reason);
-  const params = new URLSearchParams({ reason });
-  window.location.assign(`index.html?${params}`);
-}
+// Create and export singleton instance
+export const authManager = new AuthManager();
