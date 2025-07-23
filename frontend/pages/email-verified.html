@@ -1,1 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Email Verified – Zentrafuge</title>
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png">
+  <link rel="stylesheet" href="css/core/reset.css">
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/typography.css">
+  <link rel="stylesheet" href="css/components/buttons.css">
+  <link rel="stylesheet" href="css/components/loading.css">
+  <link rel="stylesheet" href="css/pages/email-verified.css">
+</head>
+<body>
+  <div class="language-selector">
+    <div class="language-dropdown-container">
+      <div class="language-dropdown" id="language-toggle">
+        <span class="language-flag" id="selected-flag">🇬🇧</span>
+        <span class="language-name" id="selected-language">English</span>
+        <span class="language-dropdown-arrow">▼</span>
+      </div>
+      <div class="language-options-dropdown" id="language-dropdown"></div>
+    </div>
+  </div>
 
+  <div class="verification-container">
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo">
+    <div class="success-icon">✅</div>
+    <h1 class="success-title" id="success-title" data-translate="successTitle">Email Verified Successfully!</h1>
+    <p class="success-message" id="success-message" data-translate="successMessage"></p>
+    <div class="cael-welcome" id="cael-welcome" data-translate="caelWelcome"></div>
+    <div class="action-buttons">
+      <a href="onboarding.html" class="btn btn-primary" id="start-onboarding" data-translate="startOnboarding">Start My Journey with Cael</a>
+      <a href="index.html" class="btn btn-secondary" id="login-instead" data-translate="loginInstead">Go to Login Instead</a>
+    </div>
+    <div class="loading" id="loading">
+      <span id="loading-text" data-translate="loadingText">Setting up your account...</span>
+    </div>
+    <div class="error-state" id="error-state">
+      <strong id="error-title" data-translate="errorTitle">Verification Error</strong>
+      <p id="error-message" data-translate="errorMessage">There was an issue verifying your email. Please try logging in or contact support.</p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <script src="firebase-init.js"></script>
+  <script>
+    console.log('🔍 DEBUG: Starting authentication debug...');
+    if (typeof firebase === 'undefined') {
+      console.error('❌ Firebase not loaded');
+    } else {
+      console.log('✅ Firebase loaded');
+    }
+    let listenerCount = 0;
+    const originalOnAuthStateChanged = firebase.auth().onAuthStateChanged;
+    firebase.auth().onAuthStateChanged = function(...args) {
+      listenerCount++;
+      console.warn(`🚨 Auth listener #${listenerCount} being registered!`);
+      if (listenerCount > 1) {
+        console.error('❌ MULTIPLE AUTH LISTENERS DETECTED');
+        console.trace('Multiple listener trace:');
+      }
+      return originalOnAuthStateChanged.apply(this, args);
+    };
+  </script>
+  <script type="module" src="js/email-verified.js"></script>
