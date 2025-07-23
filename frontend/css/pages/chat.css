@@ -1,1 +1,6 @@
-
+/* Chat page-specific styles */
+.chat-container {
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
