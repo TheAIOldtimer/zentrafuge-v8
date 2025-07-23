@@ -189,6 +189,29 @@ header img {
   border: 1px solid #c3e6cb;
 }
 
+/* Form Links */
+.form-links {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.form-links p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.form-links a {
+  color: #003366;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.form-links a:hover {
+  text-decoration: underline;
+  color: #0055aa;
+}
+
 /* About Section */
 .about {
   background: white;
