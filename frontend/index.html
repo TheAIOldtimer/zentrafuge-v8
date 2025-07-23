@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zentrafuge × Cael</title>
+  <title data-translate="page_title">Zentrafuge × Cael</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
   <style>
@@ -167,6 +167,10 @@
       color: #777;
       margin-top: auto;
     }
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -174,7 +178,7 @@
     <div class="language-dropdown-container">
       <div class="language-dropdown" onclick="toggleLanguageDropdown()">
         <span id="selected-flag">🇬🇧</span>
-        <span id="selected-language">English</span>
+        <span id="selected-language" data-translate="language_english">English</span>
         <span>▼</span>
       </div>
       <div class="language-options-dropdown" id="language-dropdown"></div>
@@ -189,17 +193,17 @@
     <div id="error-message" class="error-message"></div>
     <div id="success-message" class="success-message"></div>
     
-    <input type="email" id="login-email" placeholder="Email" required />
-    <input type="password" id="login-password" placeholder="Password" required />
-    <button class="btn btn-primary" onclick="emailLogin()" id="login-button">Log In</button>
+    <input type="email" id="login-email" data-translate-placeholder="email" placeholder="Email" required />
+    <input type="password" id="login-password" data-translate-placeholder="password" placeholder="Password" required />
+    <button class="btn btn-primary" onclick="emailLogin()" id="login-button" data-translate="sign_in">Log In</button>
   </div>
   
   <div class="about">
-    <h2>What is Zentrafuge?</h2>
-    <p>Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it's your safe space to reflect, reconnect, and remember who you are. 🌀</p>
+    <h2 data-translate="about_title">What is Zentrafuge?</h2>
+    <p data-translate="about_description">Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it's your safe space to reflect, reconnect, and remember who you are. 🌀</p>
   </div>
   
-  <footer>© 2025 Zentrafuge. All rights reserved.</footer>
+  <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -209,7 +213,88 @@
   <!-- Firebase Configuration -->
   <script src="firebases-init.js"></script>
 
-  <!-- WORKING AUTHENTICATION - NO MODULES -->
+  <!-- Translation Manager -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Initialize translation system
+    let currentTranslationManager = null;
+
+    async function initTranslation() {
+      try {
+        currentTranslationManager = translationManager;
+        
+        // Configure API client with correct backend URL
+        if (window.translationManager && window.translationManager.apiClient) {
+          window.translationManager.apiClient.setConfig({
+            baseUrl: 'https://zentrafuge-v8.onrender.com'
+          });
+        }
+        
+        await currentTranslationManager.preloadTranslations();
+        await populateLanguageDropdown();
+        await currentTranslationManager.updatePageLanguage();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
+      }
+    }
+
+    async function populateLanguageDropdown() {
+      const dropdown = document.getElementById('language-dropdown');
+      const languages = currentTranslationManager.getSupportedLanguages();
+      const currentLang = currentTranslationManager.getCurrentLanguage();
+
+      // Language flags mapping
+      const flags = {
+        'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 
+        'it': '🇮🇹', 'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳', 
+        'ru': '🇷🇺', 'nl': '🇳🇱'
+      };
+
+      // Update selected language display
+      const selectedFlag = document.getElementById('selected-flag');
+      const selectedLanguage = document.getElementById('selected-language');
+      const currentLangData = languages.find(lang => lang.code === currentLang);
+      
+      if (currentLangData) {
+        selectedFlag.textContent = flags[currentLang] || '🌍';
+        selectedLanguage.textContent = currentLangData.nativeName;
+      }
+
+      // Populate dropdown
+      dropdown.innerHTML = languages.map(lang => `
+        <div class="language-option-dropdown" onclick="changeLanguage('${lang.code}')">
+          <span>${flags[lang.code] || '🌍'}</span>
+          <span>${lang.nativeName}</span>
+        </div>
+      `).join('');
+    }
+
+    // Make functions global
+    window.changeLanguage = async function(languageCode) {
+      try {
+        document.body.classList.add('translating');
+        await currentTranslationManager.setLanguage(languageCode);
+        await populateLanguageDropdown();
+        toggleLanguageDropdown(); // Close dropdown
+      } catch (error) {
+        console.error('Error changing language:', error);
+      } finally {
+        document.body.classList.remove('translating');
+      }
+    };
+
+    window.toggleLanguageDropdown = function() {
+      const dropdown = document.getElementById('language-dropdown');
+      dropdown.classList.toggle('open');
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initTranslation);
+  </script>
+
+  <!-- WORKING AUTHENTICATION -->
   <script>
     console.log('🔥 Login page initialized');
 
@@ -305,17 +390,19 @@
       }
     }
 
-    function toggleLanguageDropdown() {
-      const dropdown = document.getElementById('language-dropdown');
-      dropdown.classList.toggle('open');
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('login-password').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
           emailLogin();
         }
       });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.language-dropdown-container')) {
+        document.getElementById('language-dropdown').classList.remove('open');
+      }
     });
 
     console.log('✅ All authentication functions loaded');
