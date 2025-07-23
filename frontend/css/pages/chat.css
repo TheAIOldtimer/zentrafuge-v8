@@ -1,6 +1,19 @@
 /* Chat page-specific styles */
 .chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
   background: #fff;
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
+}
+
+.chat {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
