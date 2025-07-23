@@ -1,13 +1,15 @@
-import { redirectToAuth, showAlert } from './ui.js';
+import { showAlert } from './ui.js';
 import { 
   currentUser, setCurrentUser, isAuthorized, setIsAuthorized, 
   isInitializing, setIsInitializing, aiName, setAiName,
-  DEFAULT_PREFERENCES 
+  DEFAULT_PREFERENCES, sessionDurationInterval, setSessionDurationInterval,
+  setSessionWarningShown
 } from './config.js';
 import { getAiName } from './chat.js';
 import { renderMoodChart } from './mood.js';
 import { loadUserPreferences, loadPreferencesIntoForm } from './preferences.js';
 import { loadPreviousMessages } from './chat.js';
+import { checkSessionDuration } from './ui.js';
 
 export async function waitForFirebase() {
   console.log('🔍 Waiting for Firebase SDK to load...');
@@ -15,6 +17,7 @@ export async function waitForFirebase() {
     if (typeof firebase === 'undefined' || !firebase.apps.length) {
       console.error('❌ Firebase SDK not loaded or initialized');
       reject(new Error('Firebase SDK not loaded or initialized'));
+      return;
     }
     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
       unsubscribe();
@@ -225,4 +228,14 @@ export function getUserId() {
     throw new Error('User not authenticated');
   }
   return currentUser.uid;
+}
+
+export function redirectToAuth(reason = 'unauthorized') {
+  if (isInitializing) {
+    console.warn('⚠️ Preventing redirect loop during initialization:', reason);
+    return;
+  }
+  console.log('➡️ Redirecting to auth:', reason);
+  const params = new URLSearchParams({ reason });
+  window.location.assign(`index.html?${params}`);
 }
