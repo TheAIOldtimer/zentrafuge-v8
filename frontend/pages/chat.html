@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zentrafuge × Cael</title>
+  <title data-translate="page_title">Zentrafuge × Cael</title>
   <link rel="stylesheet" href="css/core/reset.css">
   <link rel="stylesheet" href="css/core/variables.css">
   <link rel="stylesheet" href="css/core/typography.css">
@@ -12,33 +12,235 @@
   <link rel="stylesheet" href="css/components/messages.css">
   <link rel="stylesheet" href="css/components/loading.css">
   <link rel="stylesheet" href="css/pages/chat.css">
+  <style>
+    /* Translation-specific styles */
+    .language-selector-container {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+    
+    #language-selector {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    .translation-loading::after {
+      content: "...";
+      animation: dots 1s infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: ""; }
+      40% { content: "."; }
+      60% { content: ".."; }
+      80%, 100% { content: "..."; }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sign-out-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .sign-out-btn:hover {
+      background: #ff5252;
+    }
+  </style>
 </head>
 <body>
-  <div id="auth-loading" class="loading-spinner">Loading...</div>
+  <!-- Language Selector -->
+  <div class="language-selector-container">
+    <select id="language-selector" aria-label="Select Language">
+      <!-- Will be populated by TranslationManager -->
+    </select>
+  </div>
+
+  <div id="auth-loading" class="loading-spinner" data-translate="status_loading">Loading...</div>
+  
   <header id="main-header" class="header">
     <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo">
+    <div class="user-info">
+      <span id="user-email"></span>
+      <button id="sign-out-btn" class="sign-out-btn" data-translate="sign_out">Sign Out</button>
+    </div>
   </header>
-  <div id="user-info" class="user-info"></div>
+
   <div id="chat-container" class="chat-container">
     <div id="chat" class="chat"></div>
     <form id="chat-form" class="chat-form" aria-label="Ask Cael something">
-      <input id="message" type="text" placeholder="Ask Cael something..." autocomplete="off" class="chat-input">
-      <button id="send-button" type="submit" class="button">Send</button>
+      <input 
+        id="message" 
+        type="text" 
+        data-translate-placeholder="input_placeholder"
+        placeholder="Ask Cael something..." 
+        autocomplete="off" 
+        class="chat-input"
+      >
+      <button id="send-button" type="submit" class="button" data-translate="send_button">Send</button>
     </form>
   </div>
+
   <div id="error-message" class="message error-message" style="display: none;"></div>
   <div id="success-message" class="message success-message" style="display: none;"></div>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script type="module" src="js/main.js"></script>
-  <script>
+
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
+
+  <!-- Module-based Application with Translation -->
+  <script type="module">
+    import { authManager } from './js/modules/auth-manager.js';
+    import { chatManager } from './js/modules/chat-manager.js';
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Initialize application
+    async function initApp() {
+      try {
+        console.log('🚀 Initializing Zentrafuge chat application...');
+
+        // Initialize translation system first
+        await translationManager.preloadTranslations();
+        translationManager.initLanguageSelector();
+        
+        // Initialize auth
+        await authManager.init();
+        
+        // Check if user is authenticated
+        if (!authManager.isAuthenticated()) {
+          console.log('🔒 User not authenticated, redirecting to login');
+          window.location.href = '/index.html';
+          return;
+        }
+
+        // Hide auth loading
+        const authLoading = document.getElementById('auth-loading');
+        if (authLoading) authLoading.style.display = 'none';
+
+        // Update UI with user info
+        const user = authManager.getCurrentUser();
+        const userEmailElement = document.getElementById('user-email');
+        if (userEmailElement) {
+          userEmailElement.textContent = user.email;
+        }
+
+        // Set up sign out
+        const signOutBtn = document.getElementById('sign-out-btn');
+        if (signOutBtn) {
+          signOutBtn.addEventListener('click', async () => {
+            try {
+              await authManager.signOut();
+              window.location.href = '/index.html';
+            } catch (error) {
+              console.error('Sign out error:', error);
+            }
+          });
+        }
+
+        // Initialize chat system
+        await chatManager.init();
+        
+        // Update page language
+        await translationManager.updatePageLanguage();
+
+        // Set up translation event listeners
+        translationManager.on('languageChanged', async ({ language }) => {
+          console.log(`Language changed to ${language}`);
+          
+          // Update Cael's welcome message in new language
+          if (chatManager.isReady()) {
+            const welcomeText = await translationManager.translateUI('welcome_message');
+            // You could add logic here to update the chat if needed
+          }
+        });
+
+        translationManager.on('translationStart', () => {
+          document.body.classList.add('translating');
+        });
+
+        translationManager.on('translationComplete', () => {
+          document.body.classList.remove('translating');
+        });
+        
+        console.log('✅ Application initialized successfully');
+        
+      } catch (error) {
+        console.error('❌ Application initialization failed:', error);
+        
+        // Show error message
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+          errorDiv.textContent = 'Failed to initialize application. Please refresh the page.';
+          errorDiv.style.display = 'block';
+        }
+      }
+    }
+
+    // Enhanced chat message handling with translation
+    chatManager.on('messageExchange', async ({ userMessage, caelMessage }) => {
+      // If user is not using English, we could optionally translate their message back to English for analytics
+      const currentLang = translationManager.getCurrentLanguage();
+      if (currentLang !== 'en') {
+        console.log(`User message in ${currentLang}:`, userMessage.text);
+      }
+    });
+
+    // Error handling
+    window.addEventListener('error', (event) => {
+      console.error('❌ Global error:', event.error);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('❌ Unhandled promise rejection:', event.reason);
+    });
+
+    // Start the app
+    initApp();
+
     // Temporary debug script
     setTimeout(() => {
       console.log('🔍 DEBUG CHECK:');
       console.log('chat-container:', document.getElementById('chat-container'));
       console.log('chat-form:', document.getElementById('chat-form'));
       console.log('chat:', document.getElementById('chat'));
+      console.log('Translation manager:', translationManager);
+      console.log('Auth manager:', authManager);
+      console.log('Chat manager:', chatManager);
     }, 2000);
   </script>
+</body>
+</html>
