@@ -1,4 +1,4 @@
-import { BACKEND_URL, isAuthorized, userPreferences, currentUser } from './config.js';
+import { BACKEND_URL, isAuthorized, userPreferences, currentUser, aiName } from './config.js';
 import { getUserId } from './auth.js';
 import { applyPreferencesToResponse } from './preferences.js';
 import { streamTextAdvanced, showWelcomeMessage } from './ui.js';
@@ -237,13 +237,15 @@ export async function generateDynamicWelcome(userName = null, isReturning = fals
 }
 
 export async function getNewUserGreetings() {
+  // Fixed: Use aiName from config.js import instead of undefined variable
+  const currentAiName = aiName || 'Cael';
   return [
-    `Hi there. I'm ${aiName} - I'm here if you need someone to talk to.`,
-    `Hey. I'm ${aiName}. I hope this space can feel safe for you.`,
-    `Hi - I'm ${aiName}. I'm here to listen, whatever's going on.`,
-    `Hey there. I'm ${aiName}, and I'm genuinely glad you're here.`,
-    `Hi. I'm ${aiName} - think of me as a friend who's always here.`,
-    `Hey. I'm ${aiName}. This can be whatever kind of conversation you need.`
+    `Hi there. I'm ${currentAiName} - I'm here if you need someone to talk to.`,
+    `Hey. I'm ${currentAiName}. I hope this space can feel safe for you.`,
+    `Hi - I'm ${currentAiName}. I'm here to listen, whatever's going on.`,
+    `Hey there. I'm ${currentAiName}, and I'm genuinely glad you're here.`,
+    `Hi. I'm ${currentAiName} - think of me as a friend who's always here.`,
+    `Hey. I'm ${currentAiName}. This can be whatever kind of conversation you need.`
   ];
 }
 
