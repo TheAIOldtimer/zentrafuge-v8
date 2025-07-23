@@ -1,1 +1,31 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zentrafuge × Cael</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages/chat.css">
+</head>
+<body>
+  <div id="auth-loading" class="loading-spinner">Loading...</div>
+  <header id="main-header" class="header">
+    <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo">
+  </header>
+  <div id="user-info" class="user-info"></div>
+  <div id="chat-container" class="chat-container">
+    <div id="chat" class="chat"></div>
+    <form id="chat-form" class="chat-form" aria-label="Ask Cael something">
+      <input id="message" type="text" placeholder="Ask Cael something..." autocomplete="off" class="chat-input">
+      <button id="send-button" type="submit" class="button">Send</button>
+    </form>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
