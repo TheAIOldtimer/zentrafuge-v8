@@ -9,3 +9,4 @@ marshmallow==3.21.1
 gunicorn==23.0.0
 pytz==2023.3
 tqdm==4.66.0
+redis==5.0.0
