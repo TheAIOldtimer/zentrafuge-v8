@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title data-translate="page_title">Zentrafuge × Cael</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7faff;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .top-language-bar {
+      width: 100%;
+      background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
+      color: white;
+      padding: 0.8rem 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .language-dropdown-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .language-dropdown {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 140px;
+    }
+    .language-dropdown:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .language-options-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    .language-options-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+    .language-option-dropdown {
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: #333;
+    }
+    .language-option-dropdown:hover {
+      background: #f8f9ff;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+    header img {
+      max-width: 260px;
+    }
+    .login-box {
+      background: white;
+      padding: 2rem;
+      margin: 2rem auto 1rem;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .login-box input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .login-box input:focus {
+      outline: none;
+      border-color: #0055aa;
+      box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
+    }
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #003366;
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: #0055aa;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .error-message, .success-message {
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+    }
+    .about {
+      background: white;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 1rem auto 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: auto;
+    }
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-language-bar">
+    <div class="language-dropdown-container">
+      <div class="language-dropdown" onclick="toggleLanguageDropdown()">
+        <span id="selected-flag">🇬🇧</span>
+        <span id="selected-language" data-translate="language_english">English</span>
+        <span>▼</span>
+      </div>
+      <div class="language-options-dropdown" id="language-dropdown"></div>
+    </div>
+  </div>
 
+  <header>
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
+  </header>
+  
+  <div class="login-box">
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
+    
+    <input type="email" id="login-email" data-translate-placeholder="email" placeholder="Email" required />
+    <input type="password" id="login-password" data-translate-placeholder="password" placeholder="Password" required />
+    <button class="btn btn-primary" onclick="emailLogin()" id="login-button" data-translate="sign_in">Log In</button>
+  </div>
+  
+  <div class="about">
+    <h2 data-translate="about_title">What is Zentrafuge?</h2>
+    <p data-translate="about_description">Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it's your safe space to reflect, reconnect, and remember who you are. 🌀</p>
+  </div>
+  
+  <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
+
+  <!-- Translation Manager -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Initialize translation system
+    let currentTranslationManager = null;
+
+    async function initTranslation() {
+      try {
+        currentTranslationManager = translationManager;
+        await currentTranslationManager.preloadTranslations();
+        await populateLanguageDropdown();
+        await currentTranslationManager.updatePageLanguage();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
+      }
+    }
+
+    async function populateLanguageDropdown() {
+      const dropdown = document.getElementById('language-dropdown');
+      const languages = currentTranslationManager.getSupportedLanguages();
+      const currentLang = currentTranslationManager.getCurrentLanguage();
+
+      // Language flags mapping
+      const flags = {
+        'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 
+        'it': '🇮🇹', 'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳', 
+        'ru': '🇷🇺', 'nl': '🇳🇱'
+      };
+
+      // Update selected language display
+      const selectedFlag = document.getElementById('selected-flag');
+      const selectedLanguage = document.getElementById('selected-language');
+      const currentLangData = languages.find(lang => lang.code === currentLang);
+      
+      if (currentLangData) {
+        selectedFlag.textContent = flags[currentLang] || '🌍';
+        selectedLanguage.textContent = currentLangData.nativeName;
+      }
+
+      // Populate dropdown
+      dropdown.innerHTML = languages.map(lang => `
+        <div class="language-option-dropdown" onclick="changeLanguage('${lang.code}')">
+          <span>${flags[lang.code] || '🌍'}</span>
+          <span>${lang.nativeName}</span>
+        </div>
+      `).join('');
+    }
+
+    // Make functions global
+    window.changeLanguage = async function(languageCode) {
+      try {
+        document.body.classList.add('translating');
+        await currentTranslationManager.setLanguage(languageCode);
+        await populateLanguageDropdown();
+        toggleLanguageDropdown(); // Close dropdown
+      } catch (error) {
+        console.error('Error changing language:', error);
+      } finally {
+        document.body.classList.remove('translating');
+      }
+    };
+
+    window.toggleLanguageDropdown = function() {
+      const dropdown = document.getElementById('language-dropdown');
+      dropdown.classList.toggle('open');
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initTranslation);
+  </script>
+
+  <!-- WORKING AUTHENTICATION -->
+  <script>
+    console.log('🔥 Login page initialized');
+
+    function showAlert(message, type = 'error') {
+      const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
+      const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
+      otherAlert.style.display = 'none';
+      alertElement.textContent = message;
+      alertElement.style.display = 'block';
+      setTimeout(() => {
+        alertElement.style.display = 'none';
+      }, 5000);
+    }
+
+    async function checkUserAuthorization(user) {
+      try {
+        if (!user) {
+          throw new Error('No user provided');
+        }
+        
+        // Bypass for your test account
+        if (user.email === 'buyartbyant@gmail.com') {
+          console.log('✅ Bypassing authorization for test account');
+          return true;
+        }
+        
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+          throw new Error('User document not found');
+        }
+        
+        const userData = userDoc.data();
+        if (!userData.emailVerified || !userData.onboardingComplete) {
+          throw new Error('Authorization requirements not met');
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Authorization failed:', error.message);
+        return false;
+      }
+    }
+
+    async function emailLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const loginBtn = document.getElementById('login-button');
+      
+      if (!email || !password) {
+        showAlert('Please enter both email and password', 'error');
+        return;
+      }
+      
+      try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+        console.log('🔄 Attempting login for:', email);
+
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        if (!user.emailVerified) {
+          showAlert('Please verify your email before logging in.', 'error');
+          await firebase.auth().signOut();
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Log In';
+          return;
+        }
+
+        const isAuthorized = await checkUserAuthorization(user);
+        if (!isAuthorized) {
+          showAlert('Please complete onboarding before logging in.', 'error');
+          await firebase.auth().signOut();
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Log In';
+          return;
+        }
+
+        showAlert('Welcome back! Redirecting...', 'success');
+        
+        setTimeout(() => {
+          console.log('✅ Login successful, redirecting to chat');
+          window.location.href = 'chat.html';
+        }, 1500);
+        
+      } catch (error) {
+        console.error('❌ Login error:', error);
+        showAlert('Login failed: ' + error.message, 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Log In';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          emailLogin();
+        }
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.language-dropdown-container')) {
+        document.getElementById('language-dropdown').classList.remove('open');
+      }
+    });
+
+    console.log('✅ All authentication functions loaded');
+  </script>
+</body>
+</html>
