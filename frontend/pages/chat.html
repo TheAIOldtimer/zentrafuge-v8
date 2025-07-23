@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zentrafuge × Cael</title>
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/core/reset.css">
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/typography.css">
+  <link rel="stylesheet" href="css/components/buttons.css">
+  <link rel="stylesheet" href="css/components/forms.css">
+  <link rel="stylesheet" href="css/components/messages.css">
+  <link rel="stylesheet" href="css/components/loading.css">
   <link rel="stylesheet" href="css/pages/chat.css">
 </head>
 <body>
@@ -22,10 +26,19 @@
       <button id="send-button" type="submit" class="button">Send</button>
     </form>
   </div>
+  <div id="error-message" class="message error-message" style="display: none;"></div>
+  <div id="success-message" class="message success-message" style="display: none;"></div>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="js/main.js"></script>
-</body>
-</html>
+  <script>
+    // Temporary debug script
+    setTimeout(() => {
+      console.log('🔍 DEBUG CHECK:');
+      console.log('chat-container:', document.getElementById('chat-container'));
+      console.log('chat-form:', document.getElementById('chat-form'));
+      console.log('chat:', document.getElementById('chat'));
+    }, 2000);
+  </script>
