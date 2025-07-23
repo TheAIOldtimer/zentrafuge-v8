@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Zentrafuge Onboarding – Meet Cael</title>
+  <title data-translate="onboarding_page_title">Zentrafuge Onboarding – Meet Cael</title>
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png">
   <link rel="stylesheet" href="css/core/reset.css">
   <link rel="stylesheet" href="css/core/variables.css">
@@ -12,8 +12,38 @@
   <link rel="stylesheet" href="css/components/forms.css">
   <link rel="stylesheet" href="css/components/loading.css">
   <link rel="stylesheet" href="css/pages/onboarding.css">
+  <style>
+    /* Translation-specific styles */
+    .language-selector-container {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+    
+    #language-selector {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
+  <!-- Language Selector -->
+  <div class="language-selector-container">
+    <select id="language-selector" aria-label="Select Language">
+      <!-- Will be populated by TranslationManager -->
+    </select>
+  </div>
+
   <div class="loading-overlay" id="loading-overlay">
     <div class="loading-spinner-large"></div>
   </div>
@@ -22,7 +52,7 @@
     <div class="language-dropdown-container">
       <div class="language-dropdown" id="language-toggle">
         <span class="language-flag" id="selected-flag">🌍</span>
-        <span class="language-name" id="selected-language">Loading...</span>
+        <span class="language-name" id="selected-language" data-translate="status_loading">Loading...</span>
         <span class="language-dropdown-arrow">▼</span>
       </div>
       <div class="language-options-dropdown" id="language-dropdown"></div>
@@ -31,12 +61,13 @@
 
   <header>
     <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" onerror="this.style.display='none'; document.querySelector('.header-fallback').style.display='block';" />
-    <div class="header-fallback" style="display: none;">Zentrafuge</div>
+    <div class="header-fallback" style="display: none;" data-translate="app_name">Zentrafuge</div>
   </header>
 
   <div class="onboarding-container">
     <div class="auth-notice" id="auth-notice">
-      <span data-translate="authNotice">Loading...</span> <a href="index.html" data-translate="loginLink">Log in</a>
+      <span data-translate="auth_notice">Loading...</span> 
+      <a href="index.html" data-translate="login_link">Log in</a>
     </div>
     <div class="status-message" id="status-message"></div>
     <div class="progress-indicator">
@@ -47,167 +78,204 @@
       <div class="progress-dot" data-step="4"></div>
     </div>
 
+    <!-- Step 0: Welcome -->
     <div class="onboarding-box" id="step-0">
-      <h2 data-translate="welcomeTitle">Welcome to Zentrafuge</h2>
-      <div class="cael-intro" data-translate="caelIntro"></div>
-      <p data-translate="welcomeDescription"></p>
+      <h2 data-translate="welcome_title">Welcome to Zentrafuge</h2>
+      <div class="cael-intro" data-translate="cael_intro">Hello! I'm Cael, your emotional companion.</div>
+      <p data-translate="welcome_description">Let's personalize your experience together.</p>
       <div class="navigation-buttons">
         <div></div>
-        <button class="btn btn-primary" id="begin-button" disabled data-translate="beginButton">Begin</button>
+        <button class="btn btn-primary" id="begin-button" disabled data-translate="begin_button">Begin</button>
       </div>
     </div>
 
+    <!-- Step 1: Communication & Safety -->
     <div class="onboarding-box hidden" id="step-1">
-      <div class="theme-header" data-translate="safetyHeader"></div>
+      <div class="theme-header" data-translate="safety_header">How You Like to Be Heard</div>
       <div class="question-section">
-        <label class="question-label" data-translate="communicationQuestion"></label>
-        <div class="question-context" data-translate="communicationContext"></div>
+        <label class="question-label" data-translate="communication_question">How do you prefer to receive feedback?</label>
+        <div class="question-context" data-translate="communication_context">This helps me understand your communication style.</div>
         <div class="multi-choice">
           <div class="multi-choice-item">
             <input type="radio" id="heard-direct" name="communication_style" value="direct_feedback" />
-            <label for="heard-direct" data-translate="directLabel"></label>
+            <label for="heard-direct" data-translate="direct_label">Direct and honest feedback</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="heard-gentle" name="communication_style" value="gentle_exploration" />
-            <label for="heard-gentle" data-translate="gentleLabel"></label>
+            <label for="heard-gentle" data-translate="gentle_label">Gentle exploration</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="heard-witness" name="communication_style" value="just_witnessing" />
-            <label for="heard-witness" data-translate="witnessLabel"></label>
+            <label for="heard-witness" data-translate="witness_label">Just witnessing and presence</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="heard-mix" name="communication_style" value="mix_depends" />
-            <label for="heard-mix" data-translate="mixLabel"></label>
+            <label for="heard-mix" data-translate="mix_label">It depends on the situation</label>
           </div>
         </div>
       </div>
       <div class="question-section">
-        <label class="question-label" data-translate="processingQuestion"></label>
-        <div class="question-context" data-translate="processingContext"></div>
+        <label class="question-label" data-translate="processing_question">How do you prefer to process emotions?</label>
+        <div class="question-context" data-translate="processing_context">This helps me understand your emotional pacing.</div>
         <div class="multi-choice">
           <div class="multi-choice-item">
             <input type="radio" id="process-deep" name="emotional_pacing" value="dive_deep_quickly" />
-            <label for="process-deep" data-translate="deepLabel"></label>
+            <label for="process-deep" data-translate="deep_label">Dive deep quickly</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="process-gradual" name="emotional_pacing" value="circle_gradually" />
-            <label for="process-gradual" data-translate="gradualLabel"></label>
+            <label for="process-gradual" data-translate="gradual_label">Circle around gradually</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="process-varies" name="emotional_pacing" value="varies_situation" />
-            <label for="process-varies" data-translate="variesLabel"></label>
+            <label for="process-varies" data-translate="varies_label">It varies by situation</label>
           </div>
           <div class="multi-choice-item">
             <input type="radio" id="process-unsure" name="emotional_pacing" value="not_sure_yet" />
-            <label for="process-unsure" data-translate="unsureLabel"></label>
+            <label for="process-unsure" data-translate="unsure_label">Not sure yet</label>
           </div>
         </div>
       </div>
       <div class="navigation-buttons">
-        <button class="btn btn-secondary" data-translate="backButton">Back</button>
-        <button class="btn btn-primary" data-translate="continueButton">Continue</button>
+        <button class="btn btn-secondary" data-translate="back_button">Back</button>
+        <button class="btn btn-primary" data-translate="continue_button">Continue</button>
       </div>
     </div>
 
+    <!-- Step 2: Identity & Meaning -->
     <div class="onboarding-box hidden" id="step-2">
-      <div class="theme-header" data-translate="identityHeader"></div>
+      <div class="theme-header" data-translate="identity_header">Understanding Your Journey</div>
       <div class="question-section">
-        <label class="question-label" data-translate="lifeChapterQuestion"></label>
-        <div class="question-context" data-translate="lifeChapterContext"></div>
-        <input type="text" id="life_chapter" name="life_chapter" data-translate-placeholder="lifeChapterPlaceholder" />
+        <label class="question-label" data-translate="life_chapter_question">What life chapter are you in right now?</label>
+        <div class="question-context" data-translate="life_chapter_context">A few words about where you are in life.</div>
+        <input type="text" id="life_chapter" name="life_chapter" data-translate-placeholder="life_chapter_placeholder" placeholder="e.g., rebuilding, exploring, transitioning..." />
       </div>
       <div class="question-section">
-        <label class="question-label" data-translate="meaningQuestion"></label>
-        <div class="question-context" data-translate="meaningContext"></div>
+        <label class="question-label" data-translate="meaning_question">What gives your life meaning?</label>
+        <div class="question-context" data-translate="meaning_context">Select all that resonate with you.</div>
         <div class="multi-choice">
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-creative" name="sources_of_meaning" value="creative_work" />
-            <label for="meaning-creative" data-translate="creativeLabel"></label>
+            <label for="meaning-creative" data-translate="creative_label">Creative work</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-helping" name="sources_of_meaning" value="helping_others" />
-            <label for="meaning-helping" data-translate="helpingLabel"></label>
+            <label for="meaning-helping" data-translate="helping_label">Helping others</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-nature" name="sources_of_meaning" value="being_in_nature" />
-            <label for="meaning-nature" data-translate="natureLabel"></label>
+            <label for="meaning-nature" data-translate="nature_label">Being in nature</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-learning" name="sources_of_meaning" value="learning_growing" />
-            <label for="meaning-learning" data-translate="learningLabel"></label>
+            <label for="meaning-learning" data-translate="learning_label">Learning and growing</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-connection" name="sources_of_meaning" value="deep_connections" />
-            <label for="meaning-connection" data-translate="connectionLabel"></label>
+            <label for="meaning-connection" data-translate="connection_label">Deep connections</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="meaning-other" name="sources_of_meaning" value="something_else" />
-            <label for="meaning-other" data-translate="otherLabel"></label>
+            <label for="meaning-other" data-translate="other_label">Something else</label>
           </div>
         </div>
       </div>
       <div class="navigation-buttons">
-        <button class="btn btn-secondary" data-translate="backButton">Back</button>
-        <button class="btn btn-primary" data-translate="continueButton">Continue</button>
+        <button class="btn btn-secondary" data-translate="back_button">Back</button>
+        <button class="btn btn-primary" data-translate="continue_button">Continue</button>
       </div>
     </div>
 
+    <!-- Step 3: Support Style -->
     <div class="onboarding-box hidden" id="step-3">
-      <div class="theme-header" data-translate="supportHeader"></div>
+      <div class="theme-header" data-translate="support_header">How I Can Best Support You</div>
       <div class="question-section">
-        <label class="question-label" data-translate="supportQuestion"></label>
-        <div class="question-context" data-translate="supportContext"></div>
+        <label class="question-label" data-translate="support_question">What kind of support helps you most?</label>
+        <div class="question-context" data-translate="support_context">Select all that feel helpful to you.</div>
         <div class="multi-choice">
           <div class="multi-choice-item">
             <input type="checkbox" id="support-listening" name="effective_support" value="deep_listening" />
-            <label for="support-listening" data-translate="listeningLabel"></label>
+            <label for="support-listening" data-translate="listening_label">Deep listening</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="support-practical" name="effective_support" value="practical_solutions" />
-            <label for="support-practical" data-translate="practicalLabel"></label>
+            <label for="support-practical" data-translate="practical_label">Practical solutions</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="support-challenge" name="effective_support" value="gentle_challenges" />
-            <label for="support-challenge" data-translate="challengeLabel"></label>
+            <label for="support-challenge" data-translate="challenge_label">Gentle challenges</label>
           </div>
           <div class="multi-choice-item">
             <input type="checkbox" id="support-presence" name="effective_support" value="just_presence" />
-            <label for="support-presence" data-translate="presenceLabel"></label>
+            <label for="support-presence" data-translate="presence_label">Just presence</label>
           </div>
         </div>
       </div>
       <div class="navigation-buttons">
-        <button class="btn btn-secondary" data-translate="backButton">Back</button>
-        <button class="btn btn-primary" data-translate="continueButton">Continue</button>
+        <button class="btn btn-secondary" data-translate="back_button">Back</button>
+        <button class="btn btn-primary" data-translate="continue_button">Continue</button>
       </div>
     </div>
 
+    <!-- Step 4: Final -->
     <div class="onboarding-box hidden" id="step-4">
-      <div class="theme-header" data-translate="finalHeader"></div>
+      <div class="theme-header" data-translate="final_header">Almost Ready</div>
       <div class="question-section">
-        <label class="question-label" data-translate="nameQuestion"></label>
-        <div class="question-context" data-translate="nameContext"></div>
+        <label class="question-label" data-translate="name_question">What would you like to call me?</label>
+        <div class="question-context" data-translate="name_context">You can change this anytime.</div>
         <input type="text" id="ai_name" name="ai_name" value="Cael" />
       </div>
       <div class="navigation-buttons">
-        <button class="btn btn-secondary" data-translate="backButton">Back</button>
+        <button class="btn btn-secondary" data-translate="back_button">Back</button>
         <button class="btn btn-primary" id="complete-button">
-          <span data-translate="completeButton">Begin our journey</span>
+          <span data-translate="complete_button">Begin our journey</span>
           <span class="loading-spinner"></span>
         </button>
       </div>
     </div>
 
-    <div class="skip-note" data-translate="skipNote"></div>
-    <footer data-translate="footerText"></footer>
+    <div class="skip-note" data-translate="skip_note">You can skip these questions and customize later in settings.</div>
+    <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
 
   </div>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
   <script src="firebase-init.js"></script>
+
+  <!-- Translation and Onboarding -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Initialize translation system
+    async function initTranslation() {
+      try {
+        await translationManager.preloadTranslations();
+        translationManager.initLanguageSelector();
+        await translationManager.updatePageLanguage();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
+      }
+    }
+
+    // Translation event listeners
+    translationManager.on('translationStart', () => {
+      document.body.classList.add('translating');
+    });
+
+    translationManager.on('translationComplete', () => {
+      document.body.classList.remove('translating');
+    });
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initTranslation);
+  </script>
+
+  <!-- Authentication Debug -->
   <script>
     console.log('🔍 DEBUG: Starting authentication debug...');
     if (typeof firebase === 'undefined') {
@@ -227,4 +295,8 @@
       return originalOnAuthStateChanged.apply(this, args);
     };
   </script>
+
+  <!-- Original Onboarding Logic -->
   <script type="module" src="js/onboarding.js"></script>
+</body>
+</html>
