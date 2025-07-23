@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Support – Zentrafuge</title>
+  <title data-translate="support_page_title">Support – Zentrafuge</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -15,6 +15,28 @@
       flex-direction: column;
       align-items: center;
     }
+
+    .language-selector-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+    }
+    
+    #language-selector {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      font-size: 14px;
+      min-width: 120px;
+    }
+
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
     .container {
       background: white;
       border-radius: 16px;
@@ -84,45 +106,45 @@
   </style>
 </head>
 <body>
+  <!-- Language Selector -->
+  <div class="language-selector-container">
+    <select id="language-selector" aria-label="Select Language">
+      <!-- Will be populated by TranslationManager -->
+    </select>
+  </div>
+
   <div class="container">
-    <h1>You're Not Alone</h1>
-    <p class="intro">If you're feeling overwhelmed or in distress, please reach out. These resources can offer you support right now:</p>
+    <h1 data-translate="support_title">You're Not Alone</h1>
+    <p class="intro" data-translate="support_intro">If you're feeling overwhelmed or in distress, please reach out. These resources can offer you support right now:</p>
 
     <div id="helpline-content"></div>
 
     <div class="link-container">
-      <a class="return-link" href="/chat.html">Return to Cael</a>
+      <a class="return-link" href="/chat.html" data-translate="return_to_cael">Return to Cael</a>
     </div>
   </div>
 
-  <script>
-    const language = localStorage.getItem('zentrafuge_language') || 'en';
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
+
+  <!-- Translation and Support Logic -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Support helplines data
     const helplines = {
       en: {
         title: "🇬🇧 English (UK)",
         emergency: "Emergency: 999",
         lines: [
           "Samaritans – 116 123 (Free, 24/7)",
-          "Shout Crisis Text – Text SHOUT to 85258"
-        ]
-      },
-      'en-us': {
-        title: "🇺🇸 English (US)",
-        emergency: "Emergency: 911",
-        lines: [
-          "988 Suicide & Crisis Lifeline – 988 (24/7)",
-          "Crisis Text Line – Text HOME to 741741",
-          "National Suicide Prevention Lifeline – <a href=\"https://suicidepreventionlifeline.org/chat/\" target=\"_blank\">Online Chat</a>"
-        ]
-      },
-      'en-ca': {
-        title: "🇨🇦 English (Canada)",
-        emergency: "Emergency: 911",
-        lines: [
-          "Talk Suicide Canada – 1-833-456-4566 (24/7)",
-          "Crisis Text Line – Text HOME to 686868",
-          "Kids Help Phone – 1-800-668-6868 (Youth)"
+          "Shout Crisis Text – Text SHOUT to 85258",
+          "Mind – <a href=\"https://www.mind.org.uk/\" target=\"_blank\">www.mind.org.uk</a>"
         ]
       },
       de: {
@@ -191,43 +213,58 @@
       ]
     };
 
-    // Detect user's likely region for English speakers
-    function getLocalizedLanguage() {
-      const storedLang = localStorage.getItem('zentrafuge_language') || 'en';
-      
-      // If not English, return as-is
-      if (storedLang !== 'en') {
-        return storedLang;
-      }
-      
-      // For English speakers, try to detect region
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const locale = navigator.language || navigator.userLanguage;
-      
-      if (timezone.includes('America') || locale.includes('US')) {
-        return 'en-us';
-      } else if (timezone.includes('Toronto') || timezone.includes('Vancouver') || locale.includes('CA')) {
-        return 'en-ca';
-      } else {
-        return 'en'; // Default to UK
+    // Initialize translation system
+    async function initTranslation() {
+      try {
+        await translationManager.preloadTranslations();
+        translationManager.initLanguageSelector();
+        await translationManager.updatePageLanguage();
+        await updateHelplines();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
+        // Fallback to English helplines
+        updateHelplines('en');
       }
     }
 
-    const content = document.getElementById("helpline-content");
-    const detectedLang = getLocalizedLanguage();
-    const data = helplines[detectedLang] || helplines.en;
+    // Update helplines based on current language
+    async function updateHelplines(languageOverride = null) {
+      const currentLang = languageOverride || translationManager.getCurrentLanguage();
+      const content = document.getElementById("helpline-content");
+      const data = helplines[currentLang] || helplines.en;
 
-    content.innerHTML = `
-      <div class="section">
-        <h2>${data.title}</h2>
-        <div class="helpline"><strong>${data.emergency}</strong></div>
-        ${data.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
-      </div>
-      <div class="section">
-        <h2>${global.title}</h2>
-        ${global.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
-      </div>
-    `;
+      // Translate section titles
+      const globalTitle = await translationManager.translateUI('global_resources') || global.title;
+
+      content.innerHTML = `
+        <div class="section">
+          <h2>${data.title}</h2>
+          <div class="helpline"><strong>${data.emergency}</strong></div>
+          ${data.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
+        </div>
+        <div class="section">
+          <h2>${globalTitle}</h2>
+          ${global.lines.map(line => `<div class="helpline">${line}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // Translation event listeners
+    translationManager.on('translationStart', () => {
+      document.body.classList.add('translating');
+    });
+
+    translationManager.on('translationComplete', () => {
+      document.body.classList.remove('translating');
+    });
+
+    translationManager.on('languageChanged', async ({ language }) => {
+      await updateHelplines(language);
+    });
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initTranslation);
   </script>
 </body>
 </html>
