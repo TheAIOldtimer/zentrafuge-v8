@@ -2,36 +2,8 @@ import { currentUser, aiName, sessionDurationInterval, setSessionDurationInterva
 import { appendMessage } from './chat.js';
 import { generateDynamicWelcome } from './chat.js';
 import { renderModalMoodChart } from './mood.js';
-
-export function showAlert(message, type = 'error') {
-  const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
-  if (alertElement) {
-    const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
-    if (otherAlert) otherAlert.style.display = 'none';
-    alertElement.textContent = message;
-    alertElement.style.display = 'block';
-    setTimeout(() => {
-      alertElement.style.display = 'none';
-    }, 5000);
-  } else {
-    const chat = document.getElementById("chat");
-    if (!chat) {
-      console.warn(`⚠️ No ${type}-message or chat element found for alert:`, message);
-      return;
-    }
-    const alertDiv = document.createElement("div");
-    alertDiv.className = `message ${type}-message`;
-    alertDiv.textContent = message;
-    alertDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
-    alertDiv.style.color = type === 'error' ? '#721c24' : '#155724';
-    alertDiv.style.alignSelf = 'center';
-    alertDiv.style.maxWidth = '90%';
-    alertDiv.style.textAlign = 'center';
-    chat.appendChild(alertDiv);
-    chat.scrollTop = chat.scrollHeight;
-    setTimeout(() => alertDiv.remove(), 5000);
-  }
-}
+import { showStatusMessage } from './components/status-messages.js';
+import { hideLoadingSpinner } from './components/loading-spinner.js';
 
 export function showPreferencesStatus(message, type) {
   const statusDiv = document.getElementById('preferences-status');
@@ -41,18 +13,21 @@ export function showPreferencesStatus(message, type) {
     statusMessage.textContent = message;
     statusDiv.className = `preferences-status ${type}`;
     statusDiv.style.display = 'block';
-    
+    console.log(`🎯 Showing preferences ${type} message: ${message}`);
     setTimeout(() => {
       statusDiv.style.display = 'none';
     }, 5000);
   } else {
-    showAlert(message, type);
+    showStatusMessage(message, type);
   }
 }
 
 export function showTypingIndicator() {
   const chat = document.getElementById("chat");
-  if (!chat) return;
+  if (!chat) {
+    console.warn('⚠️ No chat element found for typing indicator');
+    return;
+  }
   const typingDiv = document.createElement("div");
   typingDiv.className = "typing-indicator";
   typingDiv.id = "typing-indicator";
@@ -65,11 +40,15 @@ export function showTypingIndicator() {
   `;
   chat.appendChild(typingDiv);
   chat.scrollTop = chat.scrollHeight;
+  console.log('🎯 Showing typing indicator');
 }
 
 export function hideTypingIndicator() {
   const typingIndicator = document.getElementById("typing-indicator");
-  if (typingIndicator) typingIndicator.remove();
+  if (typingIndicator) {
+    typingIndicator.remove();
+    console.log('🎯 Hiding typing indicator');
+  }
 }
 
 export function setFormEnabled(enabled) {
@@ -82,22 +61,28 @@ export function setFormEnabled(enabled) {
   input.disabled = !enabled;
   button.disabled = !enabled;
   input.placeholder = enabled ? `Ask ${aiName} something...` : `${aiName} is thinking...`;
+  console.log(`🎯 Form ${enabled ? 'enabled' : 'disabled'}`);
 }
 
 export function showGentleEncouragement() {
   const chat = document.getElementById("chat");
-  if (!chat) return;
+  if (!chat) {
+    console.warn('⚠️ No chat element found for encouragement');
+    return;
+  }
   const encouragementDiv = document.createElement("div");
   encouragementDiv.className = "message encouragement-message";
   encouragementDiv.textContent = `Take your time, ${currentUser?.displayName || 'friend'} - I'm here when you're ready.`;
   chat.appendChild(encouragementDiv);
   chat.scrollTop = chat.scrollHeight;
+  console.log('🎯 Showing gentle encouragement');
 }
 
 export async function showWelcomeMessage(isReturning = false, userName = null) {
   const chat = document.getElementById("chat");
   if (!chat) {
-    console.warn('⚠️ No chat element found for welcome message');
+    console.error('❌ No chat element found for welcome message');
+    showStatusMessage('Error: Chat interface failed to load.', 'error');
     return;
   }
   chat.innerHTML = '';
@@ -123,7 +108,6 @@ export function streamTextAdvanced(text, targetElement, speed = 30) {
     function typeNextCharacter() {
       if (index < text.length) {
         const char = text[index];
-        
         let delay = speed;
         if (char === '.' || char === '!' || char === '?') {
           delay = speed * 3;
@@ -180,11 +164,12 @@ export function checkSessionDuration() {
 
 export function showChartsModal() {
   if (!currentUser) {
-    showAlert('Please log in to view your charts.', 'error');
+    showStatusMessage('Please log in to view your charts.', 'error');
     return;
   }
   
   const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
   modalOverlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -266,7 +251,6 @@ export function showChartsModal() {
     </div>
   `;
   
-  modalOverlay.className = 'modal-overlay';
   modalOverlay.appendChild(modalContent);
   document.body.appendChild(modalOverlay);
   
@@ -277,6 +261,7 @@ export function showChartsModal() {
   });
   
   renderModalMoodChart(currentUser.uid);
+  console.log('🎯 Showing charts modal');
 }
 
 export function redirectToAuth(reason = 'unauthorized') {
