@@ -2,54 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register – Zentrafuge</title>
+  <title data-translate="register_page_title">Register – Zentrafuge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
-  <!-- Firebase v8 scripts -->
- <!-- CORRECT script loading order -->
-<!-- 1. Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-<!-- 2. Firebase Configuration -->
-<script src="firebases-init.js"></script>
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
 
-<!-- 3. Debug script (TEMPORARY) -->
-<script>
-console.log('🔍 DEBUG: Starting authentication debug...');
-
-if (typeof firebase === 'undefined') {
-    console.error('❌ Firebase not loaded');
-} else {
-    console.log('✅ Firebase loaded');
-}
-
-// Track auth listener registrations
-let listenerCount = 0;
-const originalOnAuthStateChanged = firebase.auth().onAuthStateChanged;
-firebase.auth().onAuthStateChanged = function(...args) {
-    listenerCount++;
-    console.warn(`🚨 Auth listener #${listenerCount} being registered!`);
-    if (listenerCount > 1) {
-        console.error('❌ MULTIPLE AUTH LISTENERS DETECTED - THIS CAUSES THE LOOP!');
-        console.trace('Multiple listener trace:');
-    }
-    return originalOnAuthStateChanged.apply(this, args);
-};
-</script>
-
-<!-- 4. Military knowledge scripts -->
-<script src="utils/military_knowledge/uk_military_data.js"></script>
-<script src="utils/military_knowledge/us_military_data.js"></script>
-<script src="utils/military_knowledge/ca_military_data.js"></script>
-<script src="utils/military_knowledge/au_military_data.js"></script>
-<script src="utils/military_knowledge/nz_military_data.js"></script>
-
-<!-- 5. Your modular scripts -->
-<script type="module" src="js/auth.js"></script>
-<script type="module" src="js/main.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -81,15 +46,7 @@ firebase.auth().onAuthStateChanged = function(...args) {
       gap: 0.5rem;
     }
 
-    .language-dropdown-label {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.9);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .language-dropdown {
+    #language-selector {
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 8px;
@@ -97,88 +54,17 @@ firebase.auth().onAuthStateChanged = function(...args) {
       color: white;
       font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
       min-width: 140px;
     }
 
-    .language-dropdown:hover {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.5);
+    #language-selector option {
+      background: #003366;
+      color: white;
     }
 
-    .language-dropdown-arrow {
-      margin-left: auto;
-      transform: rotate(0deg);
-      transition: transform 0.2s ease;
-    }
-
-    .language-dropdown.open .language-dropdown-arrow {
-      transform: rotate(180deg);
-    }
-
-    .language-options-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      z-index: 1000;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(-10px);
+    .translating {
+      opacity: 0.7;
       pointer-events: none;
-      transition: all 0.2s ease;
-      margin-top: 0.5rem;
-    }
-
-    .language-options-dropdown.open {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: all;
-    }
-
-    .language-option-dropdown {
-      padding: 0.8rem 1rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      border-bottom: 1px solid #f0f0f0;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      color: #333;
-    }
-
-    .language-option-dropdown:last-child {
-      border-bottom: none;
-    }
-
-    .language-option-dropdown:hover {
-      background: #f8f9ff;
-    }
-
-    .language-option-dropdown.selected {
-      background: #eef2ff;
-      color: #0055aa;
-      font-weight: 500;
-    }
-
-    .language-flag {
-      font-size: 1.1rem;
-    }
-
-    .language-name {
-      flex: 1;
-    }
-
-    .language-detected {
-      font-size: 0.75rem;
-      color: #0055aa;
-      font-style: italic;
     }
 
     header {
@@ -242,32 +128,13 @@ firebase.auth().onAuthStateChanged = function(...args) {
       font-weight: 500;
     }
     
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: #0055aa;
     }
 
     button:disabled {
       background-color: #ccc;
       cursor: not-allowed;
-    }
-    
-    .donate {
-      text-align: center;
-      margin: 1rem;
-    }
-    
-    .donate a {
-      padding: 0.5rem 1rem;
-      background: green;
-      color: white;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
-    }
-
-    .donate a:hover {
-      background: darkgreen;
     }
     
     .checkbox {
@@ -328,16 +195,6 @@ firebase.auth().onAuthStateChanged = function(...args) {
       text-decoration: underline;
     }
 
-    .privacy-notice {
-      margin-top: 1rem;
-      padding: 0.8rem;
-      background: #f0f8ff;
-      border-radius: 6px;
-      text-align: center;
-      color: #0055aa;
-      font-size: 0.85rem;
-    }
-
     .loading {
       display: none;
       text-align: center;
@@ -367,41 +224,15 @@ firebase.auth().onAuthStateChanged = function(...args) {
       color: #777;
       margin-top: auto;
     }
-
-    @media (max-width: 600px) {
-      .top-language-bar {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .language-dropdown-label {
-        font-size: 0.8rem;
-      }
-
-      .form-box {
-        margin: 1rem;
-        padding: 1.5rem;
-      }
-    }
   </style>
 </head>
 <body>
   <!-- Top Language Selector Bar -->
   <div class="top-language-bar">
     <div class="language-dropdown-container">
-      <div class="language-dropdown-label">
-        <span>🌍</span>
-        <span id="language-label">Language / Langue / Sprache</span>
-      </div>
-      <div class="language-dropdown" onclick="toggleLanguageDropdown()">
-        <span class="language-flag" id="selected-flag">🇬🇧</span>
-        <span class="language-name" id="selected-language">English</span>
-        <span class="language-dropdown-arrow">▼</span>
-      </div>
-      <div class="language-options-dropdown" id="language-dropdown">
-        <!-- Language options will be populated by JavaScript -->
-      </div>
+      <select id="language-selector" aria-label="Select Language">
+        <!-- Will be populated by TranslationManager -->
+      </select>
     </div>
   </div>
 
@@ -410,336 +241,60 @@ firebase.auth().onAuthStateChanged = function(...args) {
   </header>
   
   <div class="form-box">
-    <h2 class="form-title" id="form-title">Create Your Account</h2>
+    <h2 class="form-title" data-translate="form_title">Create Your Account</h2>
     <form id="register-form">
-      <input type="text" id="name" required />
-      <input type="email" id="email" required />
-      <input type="password" id="password" required />
+      <input type="text" id="name" data-translate-placeholder="name" placeholder="Name" required />
+      <input type="email" id="email" data-translate-placeholder="email" placeholder="Email" required />
+      <input type="password" id="password" data-translate-placeholder="password" placeholder="Password (6+ characters)" required />
       <div class="checkbox">
         <input type="checkbox" id="veteran" />
-        <label for="veteran" id="veteran-label">I am a military veteran (optional)</label>
+        <label for="veteran" data-translate="veteran_label">I am a military veteran (optional)</label>
       </div>
       <div class="checkbox">
         <input type="checkbox" id="terms" required />
-        <label for="terms" id="terms-label">
-          I agree to the <a href="terms.html" target="_blank" id="terms-link">Terms & Conditions</a>
+        <label for="terms">
+          <span data-translate="terms_text">I agree to the</span> 
+          <a href="terms.html" target="_blank" data-translate="terms_link">Terms & Conditions</a>
         </label>
       </div>
-      <button type="submit" id="register-button">Register</button>
+      <button type="submit" id="register-button" data-translate="register_button">Register</button>
       <div class="loading" id="loading"></div>
       <div class="message" id="message"></div>
     </form>
     <div class="login-link">
-      <span id="login-text">Already have an account?</span> <a href="index.html" id="login-link">Login here</a>
+      <span data-translate="login_text">Already have an account?</span> 
+      <a href="index.html" data-translate="login_link">Login here</a>
     </div>
   </div>
   
-  <div class="donate">
-    <a href="https://www.paypal.com/paypalme/zentrafuge" target="_blank" id="donate-button">Donate</a>
-  </div>
-  
-  <footer id="footer-text">
-    © 2025 Zentrafuge. All rights reserved.
-  </footer>
+  <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
 
-  <script>
-    // Enhanced International System for Registration Page
-    class ZentrafugeInternational {
-        constructor() {
-            this.supportedLanguages = {
-                'en': { name: 'English', flag: '🇬🇧' },
-                'de': { name: 'Deutsch', flag: '🇩🇪' },
-                'fr': { name: 'Français', flag: '🇫🇷' },
-                'es': { name: 'Español', flag: '🇪🇸' },
-                'it': { name: 'Italiano', flag: '🇮🇹' },
-                'nl': { name: 'Nederlands', flag: '🇳🇱' },
-                'pt': { name: 'Português', flag: '🇵🇹' }
-            };
-            
-            this.selectedLanguage = this.loadLanguagePreference();
-            this.translations = this.getTranslations();
-            
-            this.initializeLanguageSelector();
-            this.updatePageContent();
-        }
+  <!-- Translation and Registration Logic -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
 
-        loadLanguagePreference() {
-            try {
-                const sessionLang = sessionStorage.getItem('zentrafuge_selected_language');
-                if (sessionLang && this.supportedLanguages[sessionLang]) {
-                    return sessionLang;
-                }
-                const storedLang = localStorage.getItem('zentrafuge_language');
-                if (storedLang && this.supportedLanguages[storedLang]) {
-                    return storedLang;
-                }
-            } catch (e) {}
-            
-            const browserLang = navigator.language || navigator.userLanguage;
-            const langCode = browserLang.split('-')[0];
-            return this.supportedLanguages[langCode] ? langCode : 'en';
-        }
-
-        saveLanguage(langCode) {
-            try {
-                localStorage.setItem('zentrafuge_language', langCode);
-                sessionStorage.setItem('zentrafuge_selected_language', langCode);
-            } catch (e) {
-                console.log('Could not save language preference');
-            }
-        }
-
-        getTranslations() {
-            return {
-                'en': {
-                    languageLabel: 'Language / Langue / Sprache',
-                    formTitle: 'Create Your Account',
-                    namePlaceholder: 'Name',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password (6+ characters)',
-                    veteranLabel: 'I am a military veteran (optional)',
-                    termsLabel: 'I agree to the',
-                    termsLink: 'Terms & Conditions',
-                    registerButton: 'Register',
-                    loginText: 'Already have an account?',
-                    loginLink: 'Login here',
-                    donateButton: 'Donate',
-                    footerText: '© 2025 Zentrafuge. All rights reserved.',
-                    privacyNote: 'Your privacy is protected under GDPR and UK data protection laws.',
-                    registrationSuccess: 'Registered successfully! Please check your email to verify before logging in.',
-                    emailSentSuccess: 'Verification email sent! Please check your inbox.',
-                    pleaseWait: 'Please wait...',
-                    registrationError: 'Registration failed',
-                    emailInUse: 'This email is already registered.',
-                    weakPassword: 'Password must be at least 6 characters long.',
-                    invalidEmail: 'Please enter a valid email address.'
-                },
-                'de': {
-                    languageLabel: 'Sprache / Language / Langue',
-                    formTitle: 'Erstelle dein Konto',
-                    namePlaceholder: 'Name',
-                    emailPlaceholder: 'E-Mail',
-                    passwordPlaceholder: 'Passwort (mind. 6 Zeichen)',
-                    veteranLabel: 'Ich bin ein Militärveteran (optional)',
-                    termsLabel: 'Ich stimme den',
-                    termsLink: 'Allgemeinen Geschäftsbedingungen',
-                    registerButton: 'Registrieren',
-                    loginText: 'Bereits ein Konto?',
-                    loginLink: 'Hier anmelden',
-                    donateButton: 'Spenden',
-                    footerText: '© 2025 Zentrafuge. Alle Rechte vorbehalten.',
-                    privacyNote: 'Deine Privatsphäre ist durch die DSGVO und deutsche Datenschutzgesetze geschützt.',
-                    registrationSuccess: 'Erfolgreich registriert! Bitte überprüfe deine E-Mail zur Verifizierung vor der Anmeldung.',
-                    emailSentSuccess: 'Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.',
-                    pleaseWait: 'Bitte warten...',
-                    registrationError: 'Registrierung fehlgeschlagen',
-                    emailInUse: 'Diese E-Mail ist bereits registriert.',
-                    weakPassword: 'Das Passwort muss mindestens 6 Zeichen lang sein.',
-                    invalidEmail: 'Bitte gib eine gültige E-Mail-Adresse ein.'
-                },
-                'fr': {
-                    languageLabel: 'Langue / Language / Sprache',
-                    formTitle: 'Créez votre compte',
-                    namePlaceholder: 'Nom',
-                    emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Mot de passe (6+ caractères)',
-                    veteranLabel: 'Je suis un vétéran militaire (facultatif)',
-                    termsLabel: 'J\'accepte les',
-                    termsLink: 'Conditions générales',
-                    registerButton: 'S\'inscrire',
-                    loginText: 'Déjà un compte?',
-                    loginLink: 'Se connecter ici',
-                    donateButton: 'Faire un don',
-                    footerText: '© 2025 Zentrafuge. Tous droits réservés.',
-                    privacyNote: 'Votre vie privée est protégée par le RGPD et les lois françaises sur la protection des données.',
-                    registrationSuccess: 'Inscription réussie! Veuillez vérifier votre e-mail avant de vous connecter.',
-                    emailSentSuccess: 'E-mail de vérification envoyé! Veuillez vérifier votre boîte de réception.',
-                    pleaseWait: 'Veuillez patienter...',
-                    registrationError: 'Échec de l\'inscription',
-                    emailInUse: 'Cet e-mail est déjà enregistré.',
-                    weakPassword: 'Le mot de passe doit comporter au moins 6 caractères.',
-                    invalidEmail: 'Veuillez entrer une adresse e-mail valide.'
-                },
-                'es': {
-                    languageLabel: 'Idioma / Language / Langue',
-                    formTitle: 'Crea tu cuenta',
-                    namePlaceholder: 'Nombre',
-                    emailPlaceholder: 'Correo electrónico',
-                    passwordPlaceholder: 'Contraseña (6+ caracteres)',
-                    veteranLabel: 'Soy veterano militar (opcional)',
-                    termsLabel: 'Acepto los',
-                    termsLink: 'Términos y Condiciones',
-                    registerButton: 'Registrarse',
-                    loginText: '¿Ya tienes cuenta?',
-                    loginLink: 'Iniciar sesión aquí',
-                    donateButton: 'Donar',
-                    footerText: '© 2025 Zentrafuge. Todos los derechos reservados.',
-                    privacyNote: 'Tu privacidad está protegida bajo GDPR y las leyes españolas de protección de datos.',
-                    registrationSuccess: '¡Registro exitoso! Por favor verifica tu correo electrónico antes de iniciar sesión.',
-                    emailSentSuccess: '¡Correo de verificación enviado! Por favor revisa tu bandeja de entrada.',
-                    pleaseWait: 'Por favor espera...',
-                    registrationError: 'Error en el registro',
-                    emailInUse: 'Este correo electrónico ya está registrado.',
-                    weakPassword: 'La contraseña debe tener al menos 6 caracteres.',
-                    invalidEmail: 'Por favor ingresa una dirección de correo electrónico válida.'
-                },
-                'it': {
-                    languageLabel: 'Lingua / Language / Langue',
-                    formTitle: 'Crea il tuo account',
-                    namePlaceholder: 'Nome',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Password (6+ caratteri)',
-                    veteranLabel: 'Sono un veterano militare (opzionale)',
-                    termsLabel: 'Accetto i',
-                    termsLink: 'Termini e Condizioni',
-                    registerButton: 'Registrati',
-                    loginText: 'Hai già un account?',
-                    loginLink: 'Accedi qui',
-                    donateButton: 'Dona',
-                    footerText: '© 2025 Zentrafuge. Tutti i diritti riservati.',
-                    privacyNote: 'La tua privacy è protetta dal GDPR e dalle leggi italiane sulla protezione dei dati.',
-                    registrationSuccess: 'Registrazione riuscita! Verifica la tua email prima di accedere.',
-                    emailSentSuccess: 'Email di verifica inviata! Controlla la tua casella di posta.',
-                    pleaseWait: 'Attendere prego...',
-                    registrationError: 'Registrazione fallita',
-                    emailInUse: 'Questa email è già registrata.',
-                    weakPassword: 'La password deve essere lunga almeno 6 caratteri.',
-                    invalidEmail: 'Inserisci un indirizzo email valido.'
-                },
-                'nl': {
-                    languageLabel: 'Taal / Language / Langue',
-                    formTitle: 'Maak je account aan',
-                    namePlaceholder: 'Naam',
-                    emailPlaceholder: 'E-mail',
-                    passwordPlaceholder: 'Wachtwoord (6+ tekens)',
-                    veteranLabel: 'Ik ben een militaire veteraan (optioneel)',
-                    termsLabel: 'Ik ga akkoord met de',
-                    termsLink: 'Algemene Voorwaarden',
-                    registerButton: 'Registreren',
-                    loginText: 'Al een account?',
-                    loginLink: 'Hier inloggen',
-                    donateButton: 'Doneren',
-                    footerText: '© 2025 Zentrafuge. Alle rechten voorbehouden.',
-                    privacyNote: 'Je privacy wordt beschermd onder AVG en Nederlandse privacywetten.',
-                    registrationSuccess: 'Succesvol geregistreerd! Controleer je e-mail om te verifiëren voordat je inlogt.',
-                    emailSentSuccess: 'Verificatie-e-mail verzonden! Controleer je inbox.',
-                    pleaseWait: 'Even geduld...',
-                    registrationError: 'Registratie mislukt',
-                    emailInUse: 'Dit e-mailadres is al geregistreerd.',
-                    weakPassword: 'Het wachtwoord moet minstens 6 tekens lang zijn.',
-                    invalidEmail: 'Voer een geldig e-mailadres in.'
-                },
-                'pt': {
-                    languageLabel: 'Idioma / Language / Langue',
-                    formTitle: 'Cria a tua conta',
-                    namePlaceholder: 'Nome',
-                    emailPlaceholder: 'Email',
-                    passwordPlaceholder: 'Palavra-passe (6+ caracteres)',
-                    veteranLabel: 'Sou um veterano militar (opcional)',
-                    termsLabel: 'Concordo com os',
-                    termsLink: 'Termos e Condições',
-                    registerButton: 'Registar',
-                    loginText: 'Já tens conta?',
-                    loginLink: 'Entrar aqui',
-                    donateButton: 'Doar',
-                    footerText: '© 2025 Zentrafuge. Todos os direitos reservados.',
-                    privacyNote: 'A tua privacidade está protegida pelo RGPD e pelas leis portuguesas de proteção de dados.',
-                    registrationSuccess: 'Registo bem-sucedido! Por favor verifica o teu email antes de fazer login.',
-                    emailSentSuccess: 'Email de verificação enviado! Verifica a tua caixa de entrada.',
-                    pleaseWait: 'Por favor aguarda...',
-                    registrationError: 'Falha no registo',
-                    emailInUse: 'Este email já está registado.',
-                    weakPassword: 'A palavra-passe deve ter pelo menos 6 caracteres.',
-                    invalidEmail: 'Por favor insere um endereço de email válido.'
-                }
-            };
-        }
-
-        initializeLanguageSelector() {
-            const dropdown = document.getElementById('language-dropdown');
-            dropdown.innerHTML = Object.entries(this.supportedLanguages).map(([code, lang]) => `
-                <div class="language-option-dropdown ${code === this.selectedLanguage ? 'selected' : ''}" 
-                     onclick="window.zentrafugeIntl.setLanguage('${code}')">
-                    <span class="language-flag">${lang.flag}</span>
-                    <span class="language-name">${lang.name}</span>
-                </div>
-            `).join('');
-
-            const selectedLang = this.supportedLanguages[this.selectedLanguage];
-            document.getElementById('selected-flag').textContent = selectedLang.flag;
-            document.getElementById('selected-language').textContent = selectedLang.name;
-        }
-
-        setLanguage(langCode) {
-            this.selectedLanguage = langCode;
-            this.saveLanguage(langCode);
-            this.updatePageContent();
-            this.initializeLanguageSelector();
-            this.closeLanguageDropdown();
-        }
-
-        updatePageContent() {
-            const t = this.translations[this.selectedLanguage];
-            
-            document.getElementById('language-label').textContent = t.languageLabel;
-            document.getElementById('form-title').textContent = t.formTitle;
-            document.getElementById('name').placeholder = t.namePlaceholder;
-            document.getElementById('email').placeholder = t.emailPlaceholder;
-            document.getElementById('password').placeholder = t.passwordPlaceholder;
-            document.getElementById('veteran-label').textContent = t.veteranLabel;
-            const termsLabel = document.getElementById('terms-label');
-            termsLabel.innerHTML = `${t.termsLabel} <a href="terms.html?lang=${this.selectedLanguage}" target="_blank" id="terms-link">${t.termsLink}</a>`;
-            document.getElementById('register-button').textContent = t.registerButton;
-            document.getElementById('login-text').textContent = t.loginText;
-            document.getElementById('login-link').textContent = t.loginLink;
-            document.getElementById('donate-button').textContent = t.donateButton;
-            document.getElementById('footer-text').textContent = t.footerText;
-            
-            let privacyNotice = document.querySelector('.privacy-notice');
-            if (!privacyNotice) {
-                privacyNotice = document.createElement('div');
-                privacyNotice.className = 'privacy-notice';
-                document.querySelector('.form-box').appendChild(privacyNotice);
-            }
-            privacyNotice.innerHTML = `<small>🔒 ${t.privacyNote}</small>`;
-            
-            document.documentElement.lang = this.selectedLanguage;
-        }
-
-        closeLanguageDropdown() {
-            document.getElementById('language-dropdown').classList.remove('open');
-            document.querySelector('.language-dropdown').classList.remove('open');
-        }
-
-        getSelectedLanguage() {
-            return this.selectedLanguage;
-        }
-
-        getTranslation(key) {
-            return this.translations[this.selectedLanguage][key] || this.translations['en'][key] || key;
-        }
+    // Initialize translation system
+    async function initTranslation() {
+      try {
+        await translationManager.preloadTranslations();
+        translationManager.initLanguageSelector();
+        await translationManager.updatePageLanguage();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
+      }
     }
 
-    function toggleLanguageDropdown() {
-        const dropdown = document.getElementById('language-dropdown');
-        const button = document.querySelector('.language-dropdown');
-        
-        dropdown.classList.toggle('open');
-        button.classList.toggle('open');
-    }
-
-    document.addEventListener('click', function(e) {
-        const container = document.querySelector('.language-dropdown-container');
-        if (!container.contains(e.target)) {
-            document.getElementById('language-dropdown').classList.remove('open');
-            document.querySelector('.language-dropdown').classList.remove('open');
-        }
+    // Translation event listeners
+    translationManager.on('translationStart', () => {
+      document.body.classList.add('translating');
     });
 
-    // Initialize international system
-    window.zentrafugeIntl = new ZentrafugeInternational();
+    translationManager.on('translationComplete', () => {
+      document.body.classList.remove('translating');
+    });
 
-    // Enhanced registration form with Firestore profile storage
+    // Enhanced registration form
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -750,19 +305,25 @@ firebase.auth().onAuthStateChanged = function(...args) {
       const messageEl = document.getElementById('message');
       const loadingEl = document.getElementById('loading');
       const submitButton = document.getElementById('register-button');
-      const t = window.zentrafugeIntl.translations[window.zentrafugeIntl.selectedLanguage];
+
+      // Get translated messages
+      const errorWeak = await translationManager.translateUI('error_weak_password');
+      const errorInvalid = await translationManager.translateUI('error_invalid_email');
+      const pleaseWait = await translationManager.translateUI('please_wait');
+      const successMessage = await translationManager.translateUI('registration_success');
+      const registerText = await translationManager.translateUI('register_button');
 
       // Client-side validation
       if (password.length < 6) {
         messageEl.className = 'message error';
-        messageEl.textContent = t.weakPassword;
+        messageEl.textContent = errorWeak || 'Password must be at least 6 characters long.';
         messageEl.style.display = 'block';
         return;
       }
 
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         messageEl.className = 'message error';
-        messageEl.textContent = t.invalidEmail;
+        messageEl.textContent = errorInvalid || 'Please enter a valid email address.';
         messageEl.style.display = 'block';
         return;
       }
@@ -770,7 +331,7 @@ firebase.auth().onAuthStateChanged = function(...args) {
       // Show loading state
       loadingEl.style.display = 'block';
       submitButton.disabled = true;
-      submitButton.textContent = t.pleaseWait;
+      submitButton.textContent = pleaseWait || 'Please wait...';
       messageEl.style.display = 'none';
       
       try {
@@ -781,40 +342,30 @@ firebase.auth().onAuthStateChanged = function(...args) {
         // Update Firebase Auth profile with name
         await user.updateProfile({ displayName: name });
 
-        // Save profile to Firestore with critical fields
+        // Save profile to Firestore
         await firebase.firestore().collection("users").doc(user.uid).set({
           name: name,
           email: user.email,
-          language: window.zentrafugeIntl.getSelectedLanguage(),
+          language: translationManager.getCurrentLanguage(),
           created_at: firebase.firestore.FieldValue.serverTimestamp(),
-          emailVerified: user.emailVerified, // Initially false
-          onboardingComplete: false, // Required for auth guard
+          emailVerified: user.emailVerified,
+          onboardingComplete: false,
           lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-          isVeteran: isVeteran, // Support veteran access
-          subscription: 'free' // Default tier
+          isVeteran: isVeteran,
+          subscription: 'free'
         });
-
-        // Store language preference
-        try {
-          sessionStorage.setItem('zentrafuge_user_language', window.zentrafugeIntl.getSelectedLanguage());
-        } catch (e) {
-          console.log('Could not store user language preference');
-        }
         
-        
-        // Send verification email with debugging
-          console.log("🔥 About to send verification email...");
+        // Send verification email
         try {
-        await user.sendEmailVerification();
+          await user.sendEmailVerification();
           console.log("✅ Verification email sent successfully!");
         } catch (emailError) {
           console.error("❌ Email verification failed:", emailError);
-        // Don't block registration, just log the issue
         }
         
         // Show success message
         messageEl.className = 'message success';
-        messageEl.textContent = t.registrationSuccess;
+        messageEl.textContent = successMessage || 'Registration successful! Please check your email to verify before logging in.';
         messageEl.style.display = 'block';
         
         // Clear form
@@ -827,19 +378,19 @@ firebase.auth().onAuthStateChanged = function(...args) {
         
       } catch (error) {
         // Enhanced error handling
-        let errorMessage = t.registrationError;
+        let errorMessage = 'Registration failed';
         switch (error.code) {
           case 'auth/email-already-in-use':
-            errorMessage = t.emailInUse;
+            errorMessage = await translationManager.translateUI('error_email_in_use') || 'This email is already registered.';
             break;
           case 'auth/invalid-email':
-            errorMessage = t.invalidEmail;
+            errorMessage = errorInvalid || 'Please enter a valid email address.';
             break;
           case 'auth/weak-password':
-            errorMessage = t.weakPassword;
+            errorMessage = errorWeak || 'Password must be at least 6 characters long.';
             break;
           default:
-            errorMessage = `${t.registrationError}: ${error.message}`;
+            errorMessage = `Registration failed: ${error.message}`;
         }
         messageEl.className = 'message error';
         messageEl.textContent = errorMessage;
@@ -847,12 +398,14 @@ firebase.auth().onAuthStateChanged = function(...args) {
       } finally {
         loadingEl.style.display = 'none';
         submitButton.disabled = false;
-        submitButton.textContent = t.registerButton;
+        submitButton.textContent = registerText || 'Register';
       }
     });
 
     // Handle Enter key for better UX
     document.addEventListener('DOMContentLoaded', function() {
+      initTranslation();
+      
       const inputs = document.querySelectorAll('input');
       inputs.forEach(input => {
         input.addEventListener('keypress', function(e) {
