@@ -9,130 +9,23 @@ import { renderMoodChart } from './mood.js';
 import { loadUserPreferences, loadPreferencesIntoForm } from './preferences.js';
 import { loadPreviousMessages } from './chat.js';
 
-// Global auth state management
-let authStateListener = null;
-let isAuthInitialized = false;
-let authPromiseResolve = null;
-let authPromise = null;
-
 export async function waitForFirebase() {
   console.log('🔍 Waiting for Firebase SDK to load...');
-  
-  // Check if Firebase is loaded
-  if (typeof firebase === 'undefined' || !firebase.apps.length) {
-    console.error('❌ Firebase SDK not loaded or initialized');
-    throw new Error('Firebase SDK not loaded or initialized');
-  }
-  
-  // If auth is already initialized, return immediately
-  if (isAuthInitialized) {
-    console.log('✅ Firebase auth already initialized');
-    return Promise.resolve();
-  }
-  
-  // If we're already waiting for auth, return the existing promise
-  if (authPromise) {
-    console.log('⏳ Already waiting for Firebase auth...');
-    return authPromise;
-  }
-  
-  // Create new auth initialization promise
-  authPromise = new Promise((resolve, reject) => {
-    authPromiseResolve = resolve;
-    
-    // Set up auth state listener ONCE
-    if (!authStateListener) {
-      console.log('🔑 Setting up auth state listener...');
-      
-      authStateListener = firebase.auth().onAuthStateChanged(
-        (user) => {
-          console.log('🔄 Auth state changed:', user ? `User: ${user.uid}` : 'No user');
-          
-          if (!isAuthInitialized) {
-            isAuthInitialized = true;
-            console.log('✅ Firebase auth state resolved');
-            resolve();
-          }
-          
-          // Handle auth state change
-          handleAuthStateChange(user);
-        },
-        (error) => {
-          console.error('❌ Firebase auth initialization error:', error);
-          if (!isAuthInitialized) {
-            isAuthInitialized = true;
-            reject(error);
-          }
-        }
-      );
+  return new Promise((resolve, reject) => {
+    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+      console.error('❌ Firebase SDK not loaded or initialized');
+      reject(new Error('Firebase SDK not loaded or initialized'));
     }
-    
-    // Fallback timeout
-    setTimeout(() => {
-      if (!isAuthInitialized) {
-        console.warn('⚠️ Firebase auth initialization timeout');
-        isAuthInitialized = true;
-        resolve();
-      }
-    }, 5000);
+    const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+      unsubscribe();
+      console.log('✅ Firebase auth state resolved');
+      resolve();
+    }, error => {
+      unsubscribe();
+      console.error('❌ Firebase auth initialization error:', error);
+      reject(error);
+    });
   });
-  
-  return authPromise;
-}
-
-/**
- * Handle auth state changes - called by the single listener
- */
-async function handleAuthStateChange(user) {
-  try {
-    const t = window.zentrafugeIntl?.translations[window.zentrafugeIntl?.selectedLanguage] || {
-      verifyEmail: 'Please verify your email before logging in.',
-      onboardingIncomplete: 'Please complete onboarding to access the app.',
-      loginFailed: 'Failed to log in. Please try again.',
-      welcomeBack: 'Welcome back! Redirecting to chat...'
-    };
-
-    if (user) {
-      try {
-        console.log('🔍 Checking user authorization...');
-        const isAuthorizedResult = await checkUserAuthorization(user);
-        
-        if (!isAuthorizedResult) {
-          console.log('❌ User not authorized, redirecting to login');
-          showAlert(
-            user.emailVerified ? t.onboardingIncomplete : t.verifyEmail,
-            'error'
-          );
-          await firebase.auth().signOut();
-          redirectToAuth(user.emailVerified ? 'onboarding_incomplete' : 'email_not_verified');
-          return;
-        }
-
-        console.log('✅ User authorized');
-        await initializeApp(user);
-        
-        if (window.location.pathname.includes('index.html')) {
-          console.log('➡️ On index.html, redirecting to chat.html');
-          showAlert(t.welcomeBack, 'success');
-          setTimeout(() => {
-            window.location.assign('/chat.html');
-          }, 1500);
-        }
-      } catch (err) {
-        console.error('❌ Auth check failed:', err);
-        showAlert(t.loginFailed, 'error');
-        await firebase.auth().signOut();
-        redirectToAuth('auth_check_failed');
-      }
-    } else {
-      console.log('🔄 No user signed in');
-      if (!window.location.pathname.includes('index.html')) {
-        redirectToAuth('no_user');
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error in handleAuthStateChange:', error);
-  }
 }
 
 export async function checkUserAuthorization(user) {
@@ -224,40 +117,56 @@ export async function initializeApp(user) {
     
     const headerImg = document.querySelector('header img');
     if (headerImg) {
-      headerImg.setAttribute('onerror', 
-        `this.style.display='none'; this.insertAdjacentHTML('afterend', '<h1>Zentrafuge × ${pageTitle}</h1>');`
-      );
+      headerImg.onerror = () => {
+        console.log('⚠️ Logo failed to load, adding fallback title');
+        headerImg.style.display = 'none';
+        headerImg.insertAdjacentHTML('afterend', `<h1>Zentrafuge × ${pageTitle}</h1>`);
+      };
+    } else {
+      console.warn('⚠️ No header image found');
     }
     
     const userInfo = document.getElementById('user-info');
     if (userInfo) {
       userInfo.textContent = `Welcome, ${user.displayName || user.email}`;
+      console.log('🎯 Set user-info text');
+    } else {
+      console.warn('⚠️ No user-info element found');
     }
     
     const authLoading = document.getElementById('auth-loading');
     if (authLoading) {
       console.log('🎯 Hiding auth loading screen');
       authLoading.style.display = 'none';
+    } else {
+      console.warn('⚠️ No auth-loading element found');
     }
     
     const mainHeader = document.getElementById('main-header');
     if (mainHeader) {
       console.log('🎯 Showing main header');
       mainHeader.style.display = 'flex';
+    } else {
+      console.warn('⚠️ No main-header element found');
     }
     
     const contentDiv = document.getElementById(isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat-container');
     if (contentDiv) {
       console.log(`🎯 Showing ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat'} container`);
       contentDiv.style.display = 'flex';
+    } else {
+      console.error(`❌ No ${isDashboard ? 'dashboard' : isPreferences ? 'preferences' : 'chat-container'} element found`);
     }
     
     if (isDashboard) {
+      console.log('🔍 Initializing dashboard');
       await renderMoodChart(user.uid);
     } else if (isPreferences) {
+      console.log('🔍 Initializing preferences');
       await loadUserPreferences();
       loadPreferencesIntoForm();
     } else if (isChatPage) {
+      console.log('🔍 Entering chat page initialization');
       const chatForm = document.getElementById('chat-form');
       if (chatForm) {
         console.log('🎯 Showing chat form');
@@ -265,10 +174,16 @@ export async function initializeApp(user) {
         chatForm.setAttribute('aria-label', `Ask ${aiName} something`);
         const messageInput = document.getElementById('message');
         if (messageInput) {
+          console.log('🎯 Setting message input placeholder and focus');
           messageInput.placeholder = `Ask ${aiName} something...`;
           messageInput.focus();
+        } else {
+          console.error('❌ No message input found');
         }
+      } else {
+        console.error('❌ No chat-form found');
       }
+      console.log('🔍 Calling loadPreviousMessages');
       await loadPreviousMessages();
       
       sessionStorage.setItem('session_start', Date.now());
@@ -310,41 +225,4 @@ export function getUserId() {
     throw new Error('User not authenticated');
   }
   return currentUser.uid;
-}
-
-/**
- * Get current authenticated user
- */
-export function getCurrentUser() {
-  return firebase.auth().currentUser;
-}
-
-/**
- * Wait for user to be authenticated
- */
-export function waitForUser() {
-  return new Promise((resolve) => {
-    const user = firebase.auth().currentUser;
-    if (user) {
-      resolve(user);
-    } else {
-      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-    }
-  });
-}
-
-/**
- * Clean up auth listeners (call on app shutdown)
- */
-export function cleanupAuth() {
-  if (authStateListener) {
-    authStateListener();
-    authStateListener = null;
-  }
-  isAuthInitialized = false;
-  authPromise = null;
-  authPromiseResolve = null;
 }
