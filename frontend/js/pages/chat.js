@@ -9,13 +9,13 @@ export async function getAiName(userId) {
     const userDoc = await db.collection("users").doc(userId).get();
     if (userDoc.exists) {
       const userData = userDoc.data();
-      console.log(`Fetched user document for ${userId}:`, userData);
+      console.log(`✅ Fetched user document for ${userId}:`, userData);
       return userData.ai_name || "Cael";
     }
-    console.warn(`User document not found for ${userId}`);
+    console.warn(`⚠️ User document not found for ${userId}`);
     return "Cael";
   } catch (error) {
-    console.error("Error fetching AI name:", error);
+    console.error("❌ Error fetching AI name:", error);
     return "Cael";
   }
 }
@@ -27,12 +27,13 @@ export async function getLastSessionContext(userId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId }),
     });
+    console.log('🔍 Context fetch response status:', res.status);
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
-    console.log('Last session context:', data);
+    console.log('📦 Last session context:', data);
     return data.context || { mood: null, theme: null };
   } catch (error) {
-    console.error("Error fetching session context:", error);
+    console.error("❌ Error fetching session context:", error);
     return { mood: null, theme: null };
   }
 }
@@ -40,23 +41,26 @@ export async function getLastSessionContext(userId) {
 export async function loadPreviousMessages() {
   if (!isAuthorized) {
     console.warn('⚠️ Not authorized, skipping loadPreviousMessages');
+    await showWelcomeMessage(false);
     return;
   }
   console.log('🔍 Loading previous messages...');
   try {
+    const chat = document.getElementById("chat");
+    if (!chat) {
+      console.error('❌ No chat element found');
+      await showWelcomeMessage(false);
+      return;
+    }
     const res = await fetch(`${BACKEND_URL}/history`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: getUserId() }),
     });
+    console.log('🔍 History fetch response status:', res.status);
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
     console.log('📦 History data received:', data);
-    const chat = document.getElementById("chat");
-    if (!chat) {
-      console.warn('⚠️ No chat element found');
-      return;
-    }
     chat.innerHTML = '';
     if (Array.isArray(data.history) && data.history.length > 0) {
       let validMessagesLoaded = 0;
@@ -85,7 +89,7 @@ export async function loadPreviousMessages() {
       });
       console.log(`✅ Loaded ${validMessagesLoaded} valid messages from history`);
       if (validMessagesLoaded == 0) {
-        showWelcomeMessage(false);
+        await showWelcomeMessage(false);
       } else {
         const welcomeDiv = document.createElement("div");
         welcomeDiv.className = "message welcome-message";
@@ -96,11 +100,11 @@ export async function loadPreviousMessages() {
       }
     } else {
       console.log('📭 No chat history found, showing welcome message');
-      showWelcomeMessage(false);
+      await showWelcomeMessage(false);
     }
   } catch (err) {
     console.error("❌ Error loading chat history:", err);
-    showWelcomeMessage(false);
+    await showWelcomeMessage(false);
   }
 }
 
