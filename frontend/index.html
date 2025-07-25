@@ -5,7 +5,6 @@
   <title data-translate="page_title">Zentrafuge × Cael</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="assets/Zentrafuge-WIDE-Logo-Transparent.png" />
-
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/pages/login.css" />
 </head>
@@ -21,7 +20,7 @@
       <div class="language-options-dropdown" id="language-dropdown"></div>
     </div>
   </div>
-
+  
   <!-- Header -->
   <header>
     <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
@@ -32,7 +31,7 @@
     <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
     <div id="success-message" class="success-message" role="alert" aria-live="polite"></div>
     
-    <form id="login-form" onsubmit="return false;" novalidate>
+    <form id="login-form" novalidate>
       <input 
         type="email" 
         id="login-email" 
@@ -93,10 +92,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
+  
   <!-- Firebase Configuration -->
   <script src="firebases-init.js"></script>
-
+  
   <!-- Login Page Logic -->
   <script type="module" src="js/pages/login.js"></script>
 </body>
