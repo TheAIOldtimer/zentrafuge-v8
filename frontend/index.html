@@ -5,7 +5,7 @@
   <title data-translate="page_title">Zentrafuge × Cael</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="assets/Zentrafuge-WIDE-Logo-Transparent.png" />
-  
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/pages/login.css" />
 </head>
@@ -18,9 +18,7 @@
         <span id="selected-language" data-translate="language_english">English</span>
         <span>▼</span>
       </div>
-      <div class="language-options-dropdown" id="language-dropdown">
-        <!-- Populated by JavaScript -->
-      </div>
+      <div class="language-options-dropdown" id="language-dropdown"></div>
     </div>
   </div>
 
@@ -34,7 +32,7 @@
     <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
     <div id="success-message" class="success-message" role="alert" aria-live="polite"></div>
     
-    <form id="login-form" novalidate>
+    <form id="login-form" onsubmit="return false;" novalidate>
       <input 
         type="email" 
         id="login-email" 
