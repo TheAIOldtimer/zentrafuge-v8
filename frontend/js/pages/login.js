@@ -64,19 +64,16 @@ class LoginPage {
 
     async initTranslation() {
         try {
-            // Configure API client with correct backend URL
             if (translationManager.apiClient) {
                 translationManager.apiClient.setConfig({
                     baseUrl: 'https://zentrafuge-v8.onrender.com'
                 });
             }
-            
             await translationManager.preloadTranslations();
             translationManager.initLanguageSelector();
             await this.populateLanguageDropdown();
             await translationManager.updatePageLanguage();
-            
-            // Setup translation event listeners
+
             translationManager.on('translationStart', () => {
                 document.body.classList.add('translating');
             });
@@ -84,9 +81,8 @@ class LoginPage {
             translationManager.on('translationComplete', () => {
                 document.body.classList.remove('translating');
             });
-            
+
             this.logger.info('Translation system initialized');
-            
         } catch (error) {
             this.logger.error('Translation initialization failed:', error);
         }
@@ -95,16 +91,15 @@ class LoginPage {
     async initAuthentication() {
         try {
             await authManager.init();
-            
-            // Check if user is already authenticated
+            await authManager.waitForAuth();
+
             if (authManager.isAuthenticated()) {
                 this.logger.info('User already authenticated, redirecting...');
                 window.location.href = 'chat.html';
                 return;
             }
-            
+
             this.logger.info('Authentication system initialized');
-            
         } catch (error) {
             this.logger.error('Authentication initialization failed:', error);
         }
@@ -112,26 +107,23 @@ class LoginPage {
 
     async populateLanguageDropdown() {
         if (!this.elements.languageDropdown) return;
-        
+
         const languages = translationManager.getSupportedLanguages();
         const currentLang = translationManager.getCurrentLanguage();
 
-        // Language flags mapping
         const flags = {
-            'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 
-            'it': '🇮🇹', 'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳', 
+            'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪',
+            'it': '🇮🇹', 'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳',
             'ru': '🇷🇺', 'nl': '🇳🇱'
         };
 
-        // Update selected language display
         const currentLangData = languages.find(lang => lang.code === currentLang);
-        
+
         if (currentLangData && this.elements.selectedFlag && this.elements.selectedLanguage) {
             this.elements.selectedFlag.textContent = flags[currentLang] || '🌍';
             this.elements.selectedLanguage.textContent = currentLangData.nativeName;
         }
 
-        // Populate dropdown
         this.elements.languageDropdown.innerHTML = languages.map(lang => `
             <div class="language-option-dropdown" data-lang="${lang.code}">
                 <span>${flags[lang.code] || '🌍'}</span>
@@ -141,13 +133,11 @@ class LoginPage {
     }
 
     setupEventListeners() {
-        // Login form submission
         this.elements.loginButton.addEventListener('click', (e) => {
             e.preventDefault();
             this.handleLogin();
         });
 
-        // Enter key handling
         this.elements.passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -162,23 +152,18 @@ class LoginPage {
             }
         });
 
-        // Language dropdown
         document.addEventListener('click', (e) => {
-            // Language option selection
             if (e.target.closest('.language-option-dropdown')) {
                 const langCode = e.target.closest('.language-option-dropdown').dataset.lang;
                 if (langCode) {
                     this.changeLanguage(langCode);
                 }
             }
-            
-            // Close dropdown when clicking outside
             if (!e.target.closest('.language-dropdown-container')) {
                 this.closeLanguageDropdown();
             }
         });
 
-        // Language dropdown toggle
         const languageDropdownToggle = document.querySelector('.language-dropdown');
         if (languageDropdownToggle) {
             languageDropdownToggle.addEventListener('click', (e) => {
@@ -187,7 +172,6 @@ class LoginPage {
             });
         }
 
-        // Input validation
         this.elements.emailInput.addEventListener('blur', () => {
             this.validateEmail();
         });
@@ -200,8 +184,7 @@ class LoginPage {
     async handleLogin() {
         const email = this.elements.emailInput.value.trim();
         const password = this.elements.passwordInput.value;
-        
-        // Basic validation
+
         if (!email || !password) {
             this.showAlert('Please enter both email and password', 'error');
             return;
@@ -211,23 +194,19 @@ class LoginPage {
             this.showAlert('Please enter a valid email address', 'error');
             return;
         }
-        
+
         try {
-            // Set loading state
             this.setLoginLoading(true);
-            
             this.logger.info('Attempting login for:', email);
 
-            // Use auth manager for login
             const user = await authManager.signInWithEmail(email, password);
-            
+
             if (!user.emailVerified) {
                 this.showAlert('Please verify your email before logging in.', 'error');
                 await authManager.signOut();
                 return;
             }
 
-            // Check user authorization
             const isAuthorized = await this.checkUserAuthorization(user);
             if (!isAuthorized) {
                 this.showAlert('Please complete onboarding before logging in.', 'error');
@@ -236,19 +215,15 @@ class LoginPage {
             }
 
             this.showAlert('Welcome back! Redirecting...', 'success');
-            
-            // Redirect after short delay
             setTimeout(() => {
                 this.logger.info('Login successful, redirecting to chat');
                 window.location.href = 'chat.html';
             }, 1500);
-            
         } catch (error) {
             this.logger.error('Login error:', error);
-            
-            // Handle specific error types
+
             let errorMessage = 'Login failed. Please try again.';
-            
+
             if (error.message.includes('user-not-found')) {
                 errorMessage = 'No account found with this email address.';
             } else if (error.message.includes('wrong-password')) {
@@ -258,9 +233,8 @@ class LoginPage {
             } else if (error.message.includes('network')) {
                 errorMessage = 'Network error. Please check your connection.';
             }
-            
+
             this.showAlert(errorMessage, 'error');
-            
         } finally {
             this.setLoginLoading(false);
         }
@@ -268,25 +242,20 @@ class LoginPage {
 
     async checkUserAuthorization(user) {
         try {
-            if (!user) {
-                throw new Error('No user provided');
-            }
-            
-            // Bypass for test account
+            if (!user) throw new Error('No user provided');
+
             if (user.email === 'buyartbyant@gmail.com') {
                 this.logger.info('Bypassing authorization for test account');
                 return true;
             }
-            
-            // Check user document in Firestore
+
             const userProfile = await authManager.getUserProfile();
-            
+
             if (!userProfile.emailVerified || !userProfile.onboardingComplete) {
                 throw new Error('Authorization requirements not met');
             }
-            
+
             return true;
-            
         } catch (error) {
             this.logger.error('Authorization failed:', error.message);
             return false;
@@ -295,7 +264,7 @@ class LoginPage {
 
     setLoginLoading(loading) {
         this.elements.loginButton.disabled = loading;
-        
+
         if (loading) {
             this.elements.loginButton.classList.add('loading');
             this.elements.loginButton.textContent = 'Signing in...';
@@ -308,14 +277,13 @@ class LoginPage {
     showAlert(message, type = 'error') {
         const alertElement = this.elements[type === 'error' ? 'errorMessage' : 'successMessage'];
         const otherAlert = this.elements[type === 'error' ? 'successMessage' : 'errorMessage'];
-        
+
         if (otherAlert) otherAlert.style.display = 'none';
-        
+
         if (alertElement) {
             alertElement.textContent = message;
             alertElement.style.display = 'block';
-            
-            // Auto-hide after 5 seconds
+
             setTimeout(() => {
                 alertElement.style.display = 'none';
             }, 5000);
@@ -328,7 +296,6 @@ class LoginPage {
             await translationManager.setLanguage(languageCode);
             await this.populateLanguageDropdown();
             this.closeLanguageDropdown();
-            
         } catch (error) {
             this.logger.error('Error changing language:', error);
         } finally {
@@ -351,7 +318,6 @@ class LoginPage {
     validateEmail() {
         const email = this.elements.emailInput.value.trim();
         const isValid = this.isValidEmail(email);
-        
         this.elements.emailInput.classList.toggle('invalid', email && !isValid);
         return isValid;
     }
@@ -359,7 +325,6 @@ class LoginPage {
     validatePassword() {
         const password = this.elements.passwordInput.value;
         const isValid = password.length >= 6;
-        
         this.elements.passwordInput.classList.toggle('invalid', password && !isValid);
         return isValid;
     }
@@ -369,22 +334,17 @@ class LoginPage {
         return emailRegex.test(email);
     }
 
-    // Public method to check if page is ready
     isReady() {
         return this.isInitialized;
     }
 
-    // Cleanup method
     destroy() {
-        // Remove event listeners if needed
         this.logger.info('Login page destroyed');
     }
 }
 
-// Initialize login page when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.loginPage = new LoginPage();
 });
 
-// Export for testing/debugging
 export { LoginPage };
