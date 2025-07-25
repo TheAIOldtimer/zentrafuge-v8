@@ -126,20 +126,14 @@ export class AuthManager extends EventEmitter {
     /**
      * Sign in with email and password
      */
-    async signInWithEmail(email, password) {
-        try {
-            this.logger.info(`Attempting to sign in: ${email}`);
-            
-            const result = await firebase.auth().signInWithEmailAndPassword(email, password);
-            
-            this.logger.info('Sign in successful');
-            return result.user;
-            
-        } catch (error) {
-            this.logger.error('Sign in error:', error);
-            throw this.formatAuthError(error);
-        }
-    }
+   async signInWithEmail(email, password) {
+    this.logger.info('Setting persistence to LOCAL...');
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    const result = await firebase.auth().signInWithEmailAndPassword(email, password);
+    this.currentUser = result.user;
+    return result.user;
+}
 
     /**
      * Create account with email and password
