@@ -1,7 +1,7 @@
 // frontend/js/modules/auth-manager.js - Authentication Management
 import { EventEmitter } from './utils/event-emitter.js';
 import { Logger } from './utils/logger.js';
-import { CONFIG } from './config/config.js';
+import { CONFIG } from '../config/config.js';
 
 export class AuthManager extends EventEmitter {
     constructor() {
