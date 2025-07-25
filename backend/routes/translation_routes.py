@@ -1,6 +1,6 @@
 # backend/routes/translation_routes.py - AI Translation Endpoints
 from flask import Blueprint, request, jsonify
-import openai
+from openai import OpenAI
 import logging
 from typing import Dict, Any
 
@@ -8,6 +8,9 @@ from utils.logger import log_with_context
 from utils.validators import validate_json_request
 from utils.rate_limiter import rate_limit
 from utils.config import Config
+
+# Initialize OpenAI client with v1.3.0 syntax
+client = OpenAI(api_key=Config.OPENAI_API_KEY)
 
 # Create blueprint
 translation_bp = Blueprint('translation', __name__)
@@ -98,8 +101,8 @@ Text: "{text}"
 
 Translation:"""
         
-        # Call OpenAI API
-        response = openai.ChatCompletion.create(
+        # Call OpenAI API with v1.3.0 syntax
+        response = client.chat.completions.create(
             model=Config.OPENAI_MODEL if context == 'emotional_support' else 'gpt-3.5-turbo',
             messages=[{"role": "user", "content": prompt}],
             max_tokens=min(len(text) * 2, 1000),  # Reasonable token limit
@@ -124,17 +127,19 @@ Translation:"""
             'tokens_used': response.usage.total_tokens
         })
         
-    except openai.error.RateLimitError:
-        logger.warning("OpenAI rate limit exceeded for translation")
-        return jsonify({'error': 'Translation service temporarily unavailable'}), 429
-        
-    except openai.error.APIError as e:
-        logger.error(f"OpenAI API error: {str(e)}")
-        return jsonify({'error': 'Translation service error'}), 503
-        
     except Exception as e:
-        logger.error(f"Translation error: {str(e)}", exc_info=True)
-        return jsonify({'error': 'Translation failed'}), 500
+        # Handle new OpenAI v1.3.0 exceptions
+        error_type = type(e).__name__
+        
+        if 'RateLimit' in error_type:
+            logger.warning("OpenAI rate limit exceeded for translation")
+            return jsonify({'error': 'Translation service temporarily unavailable'}), 429
+        elif 'APIError' in error_type or 'OpenAI' in error_type:
+            logger.error(f"OpenAI API error: {str(e)}")
+            return jsonify({'error': 'Translation service error'}), 503
+        else:
+            logger.error(f"Translation error: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Translation failed'}), 500
 
 @translation_bp.route('/languages', methods=['GET'])
 @rate_limit(per_minute=10, per_hour=50)
@@ -166,7 +171,7 @@ def detect_language():
         if not text:
             return jsonify({'error': 'Text cannot be empty'}), 400
         
-        # Use OpenAI to detect language
+        # Use OpenAI to detect language with v1.3.0 syntax
         prompt = f"""
 Detect the language of this text and respond with only the 2-letter language code (en, es, fr, de, etc.):
 
@@ -174,7 +179,7 @@ Text: "{text}"
 
 Language code:"""
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model='gpt-3.5-turbo',
             messages=[{"role": "user", "content": prompt}],
             max_tokens=10,
