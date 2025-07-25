@@ -5,7 +5,7 @@ import { ApiClient } from './utils/api-client.js';
 import { MessageRenderer } from './components/message-renderer.js';
 import { InputManager } from './components/input-manager.js';
 import { StatusManager } from './components/status-manager.js';
-import { CONFIG } from './config/config.js';
+import { CONFIG } from '../config/config.js';
 
 export class ChatManager extends EventEmitter {
     constructor() {
