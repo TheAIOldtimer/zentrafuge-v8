@@ -333,6 +333,16 @@ export class AuthManager extends EventEmitter {
         return new Error(errorMessages[error.code] || error.message);
     }
 
+        async checkOnboardingStatus(uid) {
+          try {
+            const doc = await firebase.firestore().collection('users').doc(uid).get();
+            return doc.exists && doc.data().onboarding_complete === true;
+          } catch (err) {
+            console.error('Failed to check onboarding status:', err);
+            return false;
+          }
+        }
+    
     /**
      * Cleanup resources
      */
