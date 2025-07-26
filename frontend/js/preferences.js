@@ -10,15 +10,15 @@ export async function loadUserPreferences() {
     }
     
     const db = firebase.firestore();
-    const userDoc = await db.collection("users").doc(currentUser.uid).get();
-    
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      setUserPreferences({ ...DEFAULT_PREFERENCES, ...userData.ai_preferences });
-      console.log('📄 Loaded user preferences:', userPreferences);
-    } else {
-      console.warn('⚠️ User document not found, using default preferences');
+await db.collection("users").doc(currentUser.uid).set(
+  {
+    ai_preferences: preferences,
+    profile: {
+      onboardingCompleted: true
     }
+  },
+  { merge: true }
+);
     
     return userPreferences;
   } catch (error) {
