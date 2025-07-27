@@ -1,4 +1,4 @@
-# backend/utils/rate_limiter.py - Rate Limiting
+# backend/utils/rate_limiter.py - Complete Rate Limiting System
 import time
 import redis
 import logging
@@ -210,3 +210,74 @@ def rate_limit(per_minute: int = 20, per_hour: int = 100):
         
         return wrapper
     return decorator
+
+def get_client_ip():
+    """Get the real client IP address"""
+    # Check for forwarded headers first (for proxies/load balancers)
+    forwarded_ips = request.environ.get('HTTP_X_FORWARDED_FOR')
+    if forwarded_ips:
+        # Take the first IP in the chain
+        return forwarded_ips.split(',')[0].strip()
+    
+    # Check other headers
+    real_ip = request.environ.get('HTTP_X_REAL_IP')
+    if real_ip:
+        return real_ip
+    
+    # Fall back to remote_addr
+    return request.remote_addr
+
+def create_rate_limit_key(prefix: str = "rate_limit") -> str:
+    """Create a rate limit key for the current request"""
+    client_ip = get_client_ip()
+    return f"{prefix}:{client_ip}"
+
+# Specific rate limiters for different endpoints
+def chat_rate_limit():
+    """Rate limiter for chat endpoints"""
+    return rate_limit(per_minute=10, per_hour=50)
+
+def auth_rate_limit():
+    """Rate limiter for authentication endpoints"""
+    return rate_limit(per_minute=5, per_hour=20)
+
+def export_rate_limit():
+    """Rate limiter for data export endpoints"""
+    return rate_limit(per_minute=1, per_hour=3)
+
+def get_rate_limit_stats(client_id: str = None) -> dict:
+    """Get rate limit statistics for debugging"""
+    if not client_id:
+        client_id = rate_limiter._get_client_id()
+    
+    if rate_limiter.redis_client:
+        try:
+            current_time = time.time()
+            minute_window = int(current_time // 60)
+            hour_window = int(current_time // 3600)
+            
+            minute_key = f"rate_limit:minute:{client_id}:{minute_window}"
+            hour_key = f"rate_limit:hour:{client_id}:{hour_window}"
+            
+            pipe = rate_limiter.redis_client.pipeline()
+            pipe.get(minute_key)
+            pipe.get(hour_key)
+            results = pipe.execute()
+            
+            return {
+                'client_id': client_id,
+                'minute_count': int(results[0] or 0),
+                'hour_count': int(results[1] or 0),
+                'storage': 'redis'
+            }
+        except Exception as e:
+            logger.error(f"Error getting Redis rate limit stats: {e}")
+    
+    # Fall back to memory store
+    data = rate_limiter.memory_store.get(client_id, {})
+    return {
+        'client_id': client_id,
+        'minute_count': data.get('minute_count', 0),
+        'hour_count': data.get('hour_count', 0),
+        'storage': 'memory'
+    }
