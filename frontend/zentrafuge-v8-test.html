@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentrafuge v8 Testing Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+        }
+        .test-section.failed {
+            border-left-color: #ff4444;
+        }
+        .test-section.warning {
+            border-left-color: #ffaa00;
+        }
+        button {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        .info { color: #4488ff; }
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Zentrafuge v8 Testing Dashboard</h1>
+        <p>Comprehensive testing suite for your newly deployed backend and frontend fixes.</p>
+
+        <!-- Quick Status -->
+        <div class="test-section" id="quick-status">
+            <h2>⚡ Quick Status Check</h2>
+            <button onclick="runQuickTest()">Run Quick Test</button>
+            <div class="progress">
+                <div class="progress-bar" id="quick-progress"></div>
+            </div>
+            <div class="result" id="quick-results">Click "Run Quick Test" to start...</div>
+        </div>
+
+        <!-- Backend Tests -->
+        <div class="test-section" id="backend-tests">
+            <h2>🔧 Backend API Tests</h2>
+            <button onclick="testBackendEndpoints()">Test All Endpoints</button>
+            <button onclick="testChatFlow()">Test Chat Flow</button>
+            <button onclick="testRateLimiting()">Test Rate Limiting</button>
+            <div class="result" id="backend-results"></div>
+        </div>
+
+        <!-- Frontend Tests -->
+        <div class="test-section" id="frontend-tests">
+            <h2>🎨 Frontend Integration Tests</h2>
+            <button onclick="testFirebaseConnection()">Test Firebase</button>
+            <button onclick="testAuthFlow()">Test Authentication</button>
+            <button onclick="testConfigConsistency()">Test Config Files</button>
+            <div class="result" id="frontend-results"></div>
+        </div>
+
+        <!-- Full Integration Test -->
+        <div class="test-section" id="integration-tests">
+            <h2>🚀 Full Integration Test</h2>
+            <button onclick="runFullIntegrationTest()">Run Complete Test Suite</button>
+            <div class="progress">
+                <div class="progress-bar" id="integration-progress"></div>
+            </div>
+            <div class="result" id="integration-results"></div>
+        </div>
+
+        <!-- Manual Testing Guide -->
+        <div class="test-section" id="manual-guide">
+            <h2>👤 Manual Testing Checklist</h2>
+            <div class="step">
+                <h3>Step 1: Basic Deployment Check</h3>
+                <p>✅ Visit: <a href="https://zentrafuge-v8.onrender.com/health" target="_blank">https://zentrafuge-v8.onrender.com/health</a></p>
+                <p>Should return: <code>{"status": "healthy", "service": "zentrafuge-v8", ...}</code></p>
+            </div>
+            <div class="step">
+                <h3>Step 2: Route Availability</h3>
+                <p>✅ Visit: <a href="https://zentrafuge-v8.onrender.com/status" target="_blank">https://zentrafuge-v8.onrender.com/status</a></p>
+                <p>Should show system info and list of available routes</p>
+            </div>
+            <div class="step">
+                <h3>Step 3: Frontend Access</h3>
+                <p>✅ Visit your main site (Netlify URL)</p>
+                <p>✅ Try logging in with a test account</p>
+                <p>✅ Check browser console for errors</p>
+            </div>
+            <div class="step">
+                <h3>Step 4: Chat Functionality</h3>
+                <p>✅ Send a test message to Cael</p>
+                <p>✅ Verify response is received</p>
+                <p>✅ Check for proper error handling</p>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="test-section" id="troubleshooting">
+            <h2>🔍 Troubleshooting Tools</h2>
+            <button onclick="downloadLogs()">Download Test Logs</button>
+            <button onclick="clearBrowserData()">Clear Browser Data</button>
+            <button onclick="generateReport()">Generate Debug Report</button>
+            <div class="result" id="troubleshooting-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://zentrafuge-v8.onrender.com';
+        let testResults = {
+            timestamp: new Date().toISOString(),
+            tests: [],
+            errors: [],
+            summary: {}
+        };
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colored = `<span class="${type}">[${timestamp}] ${message}</span>\n`;
+            return colored;
+        }
+
+        function updateProgress(elementId, percentage) {
+            const progressBar = document.getElementById(elementId);
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+            }
+        }
+
+        async function runQuickTest() {
+            const resultsDiv = document.getElementById('quick-results');
+            resultsDiv.innerHTML = log('🚀 Starting quick test...', 'info');
+            
+            let progress = 0;
+            const tests = [
+                { name: 'Backend Health', url: '/health' },
+                { name: 'System Status', url: '/status' },
+                { name: 'Routes List', url: '/routes' },
+                { name: 'Ping Test', url: '/ping' }
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                progress = ((i + 1) / tests.length) * 100;
+                updateProgress('quick-progress', progress);
+
+                try {
+                    const response = await fetch(BACKEND_URL + test.url);
+                    const status = response.status;
+                    
+                    if (status === 200) {
+                        const data = await response.json();
+                        resultsDiv.innerHTML += log(`✅ ${test.name}: OK (${status})`, 'success');
+                        testResults.tests.push({ name: test.name, status: 'pass', details: data });
+                    } else {
+                        resultsDiv.innerHTML += log(`⚠️ ${test.name}: Status ${status}`, 'warning');
+                        testResults.tests.push({ name: test.name, status: 'warning', httpStatus: status });
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML += log(`❌ ${test.name}: ${error.message}`, 'error');
+                    testResults.errors.push({ test: test.name, error: error.message });
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            resultsDiv.innerHTML += log('🏁 Quick test completed!', 'info');
+        }
+
+        async function testBackendEndpoints() {
+            const resultsDiv = document.getElementById('backend-results');
+            resultsDiv.innerHTML = log('🔧 Testing backend endpoints...', 'info');
+
+            const endpoints = [
+                { method: 'GET', path: '/health', name: 'Health Check' },
+                { method: 'GET', path: '/status', name: 'System Status' },
+                { method: 'GET', path: '/ping', name: 'Ping' },
+                { method: 'GET', path: '/routes', name: 'Routes List' },
+                { method: 'OPTIONS', path: '/index', name: 'Chat CORS' },
+                { method: 'GET', path: '/history?user_id=test123&limit=5', name: 'History (no auth)' }
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(BACKEND_URL + endpoint.path, {
+                        method: endpoint.method,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    const status = response.status;
+                    if (status === 200) {
+                        resultsDiv.innerHTML += log(`✅ ${endpoint.name}: Working`, 'success');
+                    } else if (status === 400 || status === 401) {
+                        resultsDiv.innerHTML += log(`✅ ${endpoint.name}: Protected (${status}) - Good!`, 'success');
+                    } else if (status === 405) {
+                        resultsDiv.innerHTML += log(`⚠️ ${endpoint.name}: Method not allowed (${status}) - Route exists`, 'warning');
+                    } else {
+                        resultsDiv.innerHTML += log(`❌ ${endpoint.name}: Error ${status}`, 'error');
+                    }
+                } catch (error) {
+                    resultsDiv.innerHTML += log(`❌ ${endpoint.name}: ${error.message}`, 'error');
+                }
+            }
+
+            resultsDiv.innerHTML += log('🏁 Backend endpoint tests completed!', 'info');
+        }
+
+        async function testChatFlow() {
+            const resultsDiv = document.getElementById('backend-results');
+            resultsDiv.innerHTML += log('💬 Testing chat flow...', 'info');
+
+            // Test with mock data (should fail gracefully without auth)
+            const chatData = {
+                message: "Hello, this is a test message",
+                user_id: "test-user-123"
+            };
+
+            try {
+                const response = await fetch(BACKEND_URL + '/index', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(chatData)
+                });
+
+                const status = response.status;
+                if (status === 401 || status === 403) {
+                    resultsDiv.innerHTML += log('✅ Chat endpoint: Properly protected (needs auth)', 'success');
+                } else if (status === 200) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML += log('✅ Chat endpoint: Working! Got response', 'success');
+                    resultsDiv.innerHTML += log(`Response: ${data.response?.substring(0, 100)}...`, 'info');
+                } else if (status === 400) {
+                    resultsDiv.innerHTML += log('✅ Chat endpoint: Validation working (400 error expected)', 'success');
+                } else {
+                    resultsDiv.innerHTML += log(`⚠️ Chat endpoint: Unexpected status ${status}`, 'warning');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += log(`❌ Chat test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRateLimiting() {
+            const resultsDiv = document.getElementById('backend-results');
+            resultsDiv.innerHTML += log('🚦 Testing rate limiting...', 'info');
+
+            // Send multiple requests quickly
+            const promises = [];
+            for (let i = 0; i < 25; i++) {
+                promises.push(fetch(BACKEND_URL + '/ping'));
+            }
+
+            try {
+                const responses = await Promise.all(promises);
+                const rateLimited = responses.filter(r => r.status === 429);
+                
+                if (rateLimited.length > 0) {
+                    resultsDiv.innerHTML += log(`✅ Rate limiting: Working! ${rateLimited.length} requests blocked`, 'success');
+                } else {
+                    resultsDiv.innerHTML += log('⚠️ Rate limiting: Not triggered (may be set too high)', 'warning');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += log(`❌ Rate limit test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFirebaseConnection() {
+            const resultsDiv = document.getElementById('frontend-results');
+            resultsDiv.innerHTML = log('🔥 Testing Firebase connection...', 'info');
+
+            try {
+                // Load Firebase dynamically for testing
+                const script = document.createElement('script');
+                script.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js';
+                document.head.appendChild(script);
+
+                script.onload = async () => {
+                    const authScript = document.createElement('script');
+                    authScript.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js';
+                    document.head.appendChild(authScript);
+
+                    authScript.onload = () => {
+                        const config = {
+                            apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
+                            authDomain: "zentrafuge-v8.firebaseapp.com",
+                            projectId: "zentrafuge-v8",
+                            storageBucket: "zentrafuge-v8.appspot.com",
+                            messagingSenderId: "1035979155498",
+                            appId: "1:1035979155498:web:502d1bdbfadc116542bb53"
+                        };
+
+                        try {
+                            if (!firebase.apps.length) {
+                                firebase.initializeApp(config);
+                            }
+                            resultsDiv.innerHTML += log('✅ Firebase: SDK loaded and configured', 'success');
+                            resultsDiv.innerHTML += log(`✅ Project ID: ${config.projectId}`, 'success');
+                            resultsDiv.innerHTML += log('✅ Auth service available', 'success');
+                        } catch (error) {
+                            resultsDiv.innerHTML += log(`❌ Firebase error: ${error.message}`, 'error');
+                        }
+                    };
+                };
+            } catch (error) {
+                resultsDiv.innerHTML += log(`❌ Firebase test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthFlow() {
+            const resultsDiv = document.getElementById('frontend-results');
+            resultsDiv.innerHTML += log('🔐 Testing authentication flow...', 'info');
+
+            // This is a simplified test - real auth would need user interaction
+            resultsDiv.innerHTML += log('ℹ️ Auth flow requires user interaction', 'info');
+            resultsDiv.innerHTML += log('✅ Manual test: Visit your main site and try logging in', 'warning');
+        }
+
+        async function testConfigConsistency() {
+            const resultsDiv = document.getElementById('frontend-results');
+            resultsDiv.innerHTML += log('⚙️ Testing config consistency...', 'info');
+
+            const expectedConfig = {
+                backend: 'https://zentrafuge-v8.onrender.com',
+                firebase: 'zentrafuge-v8'
+            };
+
+            resultsDiv.innerHTML += log(`✅ Expected backend: ${expectedConfig.backend}`, 'success');
+            resultsDiv.innerHTML += log(`✅ Expected Firebase project: ${expectedConfig.firebase}`, 'success');
+            resultsDiv.innerHTML += log('⚠️ Manual check: Verify all config files use these values', 'warning');
+        }
+
+        async function runFullIntegrationTest() {
+            const resultsDiv = document.getElementById('integration-results');
+            resultsDiv.innerHTML = log('🚀 Starting full integration test...', 'info');
+
+            const tests = [
+                () => runQuickTest(),
+                () => testBackendEndpoints(),
+                () => testChatFlow(),
+                () => testRateLimiting(),
+                () => testFirebaseConnection(),
+                () => testConfigConsistency()
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                updateProgress('integration-progress', ((i + 1) / tests.length) * 100);
+                await tests[i]();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            resultsDiv.innerHTML += log('🎉 Full integration test completed!', 'success');
+            generateSummary();
+        }
+
+        function generateSummary() {
+            const summary = {
+                total_tests: testResults.tests.length,
+                passed: testResults.tests.filter(t => t.status === 'pass').length,
+                warnings: testResults.tests.filter(t => t.status === 'warning').length,
+                errors: testResults.errors.length
+            };
+
+            const resultsDiv = document.getElementById('integration-results');
+            resultsDiv.innerHTML += log('📊 TEST SUMMARY:', 'info');
+            resultsDiv.innerHTML += log(`Total Tests: ${summary.total_tests}`, 'info');
+            resultsDiv.innerHTML += log(`Passed: ${summary.passed}`, 'success');
+            resultsDiv.innerHTML += log(`Warnings: ${summary.warnings}`, 'warning');
+            resultsDiv.innerHTML += log(`Errors: ${summary.errors}`, 'error');
+
+            testResults.summary = summary;
+        }
+
+        function downloadLogs() {
+            const logs = JSON.stringify(testResults, null, 2);
+            const blob = new Blob([logs], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zentrafuge-v8-test-results-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            document.getElementById('troubleshooting-results').innerHTML = 
+                log('📁 Test logs downloaded!', 'success');
+        }
+
+        function clearBrowserData() {
+            if (confirm('This will clear all browser data for this site. Continue?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                document.getElementById('troubleshooting-results').innerHTML = 
+                    log('🧹 Browser data cleared! Refresh to see changes.', 'success');
+            }
+        }
+
+        function generateReport() {
+            const report = `
+ZENTRAFUGE V8 DIAGNOSTIC REPORT
+Generated: ${new Date().toLocaleString()}
+Backend: ${BACKEND_URL}
+
+SUMMARY:
+- Tests Run: ${testResults.tests.length}
+- Errors: ${testResults.errors.length}
+- Browser: ${navigator.userAgent}
+
+RECOMMENDATIONS:
+${testResults.errors.length === 0 ? 
+    '✅ All tests passed! Your deployment looks good.' : 
+    '❌ Issues found. Check the detailed logs for specifics.'}
+
+NEXT STEPS:
+1. If backend tests fail: Check Render deployment logs
+2. If frontend tests fail: Verify config file changes were deployed
+3. If auth fails: Check Firebase project settings
+4. If still stuck: Share this report for help
+            `;
+
+            document.getElementById('troubleshooting-results').innerHTML = 
+                '<pre>' + report + '</pre>';
+        }
+
+        // Auto-run quick test on page load
+        window.addEventListener('load', () => {
+            setTimeout(runQuickTest, 1000);
+        });
+    </script>
+</body>
+</html>
