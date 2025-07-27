@@ -1,4 +1,4 @@
-// frontend/js/config/config.js - Application Configuration (SECOND CONFIG FILE - MAKE IDENTICAL)
+// frontend/js/modules/config/config.js - Application Configuration
 export const CONFIG = {
     // API Configuration - FIXED: Updated to zentrafuge-v8 backend
     API_BASE_URL: 'https://zentrafuge-v8.onrender.com',
