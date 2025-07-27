@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentrafuge v8 Live Diagnostics</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .section {
+            background: #2d2d2d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #00ff00;
+        }
+        .error { border-left-color: #ff4444; color: #ff4444; }
+        .warning { border-left-color: #ffaa00; color: #ffaa00; }
+        .success { border-left-color: #00ff00; color: #00ff00; }
+        .info { border-left-color: #4488ff; color: #4488ff; }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #00dd00; }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-ok { background: #00ff00; }
+        .status-error { background: #ff4444; }
+        .status-warning { background: #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Zentrafuge v8 Live Diagnostics</h1>
+    <p>Running comprehensive tests on your system...</p>
+
+    <div class="section info">
+        <h3>🎯 Test Configuration</h3>
+        <p><strong>Backend:</strong> https://zentrafuge-v8.onrender.com</p>
+        <p><strong>Firebase Project:</strong> zentrafuge-v8</p>
+        <p><strong>Time:</strong> <span id="timestamp"></span></p>
+    </div>
+
+    <div class="section">
+        <h3>📡 Backend Connectivity</h3>
+        <div id="backend-status">Running tests...</div>
+    </div>
+
+    <div class="section">
+        <h3>🔥 Firebase Status</h3>
+        <div id="firebase-status">Checking Firebase...</div>
+    </div>
+
+    <div class="section">
+        <h3>🔐 Authentication Flow</h3>
+        <div id="auth-status">Testing authentication...</div>
+    </div>
+
+    <div class="section">
+        <h3>📝 Console Errors</h3>
+        <div id="console-errors">Monitoring console...</div>
+    </div>
+
+    <div class="section">
+        <h3>🌐 Network Requests</h3>
+        <div id="network-status">Monitoring network...</div>
+    </div>
+
+    <div class="section">
+        <h3>🎮 Quick Actions</h3>
+        <button onclick="testFullFlow()">Test Full User Flow</button>
+        <button onclick="clearAllData()">Clear All Browser Data</button>
+        <button onclick="downloadLogs()">Download Diagnostic Logs</button>
+    </div>
+
+    <script>
+        // Configuration
+        const BACKEND_URL = 'https://zentrafuge-v8.onrender.com';
+        const diagnostics = {
+            timestamp: new Date().toISOString(),
+            tests: [],
+            errors: [],
+            network: [],
+            firebase: null,
+            auth: null
+        };
+
+        // Set timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // Capture console errors
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        console.error = function(...args) {
+            diagnostics.errors.push({
+                type: 'error',
+                message: args.join(' '),
+                timestamp: new Date().toISOString(),
+                stack: new Error().stack
+            });
+            updateConsoleErrors();
+            originalError.apply(console, args);
+        };
+        console.warn = function(...args) {
+            diagnostics.errors.push({
+                type: 'warning', 
+                message: args.join(' '),
+                timestamp: new Date().toISOString()
+            });
+            updateConsoleErrors();
+            originalWarn.apply(console, args);
+        };
+
+        // Test backend connectivity
+        async function testBackend() {
+            const statusDiv = document.getElementById('backend-status');
+            statusDiv.innerHTML = '<span class="status-dot status-warning"></span>Testing backend...';
+
+            const tests = [
+                { endpoint: '/health', name: 'Health Check' },
+                { endpoint: '/status', name: 'Status Check' },
+                { endpoint: '/index', name: 'Chat Endpoint (OPTIONS)' },
+                { endpoint: '/history', name: 'History Endpoint' },
+                { endpoint: '/context', name: 'Context Endpoint' }
+            ];
+
+            let results = '';
+            let allPassed = true;
+
+            for (const test of tests) {
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(`${BACKEND_URL}${test.endpoint}`, {
+                        method: test.endpoint === '/index' ? 'OPTIONS' : 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const endTime = performance.now();
+                    const duration = Math.round(endTime - startTime);
+
+                    const status = response.status;
+                    let statusIcon, statusText;
+                    
+                    if (status === 200) {
+                        statusIcon = '<span class="status-dot status-ok"></span>';
+                        statusText = `✅ ${test.name}: OK (${status}) - ${duration}ms`;
+                    } else if (status === 405 || status === 404) {
+                        statusIcon = '<span class="status-dot status-warning"></span>';
+                        statusText = `⚠️ ${test.name}: ${status} - Route exists but method/auth issue`;
+                    } else {
+                        statusIcon = '<span class="status-dot status-error"></span>';
+                        statusText = `❌ ${test.name}: Error ${status}`;
+                        allPassed = false;
+                    }
+
+                    results += `<div>${statusIcon}${statusText}</div>`;
+                    
+                    diagnostics.network.push({
+                        endpoint: test.endpoint,
+                        status,
+                        duration,
+                        success: status === 200 || status === 405
+                    });
+
+                } catch (error) {
+                    results += `<div><span class="status-dot status-error"></span>❌ ${test.name}: ${error.message}</div>`;
+                    allPassed = false;
+                    diagnostics.network.push({
+                        endpoint: test.endpoint,
+                        error: error.message,
+                        success: false
+                    });
+                }
+            }
+
+            const summaryIcon = allPassed ? 
+                '<span class="status-dot status-ok"></span>' : 
+                '<span class="status-dot status-error"></span>';
+            statusDiv.innerHTML = `${summaryIcon}<strong>Backend Test Results:</strong><br>${results}`;
+        }
+
+        // Test Firebase
+        async function testFirebase() {
+            const statusDiv = document.getElementById('firebase-status');
+            statusDiv.innerHTML = '<span class="status-dot status-warning"></span>Testing Firebase...';
+
+            try {
+                // Check if Firebase is loaded
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK not loaded');
+                }
+
+                // Test Firebase configuration
+                const config = {
+                    apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
+                    authDomain: "zentrafuge-v8.firebaseapp.com",
+                    projectId: "zentrafuge-v8",
+                    storageBucket: "zentrafuge-v8.appspot.com",
+                    messagingSenderId: "1035979155498",
+                    appId: "1:1035979155498:web:502d1bdbfadc116542bb53"
+                };
+
+                // Try to initialize (or get existing)
+                let app;
+                if (firebase.apps.length === 0) {
+                    app = firebase.initializeApp(config);
+                } else {
+                    app = firebase.app();
+                }
+
+                // Test auth service
+                const auth = firebase.auth();
+                const firestore = firebase.firestore();
+
+                let results = '';
+                results += `<div><span class="status-dot status-ok"></span>✅ Firebase SDK loaded</div>`;
+                results += `<div><span class="status-dot status-ok"></span>✅ App initialized: ${app.name}</div>`;
+                results += `<div><span class="status-dot status-ok"></span>✅ Project ID: ${app.options.projectId}</div>`;
+                results += `<div><span class="status-dot status-ok"></span>✅ Auth service: ${typeof auth}</div>`;
+                results += `<div><span class="status-dot status-ok"></span>✅ Firestore service: ${typeof firestore}</div>`;
+
+                // Test auth state
+                const user = auth.currentUser;
+                if (user) {
+                    results += `<div><span class="status-dot status-ok"></span>✅ User authenticated: ${user.uid}</div>`;
+                    results += `<div><span class="status-dot status-ok"></span>✅ Email verified: ${user.emailVerified}</div>`;
+                } else {
+                    results += `<div><span class="status-dot status-warning"></span>⚠️ No user authenticated</div>`;
+                }
+
+                diagnostics.firebase = { success: true, user: user ? user.uid : null };
+                statusDiv.innerHTML = `<span class="status-dot status-ok"></span><strong>Firebase Status:</strong><br>${results}`;
+
+            } catch (error) {
+                diagnostics.firebase = { success: false, error: error.message };
+                statusDiv.innerHTML = `<span class="status-dot status-error"></span><strong>Firebase Error:</strong><br>❌ ${error.message}`;
+            }
+        }
+
+        // Test authentication flow
+        async function testAuth() {
+            const statusDiv = document.getElementById('auth-status');
+            statusDiv.innerHTML = '<span class="status-dot status-warning"></span>Testing authentication...';
+
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase not available for auth test');
+                }
+
+                const auth = firebase.auth();
+                let results = '';
+
+                // Check current auth state
+                const user = auth.currentUser;
+                if (user) {
+                    results += `<div><span class="status-dot status-ok"></span>✅ User logged in: ${user.email}</div>`;
+                    results += `<div><span class="status-dot status-${user.emailVerified ? 'ok' : 'warning'}"></span>${user.emailVerified ? '✅' : '⚠️'} Email verified: ${user.emailVerified}</div>`;
+                    
+                    // Check Firestore user document
+                    try {
+                        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            results += `<div><span class="status-dot status-ok"></span>✅ User document exists</div>`;
+                            results += `<div><span class="status-dot status-${userData.onboarding_complete ? 'ok' : 'warning'}"></span>${userData.onboarding_complete ? '✅' : '⚠️'} Onboarding complete: ${userData.onboarding_complete}</div>`;
+                        } else {
+                            results += `<div><span class="status-dot status-warning"></span>⚠️ User document missing</div>`;
+                        }
+                    } catch (firestoreError) {
+                        results += `<div><span class="status-dot status-error"></span>❌ Firestore error: ${firestoreError.message}</div>`;
+                    }
+                } else {
+                    results += `<div><span class="status-dot status-warning"></span>⚠️ No user authenticated</div>`;
+                    results += `<div><span class="status-dot status-info"></span>ℹ️ This is normal for login page</div>`;
+                }
+
+                // Check auth listener setup
+                results += `<div><span class="status-dot status-info"></span>ℹ️ Checking for auth listeners...</div>`;
+
+                diagnostics.auth = { success: true, authenticated: !!user };
+                statusDiv.innerHTML = `<span class="status-dot status-ok"></span><strong>Authentication Status:</strong><br>${results}`;
+
+            } catch (error) {
+                diagnostics.auth = { success: false, error: error.message };
+                statusDiv.innerHTML = `<span class="status-dot status-error"></span><strong>Auth Error:</strong><br>❌ ${error.message}`;
+            }
+        }
+
+        // Update console errors display
+        function updateConsoleErrors() {
+            const errorsDiv = document.getElementById('console-errors');
+            if (diagnostics.errors.length === 0) {
+                errorsDiv.innerHTML = '<span class="status-dot status-ok"></span>✅ No console errors detected';
+                return;
+            }
+
+            let errorsHtml = `<span class="status-dot status-error"></span><strong>${diagnostics.errors.length} Console Issues:</strong><br>`;
+            diagnostics.errors.slice(-5).forEach(error => { // Show last 5 errors
+                const icon = error.type === 'error' ? '❌' : '⚠️';
+                errorsHtml += `<div>${icon} ${error.type}: ${error.message}</div>`;
+            });
+            errorsDiv.innerHTML = errorsHtml;
+        }
+
+        // Test full user flow
+        async function testFullFlow() {
+            alert('🧪 Testing full user flow...\nThis will:\n1. Test backend\n2. Test Firebase\n3. Test auth\n4. Generate report');
+            
+            await testBackend();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testFirebase();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testAuth();
+            
+            alert('✅ Full flow test complete! Check results above.');
+        }
+
+        // Clear all browser data
+        function clearAllData() {
+            if (confirm('⚠️ This will clear ALL browser data for this site.\n\nProceed?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                        registrations.forEach(reg => reg.unregister());
+                    });
+                }
+                alert('✅ Browser data cleared! Refresh the page.');
+            }
+        }
+
+        // Download diagnostic logs
+        function downloadLogs() {
+            const logData = {
+                ...diagnostics,
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                timestamp: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zentrafuge-v8-diagnostics-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Auto-run tests
+        window.addEventListener('load', async () => {
+            console.log('🔧 Starting Zentrafuge v8 diagnostics...');
+            
+            setTimeout(testBackend, 500);
+            setTimeout(testFirebase, 1500);
+            setTimeout(testAuth, 2500);
+        });
+
+        // Include Firebase if available
+        if (typeof firebase !== 'undefined') {
+            console.log('Firebase detected, running enhanced tests...');
+        } else {
+            console.log('Firebase not detected, loading SDK...');
+            // Dynamically load Firebase for testing
+            const script1 = document.createElement('script');
+            script1.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js';
+            document.head.appendChild(script1);
+            
+            script1.onload = () => {
+                const script2 = document.createElement('script');
+                script2.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js';
+                document.head.appendChild(script2);
+                
+                script2.onload = () => {
+                    const script3 = document.createElement('script');
+                    script3.src = 'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js';
+                    document.head.appendChild(script3);
+                    
+                    script3.onload = () => {
+                        console.log('Firebase SDK loaded dynamically');
+                        setTimeout(testFirebase, 1000);
+                    };
+                };
+            };
+        }
+    </script>
+</body>
+</html>
