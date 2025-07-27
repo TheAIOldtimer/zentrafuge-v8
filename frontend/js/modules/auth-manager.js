@@ -8,42 +8,56 @@ export class AuthManager extends EventEmitter {
         super();
         this.currentUser = null;
         this.authStateInitialized = false;
-        this.logger = new Logger('AuthManager');
+        this.authUnsubscribe = null;
+        this.isListenerRegistered = false; // FIXED: Prevent multiple listeners
         
-        // Initialize Firebase auth state listener
-        this.initAuthState();
+        this.logger = new Logger('AuthManager');
+        this.logger.info('AuthManager initialized');
     }
 
     /**
-     * Initialize Firebase authentication state monitoring
+     * Initialize authentication system
      */
-    initAuthState() {
-        return new Promise((resolve) => {
-            this.logger.info('Initializing authentication state...');
+    async init() {
+        try {
+            this.logger.info('Initializing authentication...');
             
-            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                const wasInitialized = this.authStateInitialized;
-                this.currentUser = user;
-                this.authStateInitialized = true;
+            // FIXED: Prevent multiple listener registration
+            if (this.isListenerRegistered) {
+                this.logger.warn('Auth listener already registered, skipping initialization');
+                return;
+            }
 
-                if (user) {
-                    this.logger.info(`User authenticated: ${user.uid}`);
-                    this.handleUserAuthenticated(user);
-                } else {
-                    this.logger.info('User not authenticated');
-                    this.handleUserSignedOut();
-                }
+            this.setupAuthStateListener();
+            this.isListenerRegistered = true;
+            
+            this.logger.info('Authentication system initialized');
+        } catch (error) {
+            this.logger.error('Failed to initialize authentication', error);
+            throw error;
+        }
+    }
 
-                // Emit auth state change event
-                this.emit('authStateChanged', { user, wasInitialized });
-
-                if (!wasInitialized) {
-                    resolve(user);
-                }
+    /**
+     * Set up Firebase auth state listener
+     */
+    setupAuthStateListener() {
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            this.logger.info('Auth state changed', { 
+                userId: user ? user.uid : null,
+                emailVerified: user ? user.emailVerified : null 
             });
 
-            // Store unsubscribe function for cleanup
-            this.authUnsubscribe = unsubscribe;
+            this.currentUser = user;
+            this.authStateInitialized = true;
+
+            this.emit('authStateChanged', { user });
+
+            if (user) {
+                this.handleUserAuthenticated(user);
+            } else {
+                this.handleUserSignedOut();
+            }
         });
     }
 
@@ -52,6 +66,8 @@ export class AuthManager extends EventEmitter {
      */
     async handleUserAuthenticated(user) {
         try {
+            this.logger.info(`User authenticated: ${user.uid}`);
+            
             // Ensure user document exists
             await this.ensureUserDocument(user);
             
@@ -69,7 +85,7 @@ export class AuthManager extends EventEmitter {
      * Handle user sign out
      */
     handleUserSignedOut() {
-        this.currentUser = null;
+        this.logger.info('User signed out');
         this.emit('userSignedOut');
     }
 
@@ -78,45 +94,31 @@ export class AuthManager extends EventEmitter {
      */
     async ensureUserDocument(user) {
         try {
-            const db = firebase.firestore();
-            const userRef = db.collection('users').doc(user.uid);
+            const userRef = firebase.firestore().collection('users').doc(user.uid);
             const userDoc = await userRef.get();
-
+            
             if (!userDoc.exists) {
-                this.logger.info(`Creating user document for: ${user.uid}`);
-                
                 await userRef.set({
                     email: user.email,
-                    displayName: user.displayName || '',
-                    photoURL: user.photoURL || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp(),
-                    preferences: {
-                        theme: 'light',
-                        notifications: true,
-                        language: 'en'
-                    },
-                    profile: {
-                        onboardingCompleted: false,
-                        supportStyle: null,
-                        communicationPreferences: {}
-                    }
-                }, { merge: true });
+                    emailVerified: user.emailVerified,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    last_active: firebase.firestore.FieldValue.serverTimestamp(),
+                    onboarding_complete: false
+                });
+                this.logger.info('User document created');
             }
         } catch (error) {
             this.logger.error('Error ensuring user document:', error);
-            throw error;
         }
     }
 
     /**
-     * Update user's last active timestamp
+     * Update last active timestamp
      */
-    async updateLastActive(userId) {
+    async updateLastActive(uid) {
         try {
-            const db = firebase.firestore();
-            await db.collection('users').doc(userId).update({
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            await firebase.firestore().collection('users').doc(uid).update({
+                last_active: firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (error) {
             this.logger.error('Error updating last active:', error);
@@ -126,34 +128,40 @@ export class AuthManager extends EventEmitter {
     /**
      * Sign in with email and password
      */
-   async signInWithEmail(email, password) {
-    this.logger.info('Setting persistence to LOCAL...');
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-    const result = await firebase.auth().signInWithEmailAndPassword(email, password);
-    this.currentUser = result.user;
-    return result.user;
-}
-
-    /**
-     * Create account with email and password
-     */
-    async createAccount(email, password, displayName = '') {
+    async signInWithEmailAndPassword(email, password) {
         try {
-            this.logger.info(`Creating account: ${email}`);
+            this.logger.info('Attempting email login', { email });
             
-            const result = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
             
-            // Update profile with display name
-            if (displayName) {
-                await result.user.updateProfile({ displayName });
-            }
-            
-            this.logger.info('Account created successfully');
-            return result.user;
+            this.logger.info('Email login successful', { userId: user.uid });
+            return user;
             
         } catch (error) {
-            this.logger.error('Account creation error:', error);
+            this.logger.error('Email login failed', error);
+            throw this.formatAuthError(error);
+        }
+    }
+
+    /**
+     * Create user with email and password
+     */
+    async createUserWithEmailAndPassword(email, password) {
+        try {
+            this.logger.info('Creating user account', { email });
+            
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Send email verification
+            await user.sendEmailVerification();
+            
+            this.logger.info('User account created', { userId: user.uid });
+            return user;
+            
+        } catch (error) {
+            this.logger.error('User creation failed', error);
             throw this.formatAuthError(error);
         }
     }
@@ -165,9 +173,9 @@ export class AuthManager extends EventEmitter {
         try {
             this.logger.info('Signing out user');
             await firebase.auth().signOut();
-            this.logger.info('Sign out successful');
+            this.logger.info('User signed out successfully');
         } catch (error) {
-            this.logger.error('Sign out error:', error);
+            this.logger.error('Sign out failed', error);
             throw error;
         }
     }
@@ -175,94 +183,14 @@ export class AuthManager extends EventEmitter {
     /**
      * Send password reset email
      */
-    async resetPassword(email) {
+    async sendPasswordResetEmail(email) {
         try {
-            this.logger.info(`Sending password reset email: ${email}`);
+            this.logger.info('Sending password reset email', { email });
             await firebase.auth().sendPasswordResetEmail(email);
             this.logger.info('Password reset email sent');
         } catch (error) {
-            this.logger.error('Password reset error:', error);
+            this.logger.error('Password reset failed', error);
             throw this.formatAuthError(error);
-        }
-    }
-
-    /**
-     * Send email verification
-     */
-    async sendEmailVerification() {
-        try {
-            if (!this.currentUser) {
-                throw new Error('No authenticated user');
-            }
-
-            await this.currentUser.sendEmailVerification();
-            this.logger.info('Email verification sent');
-        } catch (error) {
-            this.logger.error('Email verification error:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Update user profile
-     */
-    async updateProfile(profileData) {
-        try {
-            if (!this.currentUser) {
-                throw new Error('No authenticated user');
-            }
-
-            const db = firebase.firestore();
-            const userRef = db.collection('users').doc(this.currentUser.uid);
-
-            await userRef.update({
-                ...profileData,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            this.logger.info('Profile updated successfully');
-            this.emit('profileUpdated', profileData);
-            
-        } catch (error) {
-            this.logger.error('Profile update error:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get user profile data
-     */
-    async getUserProfile() {
-        try {
-            if (!this.currentUser) {
-                throw new Error('No authenticated user');
-            }
-
-            const db = firebase.firestore();
-            const userDoc = await db.collection('users').doc(this.currentUser.uid).get();
-
-            if (userDoc.exists) {
-                return {
-                    uid: this.currentUser.uid,
-                    email: this.currentUser.email,
-                    displayName: this.currentUser.displayName,
-                    photoURL: this.currentUser.photoURL,
-                    emailVerified: this.currentUser.emailVerified,
-                    ...userDoc.data()
-                };
-            } else {
-                // Return basic profile if document doesn't exist
-                return {
-                    uid: this.currentUser.uid,
-                    email: this.currentUser.email,
-                    displayName: this.currentUser.displayName,
-                    photoURL: this.currentUser.photoURL,
-                    emailVerified: this.currentUser.emailVerified
-                };
-            }
-        } catch (error) {
-            this.logger.error('Error fetching user profile:', error);
-            throw error;
         }
     }
 
@@ -271,6 +199,20 @@ export class AuthManager extends EventEmitter {
      */
     isAuthenticated() {
         return !!this.currentUser;
+    }
+
+    /**
+     * Check if user is anonymous
+     */
+    isAnonymous() {
+        return this.currentUser ? this.currentUser.isAnonymous : false;
+    }
+
+    /**
+     * Check if user needs authentication
+     */
+    needsAuth() {
+        return !this.currentUser;
     }
 
     /**
@@ -333,24 +275,99 @@ export class AuthManager extends EventEmitter {
         return new Error(errorMessages[error.code] || error.message);
     }
 
-        async checkOnboardingStatus(uid) {
-          try {
+    /**
+     * Check onboarding status
+     */
+    async checkOnboardingStatus(uid) {
+        try {
             const doc = await firebase.firestore().collection('users').doc(uid).get();
             return doc.exists && doc.data().onboarding_complete === true;
-          } catch (err) {
-            console.error('Failed to check onboarding status:', err);
+        } catch (err) {
+            this.logger.error('Failed to check onboarding status:', err);
             return false;
-          }
         }
-    
+    }
+
     /**
-     * Cleanup resources
+     * Update onboarding status
+     */
+    async updateOnboardingStatus(uid, completed = true) {
+        try {
+            await firebase.firestore().collection('users').doc(uid).update({
+                onboarding_complete: completed,
+                onboarding_completed_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            this.logger.info('Onboarding status updated', { uid, completed });
+        } catch (error) {
+            this.logger.error('Failed to update onboarding status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get user profile data
+     */
+    async getUserProfile() {
+        if (!this.currentUser) {
+            throw new Error('No authenticated user');
+        }
+
+        try {
+            const userDoc = await firebase.firestore().collection('users').doc(this.currentUser.uid).get();
+            
+            if (userDoc.exists) {
+                return {
+                    uid: this.currentUser.uid,
+                    email: this.currentUser.email,
+                    emailVerified: this.currentUser.emailVerified,
+                    ...userDoc.data()
+                };
+            } else {
+                return {
+                    uid: this.currentUser.uid,
+                    email: this.currentUser.email,
+                    emailVerified: this.currentUser.emailVerified
+                };
+            }
+        } catch (error) {
+            this.logger.error('Error fetching user profile:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update user profile
+     */
+    async updateUserProfile(profileData) {
+        if (!this.currentUser) {
+            throw new Error('No authenticated user');
+        }
+
+        try {
+            const userRef = firebase.firestore().collection('users').doc(this.currentUser.uid);
+            await userRef.update({
+                ...profileData,
+                updated_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            this.logger.info('User profile updated');
+        } catch (error) {
+            this.logger.error('Error updating user profile:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Cleanup resources - FIXED: Add proper cleanup
      */
     destroy() {
         if (this.authUnsubscribe) {
             this.authUnsubscribe();
+            this.authUnsubscribe = null;
         }
+        this.isListenerRegistered = false;
         this.removeAllListeners();
+        this.logger.info('AuthManager destroyed');
     }
 }
 
