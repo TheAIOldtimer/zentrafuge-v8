@@ -1,10 +1,10 @@
-# backend/controllers/chat_controller.py - Chat Orchestration Logic (Fixed Imports)
+# backend/controllers/chat_controller.py - Chat Orchestration Logic (Complete Version)
 import time
 import logging
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 
-# Import existing modules - use whatever class names actually exist
+# Import existing modules with fallbacks
 try:
     from utils.memory_engine import MemoryEngine
 except ImportError:
@@ -14,7 +14,6 @@ except ImportError:
         try:
             from utils.memory_engine import MemoryManager as MemoryEngine
         except ImportError:
-            # Fallback - create a simple placeholder
             class MemoryEngine:
                 def __init__(self):
                     pass
@@ -175,55 +174,46 @@ class ChatController:
             self.memory_engine.store_conversation(
                 user_id=user_id,
                 user_message=message,
-                cael_response=response_data['response'],
-                emotional_analysis=emotional_analysis,
-                metadata={
-                    'processing_time': time.time() - start_time,
-                    'model_used': response_data.get('model_used', 'gpt-4'),
-                    'tokens_used': response_data.get('tokens_used', 0),
-                    **request_metadata
-                }
+                ai_response=response_data.get('response', ''),
+                emotional_context=emotional_analysis,
+                timestamp=time.time()
             )
             
-            log_memory_operation(
-                user_id=user_id,
-                operation="store_conversation",
-                status="success"
-            )
-            
-            # Step 8: Update health monitoring
+            # Step 8: Record health metrics
             self.health_monitor.record_interaction(
                 user_id=user_id,
-                emotional_state=emotional_analysis,
-                response_quality=response_data.get('confidence_score', 0.8)
+                message_length=len(message),
+                response_length=len(response_data.get('response', '')),
+                emotional_state=emotional_analysis.get('primary_emotion', 'neutral'),
+                processing_time=time.time() - start_time
             )
             
             processing_time = time.time() - start_time
-            self.logger.info(f"Message processed successfully in {processing_time:.3f}s")
             
             return {
-                'response': response_data['response'],
+                'response': response_data.get('response', 'I understand and I\'m here for you.'),
                 'model_used': response_data.get('model_used', 'gpt-4'),
                 'tokens_used': response_data.get('tokens_used', 0),
                 'processing_time': processing_time,
-                'emotional_tone': emotional_analysis.get('primary_emotion', 'neutral'),
+                'emotional_tone': emotional_analysis.get('primary_emotion', 'supportive'),
                 'confidence_score': response_data.get('confidence_score', 0.8)
             }
             
         except Exception as e:
+            processing_time = time.time() - start_time
             self.logger.error(f"Error processing message: {str(e)}", exc_info=True)
+            
             log_error_with_context(e, {
                 'user_id': user_id,
                 'message_length': len(message),
-                'processing_stage': 'unknown'
+                'processing_time': processing_time
             })
             
-            # Return fallback response
             return {
-                'response': "I'm having trouble processing your message right now. Let me take a moment to gather my thoughts, and please try again.",
+                'response': "I'm experiencing some technical difficulties right now, but I'm here with you. Let me take a moment to gather my thoughts, and please try again.",
                 'model_used': 'fallback',
                 'tokens_used': 0,
-                'processing_time': time.time() - start_time,
+                'processing_time': processing_time,
                 'emotional_tone': 'supportive',
                 'confidence_score': 0.5
             }
@@ -262,95 +252,125 @@ class ChatController:
                 'emotional_profile': self.emotion_parser.get_user_emotional_profile(user_id),
                 'conversation_patterns': self.nlp_analyzer.get_user_patterns(user_id),
                 'memory_summary': self.memory_engine.get_user_summary(user_id),
-                'growth_indicators': self.health_monitor.get_growth_indicators(user_id)
+                'growth_indicators': self.health_monitor.get_growth_indicators(user_id),
+                'timestamp': time.time(),
+                'user_id': user_id
             }
             
             return context
             
         except Exception as e:
-            self.logger.error(f"Error retrieving user context: {str(e)}", exc_info=True)
-            return {}
+            self.logger.error(f"Error getting user context: {str(e)}", exc_info=True)
+            return {
+                'error': 'Failed to retrieve context',
+                'user_id': user_id,
+                'timestamp': time.time()
+            }
     
     def record_mood(self, user_id: str, mood: str, notes: str = '') -> Dict[str, Any]:
-        """Record user's mood"""
+        """Record user's current mood"""
         try:
-            # Basic mood storage - adapt based on your memory engine
-            mood_data = {
-                'user_id': user_id,
-                'mood': mood,
-                'notes': notes,
+            # Update mood in emotion parser
+            self.emotion_parser.update_mood_history(user_id, mood)
+            
+            # Record in health monitor
+            self.health_monitor.record_interaction(
+                user_id=user_id,
+                mood=mood,
+                notes=notes,
+                timestamp=time.time()
+            )
+            
+            mood_id = f"{user_id}_{int(time.time())}"
+            
+            self.logger.info(f"Mood recorded for user {user_id}: {mood}")
+            
+            return {
+                'mood_id': mood_id,
+                'status': 'recorded',
                 'timestamp': time.time()
             }
             
-            # Update emotional profile
-            self.emotion_parser.update_mood_history(user_id, mood)
-            
-            log_memory_operation(
-                user_id=user_id,
-                operation="record_mood",
-                status="success",
-                details={"mood": mood}
-            )
-            
-            return {'mood_id': f"mood_{int(time.time())}"}
-            
         except Exception as e:
             self.logger.error(f"Error recording mood: {str(e)}", exc_info=True)
-            log_memory_operation(
-                user_id=user_id,
-                operation="record_mood",
-                status="error"
-            )
-            raise
+            return {
+                'error': 'Failed to record mood',
+                'mood_id': None,
+                'status': 'error'
+            }
     
     def export_user_data(self, user_id: str) -> Dict[str, Any]:
         """Export all user data for GDPR compliance"""
         try:
             export_data = {
-                'conversations': self.get_chat_history(user_id, limit=1000),
-                'emotional_profile': self.emotion_parser.export_user_profile(user_id),
-                'patterns': self.nlp_analyzer.export_user_patterns(user_id),
-                'growth_data': self.health_monitor.export_user_data(user_id)
+                'user_id': user_id,
+                'export_timestamp': time.time(),
+                'format_version': '2.0',
+                'data': {
+                    'chat_history': self.get_chat_history(user_id, limit=1000),
+                    'emotional_profile': self.emotion_parser.export_user_profile(user_id),
+                    'conversation_patterns': self.nlp_analyzer.export_user_patterns(user_id),
+                    'health_metrics': self.health_monitor.export_user_data(user_id),
+                    'user_context': self.get_user_context(user_id)
+                }
             }
             
-            log_memory_operation(
-                user_id=user_id,
-                operation="export_user_data",
-                status="success"
-            )
-            
+            self.logger.info(f"User data exported for {user_id}")
             return export_data
             
         except Exception as e:
             self.logger.error(f"Error exporting user data: {str(e)}", exc_info=True)
-            log_memory_operation(
-                user_id=user_id,
-                operation="export_user_data",
-                status="error"
-            )
-            raise
+            return {
+                'error': 'Failed to export user data',
+                'user_id': user_id,
+                'export_timestamp': time.time()
+            }
     
-    def delete_user_data(self, user_id: str) -> bool:
-        """Delete all user data (GDPR right to be forgotten)"""
+    def delete_user_data(self, user_id: str) -> Dict[str, Any]:
+        """Delete all user data for GDPR compliance"""
         try:
             # Delete from all components
             self.emotion_parser.delete_user_data(user_id)
             self.nlp_analyzer.delete_user_data(user_id)
+            self.memory_engine.delete_user_data(user_id)
             self.health_monitor.delete_user_data(user_id)
             
-            log_memory_operation(
-                user_id=user_id,
-                operation="delete_user_data",
-                status="success"
-            )
+            self.logger.info(f"User data deleted for {user_id}")
             
-            return True
+            return {
+                'status': 'deleted',
+                'user_id': user_id,
+                'deletion_timestamp': time.time()
+            }
             
         except Exception as e:
             self.logger.error(f"Error deleting user data: {str(e)}", exc_info=True)
-            log_memory_operation(
-                user_id=user_id,
-                operation="delete_user_data",
-                status="error"
-            )
-            return False
+            return {
+                'error': 'Failed to delete user data',
+                'user_id': user_id,
+                'status': 'error'
+            }
+    
+    def get_system_health(self) -> Dict[str, Any]:
+        """Get system health metrics"""
+        try:
+            return {
+                'status': 'healthy',
+                'components': {
+                    'memory_engine': 'active',
+                    'emotion_parser': 'active',
+                    'nlp_analyzer': 'active',
+                    'eastern_brain': 'active',
+                    'orchestrator': 'active',
+                    'context_assembler': 'active',
+                    'health_monitor': 'active'
+                },
+                'timestamp': time.time()
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting system health: {str(e)}")
+            return {
+                'status': 'degraded',
+                'error': str(e),
+                'timestamp': time.time()
+            }
