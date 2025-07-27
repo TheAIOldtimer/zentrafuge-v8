@@ -1,67 +1,81 @@
-# backend/utils/validators.py - Request Validation
-from flask import request
+# backend/utils/validators.py - Complete Request Validation System
 import re
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Dict, Any, List, Optional
+from flask import request
 
 logger = logging.getLogger(__name__)
 
 class ValidationError(Exception):
-    """Custom validation error"""
+    """Custom validation error with field context"""
     def __init__(self, message: str, field: str = None):
-        super().__init__(message)
         self.message = message
         self.field = field
+        super().__init__(message)
 
 def validate_chat_request(request) -> Dict[str, Any]:
-    """Validate chat request data"""
+    """Validate chat request with comprehensive checks"""
     if not request.is_json:
         raise ValidationError("Request must be JSON")
     
     data = request.get_json()
     
     if not data:
-        raise ValidationError("Empty request body")
+        raise ValidationError("Request body is empty")
     
-    # Validate required fields
     if 'message' not in data:
-        raise ValidationError("Message field is required", "message")
+        raise ValidationError("Message is required", "message")
     
     if 'user_id' not in data:
-        raise ValidationError("User ID field is required", "user_id")
+        raise ValidationError("User ID is required", "user_id")
     
-    message = data['message']
-    user_id = data['user_id']
+    message = data['message'].strip()
+    user_id = data['user_id'].strip()
     
-    # Validate message
-    if not isinstance(message, str):
-        raise ValidationError("Message must be a string", "message")
-    
-    message = message.strip()
-    if len(message) == 0:
+    if not message:
         raise ValidationError("Message cannot be empty", "message")
     
-    if len(message) > 10000:  # 10KB limit
-        raise ValidationError("Message too long (max 10,000 characters)", "message")
+    if not user_id:
+        raise ValidationError("User ID cannot be empty", "user_id")
     
-    # Check for suspicious patterns
-    if is_suspicious_message(message):
-        raise ValidationError("Message contains suspicious content", "message")
+    if len(message) > 10000:
+        raise ValidationError("Message too long (max 10000 characters)", "message")
     
-    # Validate user_id
-    if not isinstance(user_id, str):
-        raise ValidationError("User ID must be a string", "user_id")
+    if len(message) < 1:
+        raise ValidationError("Message too short", "message")
     
+    # Validate user ID format
     if not validate_user_id_format(user_id):
         raise ValidationError("Invalid user ID format", "user_id")
     
+    # Check for suspicious content
+    if is_suspicious_message(message):
+        raise ValidationError("Message contains suspicious content", "message")
+    
     # Sanitize message
-    message = sanitize_message(message)
+    sanitized_message = sanitize_message(message)
     
     return {
-        'message': message,
-        'user_id': user_id
+        'message': sanitized_message,
+        'user_id': user_id,
+        'original_length': len(message),
+        'sanitized_length': len(sanitized_message)
     }
+
+def validate_user_id_format(user_id: str) -> bool:
+    """Validate user ID format (Firebase UID compatible)"""
+    if not user_id or not isinstance(user_id, str):
+        return False
+    
+    # Firebase UIDs are typically 28 characters, alphanumeric
+    if len(user_id) < 10 or len(user_id) > 128:
+        return False
+    
+    # Allow alphanumeric characters, hyphens, and underscores
+    if not re.match(r'^[a-zA-Z0-9_-]+$', user_id):
+        return False
+    
+    return True
 
 def validate_mood_request(request) -> Dict[str, Any]:
     """Validate mood recording request"""
@@ -71,69 +85,56 @@ def validate_mood_request(request) -> Dict[str, Any]:
     data = request.get_json()
     
     if not data:
-        raise ValidationError("Empty request body")
+        raise ValidationError("Request body is empty")
     
-    # Validate required fields
-    required_fields = ['user_id', 'mood']
-    for field in required_fields:
-        if field not in data:
-            raise ValidationError(f"{field} field is required", field)
+    if 'user_id' not in data:
+        raise ValidationError("User ID is required", "user_id")
     
-    user_id = data['user_id']
-    mood = data['mood']
-    notes = data.get('notes', '')
+    if 'mood' not in data:
+        raise ValidationError("Mood is required", "mood")
     
-    # Validate user_id
-    if not isinstance(user_id, str) or not validate_user_id_format(user_id):
+    user_id = data['user_id'].strip()
+    mood = data['mood'].strip().lower()
+    notes = data.get('notes', '').strip()
+    
+    if not user_id:
+        raise ValidationError("User ID cannot be empty", "user_id")
+    
+    if not mood:
+        raise ValidationError("Mood cannot be empty", "mood")
+    
+    if not validate_user_id_format(user_id):
         raise ValidationError("Invalid user ID format", "user_id")
     
-    # Validate mood
+    # Validate mood is one of expected values
     valid_moods = [
-        'happy', 'sad', 'anxious', 'calm', 'excited', 'depressed',
-        'angry', 'peaceful', 'frustrated', 'hopeful', 'overwhelmed',
-        'content', 'lonely', 'energetic', 'tired', 'confused',
-        'grateful', 'stressed', 'relaxed', 'worried', 'neutral',
-        'motivated', 'discouraged', 'confident', 'insecure', 'joyful'
+        'happy', 'sad', 'angry', 'anxious', 'calm', 'excited', 
+        'depressed', 'stressed', 'content', 'frustrated', 'peaceful', 
+        'overwhelmed', 'hopeful', 'lonely', 'grateful', 'confused',
+        'energetic', 'tired', 'motivated', 'worried'
     ]
     
-    if not isinstance(mood, str) or mood.lower() not in valid_moods:
+    if mood not in valid_moods:
         raise ValidationError(f"Invalid mood. Must be one of: {', '.join(valid_moods)}", "mood")
     
-    # Validate notes
-    if not isinstance(notes, str):
-        raise ValidationError("Notes must be a string", "notes")
-    
     if len(notes) > 1000:
-        raise ValidationError("Notes too long (max 1,000 characters)", "notes")
+        raise ValidationError("Notes too long (max 1000 characters)", "notes")
+    
+    # Sanitize notes
+    sanitized_notes = sanitize_text(notes)
     
     return {
         'user_id': user_id,
-        'mood': mood.lower(),
-        'notes': sanitize_text(notes.strip())
+        'mood': mood,
+        'notes': sanitized_notes
     }
 
-def validate_user_id_format(user_id: str) -> bool:
-    """Validate user ID format (Firebase UID format)"""
-    if not isinstance(user_id, str):
+def validate_email_format(email: str) -> bool:
+    """Validate email format with comprehensive checks"""
+    if not email or not isinstance(email, str):
         return False
     
-    if len(user_id) < 10 or len(user_id) > 128:
-        return False
-    
-    # Firebase UIDs contain alphanumeric characters and some special chars
-    if not re.match(r'^[a-zA-Z0-9_-]+$', user_id):
-        return False
-    
-    return True
-
-def validate_email(email: str) -> bool:
-    """Validate email format"""
-    if not isinstance(email, str):
-        return False
-    
-    email = email.strip().lower()
-    
-    # Basic email regex
+    # Basic format check
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     
     if not re.match(email_pattern, email):
@@ -199,88 +200,6 @@ def validate_export_request(request) -> Dict[str, Any]:
         'user_id': user_id,
         'format': export_format
     }
-
-def sanitize_message(message: str) -> str:
-    """Sanitize user message"""
-    # Remove null bytes
-    message = message.replace('\x00', '')
-    
-    # Normalize whitespace
-    message = re.sub(r'\s+', ' ', message)
-    
-    # Remove excessive punctuation
-    message = re.sub(r'[!?]{4,}', '!!!', message)
-    message = re.sub(r'[.]{4,}', '...', message)
-    
-    # Remove potentially harmful HTML/script tags
-    message = re.sub(r'<[^>]*>', '', message)
-    
-    # Remove excessive capitalization (more than 3 consecutive caps)
-    def replace_caps(match):
-        text = match.group(0)
-        if len(text) > 3:
-            return text[:3]
-        return text
-    
-    message = re.sub(r'[A-Z]{4,}', replace_caps, message)
-    
-    return message.strip()
-
-def sanitize_text(text: str) -> str:
-    """Basic text sanitization"""
-    # Remove null bytes and control characters
-    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
-    
-    # Normalize whitespace
-    text = re.sub(r'\s+', ' ', text)
-    
-    # Remove HTML tags
-    text = re.sub(r'<[^>]*>', '', text)
-    
-    return text.strip()
-
-def is_suspicious_message(message: str) -> bool:
-    """Check for suspicious message patterns"""
-    # Convert to lowercase for pattern matching
-    lower_message = message.lower()
-    
-    # Suspicious patterns
-    suspicious_patterns = [
-        # Potential injection attempts
-        r'<script[^>]*>',
-        r'javascript:',
-        r'vbscript:',
-        r'onload\s*=',
-        r'onerror\s*=',
-        r'eval\s*\(',
-        
-        # SQL injection patterns
-        r'union\s+select',
-        r'drop\s+table',
-        r'delete\s+from',
-        r'insert\s+into',
-        
-        # Excessive repetition (possible spam)
-        r'(.)\1{50,}',  # Same character repeated 50+ times
-        
-        # Potential phishing
-        r'click\s+here\s+to\s+claim',
-        r'urgent\s+action\s+required',
-        r'verify\s+your\s+account',
-    ]
-    
-    for pattern in suspicious_patterns:
-        if re.search(pattern, lower_message, re.IGNORECASE):
-            logger.warning(f"Suspicious pattern detected: {pattern}")
-            return True
-    
-    # Check for excessive URL patterns
-    url_count = len(re.findall(r'https?://', lower_message))
-    if url_count > 3:
-        logger.warning(f"Excessive URLs detected: {url_count}")
-        return True
-    
-    return False
 
 def validate_file_upload(request) -> Dict[str, Any]:
     """Validate file upload request"""
@@ -394,3 +313,85 @@ def validate_json_request(request, required_fields: List[str] = None) -> Dict[st
                 raise ValidationError(f"{field} field is required", field)
     
     return data
+
+def sanitize_message(message: str) -> str:
+    """Sanitize user message"""
+    # Remove null bytes
+    message = message.replace('\x00', '')
+    
+    # Normalize whitespace
+    message = re.sub(r'\s+', ' ', message)
+    
+    # Remove excessive punctuation
+    message = re.sub(r'[!?]{4,}', '!!!', message)
+    message = re.sub(r'[.]{4,}', '...', message)
+    
+    # Remove potentially harmful HTML/script tags
+    message = re.sub(r'<[^>]*>', '', message)
+    
+    # Remove excessive capitalization (more than 3 consecutive caps)
+    def replace_caps(match):
+        text = match.group(0)
+        if len(text) > 3:
+            return text[:3]
+        return text
+    
+    message = re.sub(r'[A-Z]{4,}', replace_caps, message)
+    
+    return message.strip()
+
+def sanitize_text(text: str) -> str:
+    """Basic text sanitization"""
+    # Remove null bytes and control characters
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+    
+    # Normalize whitespace
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Remove HTML tags
+    text = re.sub(r'<[^>]*>', '', text)
+    
+    return text.strip()
+
+def is_suspicious_message(message: str) -> bool:
+    """Check for suspicious message patterns"""
+    # Convert to lowercase for pattern matching
+    lower_message = message.lower()
+    
+    # Suspicious patterns
+    suspicious_patterns = [
+        # Potential injection attempts
+        r'<script[^>]*>',
+        r'javascript:',
+        r'vbscript:',
+        r'onload\s*=',
+        r'onerror\s*=',
+        r'eval\s*\(',
+        
+        # SQL injection patterns
+        r'union\s+select',
+        r'drop\s+table',
+        r'delete\s+from',
+        r'insert\s+into',
+        
+        # Excessive repetition (possible spam)
+        r'(.)\1{50,}',  # Same character repeated 50+ times
+        
+        # Potential phishing
+        r'click\s+here\s+to\s+claim',
+        r'urgent\s+action\s+required',
+        r'verify\s+your\s+account',
+    ]
+    
+    for pattern in suspicious_patterns:
+        if re.search(pattern, lower_message, re.IGNORECASE):
+            logger.warning(f"Suspicious pattern detected: {pattern}")
+            return True
+    
+    # Check for excessive URL patterns
+    url_count = len(re.findall(r'https?://', lower_message))
+    if url_count > 3:
+        logger.warning(f"Excessive URLs detected: {url_count}")
+        return True
+    
+    return False
