@@ -1,12 +1,12 @@
 // frontend/js/modules/config/config.js - Application Configuration
 export const CONFIG = {
-    // API Configuration - FIXED: Updated to zentrafuge-v8 backend
+    // API Configuration - FIXED TO V8
     API_BASE_URL: 'https://zentrafuge-v8.onrender.com',
     API_TIMEOUT: 30000, // 30 seconds
     API_RETRY_ATTEMPTS: 3,
     API_RETRY_DELAY: 1000, // 1 second
 
-    // Firebase Configuration - FIXED: Updated to zentrafuge-v8 project
+    // Firebase Configuration - FIXED TO V8
     FIREBASE_CONFIG: {
         apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
         authDomain: "zentrafuge-v8.firebaseapp.com",
@@ -29,7 +29,7 @@ export const CONFIG = {
 
     // Chat Configuration
     CHAT: {
-        WELCOME_MESSAGE: "Hello! I'm Cael, your emotional companion. I'm here to listen, reflect, and support you on your journey. How are you feeling today?",
+        WELCOME_MESSAGE: "Hi - I'm Cael. I'm here to listen, whatever's going on. How has your inner weather been lately?",
         ERROR_MESSAGE: "I'm having trouble processing your message right now. Please try again.",
         CONNECTION_ERROR_MESSAGE: "I'm having connection issues. Please check your internet and try again.",
         TYPING_INDICATORS: ['⏳', '💭', '🤔'],
@@ -97,12 +97,9 @@ export const CONFIG = {
     // Validation Rules
     VALIDATION: {
         EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        PASSWORD_MIN_LENGTH: 6,
         MESSAGE_MIN_LENGTH: 1,
         MESSAGE_MAX_LENGTH: 10000,
-        USERNAME_MIN_LENGTH: 3,
-        USERNAME_MAX_LENGTH: 30,
-        DISPLAY_NAME_MAX_LENGTH: 50
+        PASSWORD_MIN_LENGTH: 6
     },
 
     // Rate Limiting (client-side)
@@ -120,80 +117,28 @@ export const CONFIG = {
         CONSOLE_LOGGING: true
     },
 
-    // Error Tracking
-    ERROR_TRACKING: {
-        ENABLED: true,
-        MAX_STACK_TRACE_LENGTH: 1000,
-        IGNORE_PATTERNS: [
-            'ResizeObserver loop limit exceeded',
-            'Non-Error promise rejection captured',
-            'Network request failed'
-        ]
-    },
-
-    // Accessibility
-    ACCESSIBILITY: {
-        HIGH_CONTRAST_MODE: false,
-        REDUCED_MOTION: false,
-        SCREEN_READER_SUPPORT: true,
-        KEYBOARD_NAVIGATION: true,
-        FOCUS_VISIBLE: true
-    },
-
     // Security
     SECURITY: {
-        CSP_ENABLED: true,
-        XSS_PROTECTION: true,
-        IFRAME_PROTECTION: true,
-        SECURE_COOKIES: true,
         SESSION_TIMEOUT: 24 * 60 * 60 * 1000, // 24 hours
         IDLE_TIMEOUT: 30 * 60 * 1000 // 30 minutes
     },
 
-    // Performance
-    PERFORMANCE: {
-        LAZY_LOADING: true,
-        IMAGE_OPTIMIZATION: true,
-        DEBOUNCE_DELAY: 300,
-        THROTTLE_DELAY: 100,
-        VIRTUAL_SCROLLING: false, // Enable for large message lists
-        PRELOAD_ASSETS: true
-    },
-
-    // Monitoring
-    MONITORING: {
-        PERFORMANCE_METRICS: true,
-        ERROR_REPORTING: true,
-        USER_ANALYTICS: false, // Privacy-first approach
-        HEALTH_CHECKS: true,
-        UPTIME_MONITORING: true
-    }
+    // Environment
+    ENVIRONMENT: 'production',
+    VERSION: '8.0.0'
 };
 
-// Environment-specific overrides
-if (CONFIG.DEVELOPMENT.DEBUG_MODE) {
-    CONFIG.UI.ANIMATION_DURATION = 100; // Faster animations in dev
-    CONFIG.CHAT.RETRY_DELAY = 500; // Faster retries in dev
-    CONFIG.API_TIMEOUT = 10000; // Shorter timeout in dev
-    // Override for local development
+// Environment-specific overrides (BEFORE freezing)
+if (CONFIG.DEVELOPMENT.DEBUG_MODE && window.location.hostname === 'localhost' && window.location.port) {
+    // Only override for actual local development
+    console.warn('🔧 Development mode: Using localhost backend');
     CONFIG.API_BASE_URL = 'http://localhost:5000';
+    CONFIG.UI.ANIMATION_DURATION = 100;
+    CONFIG.CHAT.RETRY_DELAY = 500;
+    CONFIG.API_TIMEOUT = 10000;
+} else if (CONFIG.DEVELOPMENT.DEBUG_MODE) {
+    console.log('🔧 Debug mode enabled but using production backend');
 }
 
 // Freeze configuration to prevent accidental modifications
 Object.freeze(CONFIG);
-Object.freeze(CONFIG.FIREBASE_CONFIG);
-Object.freeze(CONFIG.UI);
-Object.freeze(CONFIG.CHAT);
-Object.freeze(CONFIG.STORAGE);
-Object.freeze(CONFIG.THEMES);
-Object.freeze(CONFIG.FEATURES);
-Object.freeze(CONFIG.VALIDATION);
-Object.freeze(CONFIG.RATE_LIMITS);
-Object.freeze(CONFIG.DEVELOPMENT);
-Object.freeze(CONFIG.ERROR_TRACKING);
-Object.freeze(CONFIG.ACCESSIBILITY);
-Object.freeze(CONFIG.SECURITY);
-Object.freeze(CONFIG.PERFORMANCE);
-Object.freeze(CONFIG.MONITORING);
-
-export default CONFIG;
