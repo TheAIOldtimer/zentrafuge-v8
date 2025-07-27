@@ -1,19 +1,20 @@
-// frontend/js/modules/config/config.js - Application Configuration
+// frontend/js/config/config.js - Application Configuration (SECOND CONFIG FILE - MAKE IDENTICAL)
 export const CONFIG = {
-    // API Configuration
-    API_BASE_URL: 'https://zentrafuge-backend.onrender.com',
+    // API Configuration - FIXED: Updated to zentrafuge-v8 backend
+    API_BASE_URL: 'https://zentrafuge-v8.onrender.com',
     API_TIMEOUT: 30000, // 30 seconds
     API_RETRY_ATTEMPTS: 3,
     API_RETRY_DELAY: 1000, // 1 second
 
-    // Firebase Configuration
+    // Firebase Configuration - FIXED: Updated to zentrafuge-v8 project
     FIREBASE_CONFIG: {
-        apiKey: "AIzaSyDGpHZVBOJO7DT0hSQKO1W-dH32pGBt9x8",
-        authDomain: "zentrafuge-v7.firebaseapp.com",
-        projectId: "zentrafuge-v7",
-        storageBucket: "zentrafuge-v7.appspot.com",
-        messagingSenderId: "553147136358",
-        appId: "1:553147136358:web:51b4b5ec82b4b1c7e19e8f"
+        apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
+        authDomain: "zentrafuge-v8.firebaseapp.com",
+        projectId: "zentrafuge-v8",
+        storageBucket: "zentrafuge-v8.appspot.com",
+        messagingSenderId: "1035979155498",
+        appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
+        measurementId: "G-WZNXDGR0BN"
     },
 
     // UI Configuration
@@ -174,6 +175,8 @@ if (CONFIG.DEVELOPMENT.DEBUG_MODE) {
     CONFIG.UI.ANIMATION_DURATION = 100; // Faster animations in dev
     CONFIG.CHAT.RETRY_DELAY = 500; // Faster retries in dev
     CONFIG.API_TIMEOUT = 10000; // Shorter timeout in dev
+    // Override for local development
+    CONFIG.API_BASE_URL = 'http://localhost:5000';
 }
 
 // Freeze configuration to prevent accidental modifications
