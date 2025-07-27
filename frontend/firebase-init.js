@@ -1,15 +1,16 @@
+// frontend/firebase-init.js
 // This assumes you're using <script> tags in HTML to load Firebase v8 SDKs like:
 // <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 // <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 // <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 // <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-// ✅ Firebase configuration for Zentrafuge v8
+// ✅ Firebase configuration for Zentrafuge v8 - FIXED: Consistent with v8 project
 var firebaseConfig = {
   apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
   authDomain: "zentrafuge-v8.firebaseapp.com",
   projectId: "zentrafuge-v8",
-  storageBucket: "zentrafuge-v8.appspot.com", // ✅ FIXED: correct storage bucket domain
+  storageBucket: "zentrafuge-v8.appspot.com",
   messagingSenderId: "1035979155498",
   appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
   measurementId: "G-WZNXDGR0BN"
