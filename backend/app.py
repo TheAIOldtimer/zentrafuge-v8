@@ -1,4 +1,4 @@
-# backend/app.py - Zentrafuge v8 Application with Firebase Initialization
+# backend/app.py - Zentrafuge v8 Application with Firebase Initialization Fix
 from flask import Flask
 from flask_cors import CORS
 import os
@@ -30,33 +30,33 @@ except Exception as e:
     print(f"❌ Firebase initialization failed: {e}")
     print("⚠️  Continuing without Firebase - some features may be limited")
 
-# Now import route modules AFTER Firebase is initialized
+# Import only existing route modules
 try:
     from routes.chat_routes import chat_bp
     chat_routes_available = True
-except ImportError as e:
-    print(f"Warning: chat_routes not found - {e}")
+except ImportError:
+    print("Warning: chat_routes not found")
     chat_routes_available = False
 
 try:
     from routes.debug_routes import debug_bp
     debug_routes_available = True
-except ImportError as e:
-    print(f"Warning: debug_routes not found - {e}")
+except ImportError:
+    print("Warning: debug_routes not found")
     debug_routes_available = False
 
 try:
     from routes.auth_routes import auth_bp
     auth_routes_available = True
-except ImportError as e:
-    print(f"Warning: auth_routes not found - {e}")
+except ImportError:
+    print("Warning: auth_routes not found")
     auth_routes_available = False
 
 try:
     from routes.translation_routes import translation_bp
     translation_routes_available = True
-except ImportError as e:
-    print(f"Warning: translation_routes not found - {e}")
+except ImportError:
+    print("Warning: translation_routes not found")
     translation_routes_available = False
 
 # Import configuration
@@ -78,15 +78,14 @@ except ImportError:
     logging_available = False
 
 def create_app():
-    """Application factory pattern with proper Firebase initialization"""
+    """Application factory pattern"""
     app = Flask(__name__)
     
     # Load configuration
     if config_available:
         app.config.from_object(Config)
     else:
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'zentrafuge-dev-key')
-        app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+        app.config['SECRET_KEY'] = 'zentrafuge-dev-key'
     
     # Setup CORS
     CORS(app, origins=[
@@ -98,8 +97,6 @@ def create_app():
     # Setup logging
     if logging_available:
         setup_logging(app)
-    else:
-        logging.basicConfig(level=logging.INFO)
     
     # Register available blueprints
     if chat_routes_available:
