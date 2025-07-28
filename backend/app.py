@@ -2,7 +2,6 @@
 from flask import Flask
 from flask_cors import CORS
 import os
-import logging
 
 # CRITICAL: Initialize Firebase FIRST before any other imports that use it
 try:
@@ -30,7 +29,7 @@ except Exception as e:
     print(f"❌ Firebase initialization failed: {e}")
     print("⚠️  Continuing without Firebase - some features may be limited")
 
-# Import only existing route modules
+# Import only existing route modules AFTER Firebase initialization
 try:
     from routes.chat_routes import chat_bp
     chat_routes_available = True
@@ -108,33 +107,43 @@ def create_app():
         print("✅ Registered debug routes")
     
     if auth_routes_available:
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
+        app.register_blueprint(auth_bp)
         print("✅ Registered auth routes")
     
     if translation_routes_available:
-        app.register_blueprint(translation_bp, url_prefix='/api/translate')
+        app.register_blueprint(translation_bp)
         print("✅ Registered translation routes")
     
-    # Health check endpoint
-    @app.route('/health')
-    def health_check():
+    # Root endpoint
+    @app.route('/')
+    def root():
         return {
-            'status': 'healthy',
-            'firebase': 'initialized' if firebase_admin._apps else 'not_initialized',
-            'routes': {
-                'chat': chat_routes_available,
-                'debug': debug_routes_available,
-                'auth': auth_routes_available,
-                'translation': translation_routes_available
+            "status": "healthy",
+            "service": "Zentrafuge Backend",
+            "version": "8.0.0",
+            "routes_loaded": {
+                "chat": chat_routes_available,
+                "debug": debug_routes_available,
+                "auth": auth_routes_available,
+                "translation": translation_routes_available
             }
         }
     
+    # Health check endpoint
+    @app.route('/health')
+    def health():
+        return {"status": "healthy", "timestamp": os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')}
+    
+    # Simple test endpoint
+    @app.route('/test')
+    def test():
+        return {"message": "Zentrafuge backend is running!", "test": "success"}
+    
     return app
 
-# Create the app instance
+# Create app instance
 app = create_app()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(host='0.0.0.0', port=port, debug=False)
