@@ -1,35 +1,62 @@
-# backend/app.py - Minimal Application Router
+# backend/app.py - Zentrafuge v8 Application with Firebase Initialization
 from flask import Flask
 from flask_cors import CORS
 import os
+import logging
 
-# Import only existing route modules
+# CRITICAL: Initialize Firebase FIRST before any other imports that use it
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    import json
+    
+    # Load Firebase credentials from environment
+    firebase_json = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+    
+    if firebase_json:
+        cred_dict = json.loads(firebase_json)
+        cred = credentials.Certificate(cred_dict)
+        
+        # Initialize Firebase if not already done
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+            print("✅ Firebase initialized successfully")
+        else:
+            print("✅ Firebase already initialized")
+    else:
+        print("⚠️  Warning: FIREBASE_CREDENTIALS_JSON not found - Firebase features disabled")
+        
+except Exception as e:
+    print(f"❌ Firebase initialization failed: {e}")
+    print("⚠️  Continuing without Firebase - some features may be limited")
+
+# Now import route modules AFTER Firebase is initialized
 try:
     from routes.chat_routes import chat_bp
     chat_routes_available = True
-except ImportError:
-    print("Warning: chat_routes not found")
+except ImportError as e:
+    print(f"Warning: chat_routes not found - {e}")
     chat_routes_available = False
 
 try:
     from routes.debug_routes import debug_bp
     debug_routes_available = True
-except ImportError:
-    print("Warning: debug_routes not found")
+except ImportError as e:
+    print(f"Warning: debug_routes not found - {e}")
     debug_routes_available = False
 
 try:
     from routes.auth_routes import auth_bp
     auth_routes_available = True
-except ImportError:
-    print("Warning: auth_routes not found")
+except ImportError as e:
+    print(f"Warning: auth_routes not found - {e}")
     auth_routes_available = False
 
 try:
     from routes.translation_routes import translation_bp
     translation_routes_available = True
-except ImportError:
-    print("Warning: translation_routes not found")
+except ImportError as e:
+    print(f"Warning: translation_routes not found - {e}")
     translation_routes_available = False
 
 # Import configuration
@@ -51,14 +78,15 @@ except ImportError:
     logging_available = False
 
 def create_app():
-    """Application factory pattern"""
+    """Application factory pattern with proper Firebase initialization"""
     app = Flask(__name__)
     
     # Load configuration
     if config_available:
         app.config.from_object(Config)
     else:
-        app.config['SECRET_KEY'] = 'zentrafuge-dev-key'
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'zentrafuge-dev-key')
+        app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
     # Setup CORS
     CORS(app, origins=[
@@ -70,6 +98,8 @@ def create_app():
     # Setup logging
     if logging_available:
         setup_logging(app)
+    else:
+        logging.basicConfig(level=logging.INFO)
     
     # Register available blueprints
     if chat_routes_available:
@@ -81,43 +111,33 @@ def create_app():
         print("✅ Registered debug routes")
     
     if auth_routes_available:
-        app.register_blueprint(auth_bp)
+        app.register_blueprint(auth_bp, url_prefix='/api/auth')
         print("✅ Registered auth routes")
     
     if translation_routes_available:
-        app.register_blueprint(translation_bp)
+        app.register_blueprint(translation_bp, url_prefix='/api/translate')
         print("✅ Registered translation routes")
-    
-    # Root endpoint
-    @app.route('/')
-    def root():
-        return {
-            "status": "healthy",
-            "service": "Zentrafuge Backend",
-            "version": "8.0.0",
-            "routes_loaded": {
-                "chat": chat_routes_available,
-                "debug": debug_routes_available,
-                "auth": auth_routes_available,
-                "translation": translation_routes_available
-            }
-        }
     
     # Health check endpoint
     @app.route('/health')
-    def health():
-        return {"status": "healthy", "timestamp": os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')}
-    
-    # Simple test endpoint
-    @app.route('/test')
-    def test():
-        return {"message": "Zentrafuge backend is running!", "test": "success"}
+    def health_check():
+        return {
+            'status': 'healthy',
+            'firebase': 'initialized' if firebase_admin._apps else 'not_initialized',
+            'routes': {
+                'chat': chat_routes_available,
+                'debug': debug_routes_available,
+                'auth': auth_routes_available,
+                'translation': translation_routes_available
+            }
+        }
     
     return app
 
-# Create app instance
+# Create the app instance
 app = create_app()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug)
