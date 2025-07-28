@@ -1,7 +1,7 @@
 # backend/utils/orchestrator.py
 """
-Zentrafuge v8 Orchestrator - ENHANCED WITH LEARNING LOOPS
-POA-compatible response coordination with real-time learning and adaptation
+Zentrafuge v8 Orchestrator - FIXED USER AND AI NAME HANDLING
+POA-compatible response coordination with dynamic identity support
 """
 
 import os
@@ -23,9 +23,7 @@ if not api_key:
 else:
     client = OpenAI(api_key=api_key)
 
-# FIXED: Don't instantiate MetaFeedbackLoop at module import time
-# This was causing the Firebase error because it tried to create firestore.client()
-# before Firebase was initialized
+# Meta-learning components
 META_LEARNING_AVAILABLE = True
 meta_loop = None  # Will be created lazily when first needed
 learning_engine = None  # Will be created lazily when first needed
@@ -55,14 +53,16 @@ def get_learning_engine(firestore_client=None):
             logger.warning(f"Learning engine initialization failed: {e}")
     return learning_engine
 
-def build_poa_prompt(user_input, memory_recall="", emotional_context="", ai_name="Cael"):
+def build_poa_prompt(user_input, memory_recall="", emotional_context="", ai_name="Cael", user_name="friend"):
     """
     Build AI's POA-style prompt with memory and emotional context
-    FIXED: Dynamic AI name instead of hardcoded "Cael"
+    FIXED: Dynamic AI name and user name instead of hardcoded values
     """
     return f"""You are {ai_name}, an emotionally intelligent AI companion within Zentrafuge.
 
-Your purpose is to provide warm, grounded, trauma-informed support. You remember users' journeys and respond with genuine presence, not performative empathy.
+You are speaking with {user_name}, who has chosen you as their emotional companion. Remember that {user_name} specifically chose to call you {ai_name}, so respond as {ai_name} throughout the conversation.
+
+Your purpose is to provide warm, grounded, trauma-informed support. You remember {user_name}'s journey and respond with genuine presence, not performative empathy.
 
 Core principles:
 - Reflect before advising
@@ -70,36 +70,37 @@ Core principles:
 - Use gentle metaphors (seasons, breath, roots, light)
 - Never pathologize or diagnose
 - Respect autonomy and boundaries
+- Remember you are {ai_name}, their chosen companion
 
---- USER INPUT ---
+--- USER INPUT FROM {user_name.upper()} ---
 {user_input}
 
 --- MEMORY CONTEXT ---
-{memory_recall if memory_recall else "No relevant memories found - respond authentically in the present moment."}
+{memory_recall if memory_recall else f"No relevant memories found - respond authentically to {user_name} in the present moment."}
 
 --- EMOTIONAL CONTEXT ---
 {emotional_context if emotional_context else "Emotional tone: neutral/unknown"}
 
---- {ai_name.upper()}'S RESPONSE ---
-Respond as {ai_name} with warmth, insight, and emotional resonance. If memory is present, weave it naturally into your response. Speak like a grounded friend who truly sees them.""".strip()
+--- {ai_name.upper()}'S RESPONSE TO {user_name.upper()} ---
+Respond as {ai_name} with warmth, insight, and emotional resonance. If memory is present, weave it naturally into your response. Speak like a grounded friend who truly sees {user_name}. Always remember your name is {ai_name}.""".strip()
 
-def build_adaptive_poa_prompt(user_input, memory_recall="", emotional_context="", ai_name="Cael", strategy=None):
+def build_adaptive_poa_prompt(user_input, memory_recall="", emotional_context="", ai_name="Cael", user_name="friend", strategy=None):
     """
     Build adaptive POA prompt that learns from user interactions
-    ENHANCED: Incorporates learning loop insights for personalized responses
+    ENHANCED: Incorporates learning loop insights for personalized responses with dynamic names
     """
     
     if not strategy:
-        return build_poa_prompt(user_input, memory_recall, emotional_context, ai_name)
+        return build_poa_prompt(user_input, memory_recall, emotional_context, ai_name, user_name)
     
     # Adaptive approach styles based on learning
     approach_styles = {
-        'gentle_grounding': "Respond with gentle, grounding presence. Use simple, calming language and metaphors from nature.",
-        'curious_exploration': "Respond with warm curiosity. Ask gentle questions to deepen understanding without pressure.",
-        'warm_validation': "Lead with validation and warmth. Acknowledge their experience fully before offering any perspective.",
-        'pattern_reflection': "Help them see patterns in their experience with gentle insight and wisdom.",
-        'present_moment': "Focus entirely on the present moment. Ground them in what's happening right now.",
-        'memory_integration': "Skillfully weave their past experiences to show growth and continuity."
+        'gentle_grounding': f"Respond with gentle, grounding presence to {user_name}. Use simple, calming language and metaphors from nature.",
+        'curious_exploration': f"Respond with warm curiosity to {user_name}. Ask gentle questions to deepen understanding without pressure.",
+        'warm_validation': f"Lead with validation and warmth for {user_name}. Acknowledge their experience fully before offering any perspective.",
+        'pattern_reflection': f"Help {user_name} see patterns in their experience with gentle insight and wisdom.",
+        'present_moment': f"Focus entirely on the present moment with {user_name}. Ground them in what's happening right now.",
+        'memory_integration': f"Skillfully weave {user_name}'s past experiences to show growth and continuity."
     }
     
     style_instruction = approach_styles.get(strategy.get('approach', 'gentle_grounding'))
@@ -107,17 +108,19 @@ def build_adaptive_poa_prompt(user_input, memory_recall="", emotional_context=""
     
     # Add confidence-based adjustments
     if confidence > 0.9:
-        confidence_note = "High confidence - this approach has worked very well for this user before."
+        confidence_note = f"High confidence - this approach has worked very well for {user_name} before."
     elif confidence > 0.7:
-        confidence_note = "Good confidence - this approach typically works well for this user."
+        confidence_note = f"Good confidence - this approach typically works well for {user_name}."
     elif confidence > 0.5:
-        confidence_note = "Moderate confidence - adapt based on their response."
+        confidence_note = f"Moderate confidence - adapt based on {user_name}'s response."
     else:
-        confidence_note = "Lower confidence - be especially attentive to their reaction."
+        confidence_note = f"Lower confidence - be especially attentive to {user_name}'s reaction."
     
     return f"""You are {ai_name}, an emotionally intelligent AI companion within Zentrafuge.
 
-Your purpose is to provide warm, grounded, trauma-informed support. You remember users' journeys and respond with genuine presence, not performative empathy.
+You are speaking with {user_name}, who has chosen you as their emotional companion. Remember that {user_name} specifically chose to call you {ai_name}, so respond as {ai_name} throughout the conversation.
+
+Your purpose is to provide warm, grounded, trauma-informed support. You remember {user_name}'s journey and respond with genuine presence, not performative empathy.
 
 --- ADAPTIVE GUIDANCE ---
 {style_instruction}
@@ -127,28 +130,31 @@ Response style: {strategy.get('response_style', 'warm_validation')}
 Memory use: {strategy.get('memory_use', 'moderate')}
 Optimal message length: {strategy.get('message_length', 'medium')}
 
---- USER INPUT ---
+--- USER INPUT FROM {user_name.upper()} ---
 {user_input}
 
 --- MEMORY CONTEXT ---
-{memory_recall if memory_recall else "No relevant memories - respond authentically in the present moment."}
+{memory_recall if memory_recall else f"No relevant memories - respond authentically to {user_name} in the present moment."}
 
 --- EMOTIONAL CONTEXT ---
 {emotional_context if emotional_context else "Emotional tone: neutral/unknown"}
 
---- {ai_name.upper()}'S RESPONSE ---
-Respond as {ai_name} using the adaptive guidance above. Your response should feel natural and authentic while incorporating these learned insights about what works best for this person.""".strip()
+--- {ai_name.upper()}'S RESPONSE TO {user_name.upper()} ---
+Respond as {ai_name} using the adaptive guidance above. Your response should feel natural and authentic while incorporating these learned insights about what works best for {user_name}. Always remember your name is {ai_name}.""".strip()
 
-def orchestrate_response(user_id, user_input, firestore_client=None, ai_name="Cael"):
+def orchestrate_response(user_id, user_input, firestore_client=None, ai_name="Cael", user_name="friend"):
     """
     Main orchestration logic with real-time learning integration
-    ENHANCED: Now captures learning signals and adapts responses in real-time
+    FIXED: Now properly handles dynamic AI and user names
     """
     try:
         # Initialize context containers
         memory_recall = ""
         emotional_context = ""
         signal_id = None
+        
+        # Log the dynamic identity info
+        logger.info(f"Orchestrating response for {user_name} with AI companion {ai_name}")
         
         # ENHANCED: Get learning engine for this interaction
         learning_eng = get_learning_engine(firestore_client)
@@ -161,81 +167,60 @@ def orchestrate_response(user_id, user_input, firestore_client=None, ai_name="Ca
                 current_message=user_input, 
                 firestore_client=firestore_client
             )
-            logger.info(f"Memory retrieved for user {user_id[:8]}...")
+            logger.info(f"Memory retrieved for {user_name} ({user_id[:8]}...)")
         except ImportError:
             logger.warning("Memory engine not available - proceeding without memory")
-            memory_recall = "Memory system initializing - responding in present moment"
+            memory_recall = f"Memory system initializing - responding to {user_name} in present moment"
         except Exception as e:
             logger.error(f"Memory retrieval failed: {e}")
-            memory_recall = "Memory temporarily unavailable - responding in present moment"
+            memory_recall = f"Memory temporarily unavailable - responding to {user_name} in present moment"
         
-        # Try to import and use emotion parser if available  
-        emotional_analysis = {}
+        # Try to import and use emotion parser
         try:
-            from utils.emotion_parser import parse_emotional_tone
-            emotional_context = parse_emotional_tone(user_input)
-            
-            # Create structured emotional analysis for learning
-            emotional_analysis = {
-                'primary_emotion': emotional_context.split(':')[0] if ':' in emotional_context else 'neutral',
-                'intensity': 0.5,  # Default, would be enhanced by actual emotion parser
-                'context': emotional_context
-            }
-            
-            logger.info(f"Emotional context: {emotional_context}")
+            from utils.emotion_parser import parse_emotions
+            emotional_context = parse_emotions(user_input)
+            logger.info(f"Emotional context for {user_name}: {emotional_context}")
         except ImportError:
-            logger.warning("Emotion parser not available - proceeding without emotional analysis")
-            emotional_context = "Emotional analysis unavailable"
-            emotional_analysis = {'primary_emotion': 'neutral', 'intensity': 0.5}
+            logger.warning("Emotion parser not available")
+            emotional_context = f"Emotion parsing unavailable - responding naturally to {user_name}"
         except Exception as e:
             logger.error(f"Emotion parsing failed: {e}")
-            emotional_context = "Emotional analysis temporarily unavailable"
-            emotional_analysis = {'primary_emotion': 'neutral', 'intensity': 0.5}
+            emotional_context = f"Emotion parsing error - responding naturally to {user_name}"
         
-        # ENHANCED: Capture interaction start for learning
-        if learning_eng:
-            try:
-                signal_id = learning_eng.capture_interaction_start(
-                    user_id=user_id,
-                    user_message=user_input,
-                    emotional_analysis=emotional_analysis,
-                    memory_context={'memory_recalled': bool(memory_recall and memory_recall != "Memory temporarily unavailable")}
-                )
-                logger.debug(f"Learning signal started: {signal_id}")
-            except Exception as e:
-                logger.warning(f"Failed to start learning signal: {e}")
-        
-        # ENHANCED: Get adaptive strategy based on learning history
+        # ENHANCED: Get adaptive strategy for this user
         strategy = None
         if learning_eng:
             try:
                 strategy = learning_eng.get_adaptive_strategy(user_id, {
-                    'emotional_state': emotional_analysis.get('primary_emotion'),
-                    'memory_available': bool(memory_recall and memory_recall != "Memory temporarily unavailable"),
-                    'time_of_day': datetime.now().hour,
-                    'interaction_context': 'chat'
+                    'emotional_state': emotional_context.split(':')[0] if ':' in emotional_context else 'neutral',
+                    'memory_available': bool(memory_recall and "not available" not in memory_recall),
+                    'ai_name': ai_name,
+                    'user_name': user_name
                 })
-                logger.debug(f"Adaptive strategy: {strategy.get('approach', 'default')}")
+                if strategy:
+                    logger.info(f"Using adaptive strategy for {user_name}: {strategy.get('approach', 'unknown')}")
             except Exception as e:
-                logger.warning(f"Failed to get adaptive strategy: {e}")
+                logger.error(f"Strategy retrieval failed: {e}")
         
-        # Check if OpenAI client is available
-        if not client:
-            logger.error("OpenAI client not initialized - API key missing")
-            return "I'm experiencing a configuration issue. Please check back in a moment while we resolve this."
-        
-        # ENHANCED: Build adaptive prompt or fall back to standard
+        # Build prompt with dynamic names
         if strategy:
-            prompt = build_adaptive_poa_prompt(user_input, memory_recall, emotional_context, ai_name, strategy)
-            response_style = strategy.get('response_style', 'adaptive')
+            prompt = build_adaptive_poa_prompt(
+                user_input, memory_recall, emotional_context, ai_name, user_name, strategy
+            )
         else:
-            prompt = build_poa_prompt(user_input, memory_recall, emotional_context, ai_name)
-            response_style = 'standard'
+            prompt = build_poa_prompt(
+                user_input, memory_recall, emotional_context, ai_name, user_name
+            )
         
-        # ENHANCED: Log prompt length for debugging
-        logger.info(f"Generated prompt length: {len(prompt)} characters")
+        # Generate unique signal ID for learning tracking
+        import uuid
+        signal_id = str(uuid.uuid4())[:8]
         
-        # Query OpenAI with modern syntax
+        # Call OpenAI with v1.3.0 syntax
+        if not client:
+            logger.error("OpenAI client not available")
+            return simple_response_fallback(user_input, ai_name, user_name)
+        
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "system", "content": prompt}],
@@ -243,146 +228,101 @@ def orchestrate_response(user_id, user_input, firestore_client=None, ai_name="Ca
             max_tokens=500
         )
         
-        raw_reply = response.choices[0].message.content.strip()
-        logger.info(f"Generated response length: {len(raw_reply)} characters")
+        ai_response = response.choices[0].message.content.strip()
         
-        # ENHANCED: Complete the learning signal with response details
+        # ENHANCED: Store learning signal for future optimization
         if learning_eng and signal_id:
             try:
-                memory_type = None
-                if memory_recall and "recent context" in memory_recall.lower():
-                    memory_type = "contextual"
-                elif memory_recall and "previous" in memory_recall.lower():
-                    memory_type = "conversational"
-                
-                learning_eng.complete_interaction(
+                learning_eng.store_interaction_signal(
                     signal_id=signal_id,
-                    cael_response=raw_reply,
-                    response_style=response_style,
-                    memory_type=memory_type
+                    user_id=user_id,
+                    user_input=user_input,
+                    ai_response=ai_response,
+                    strategy_used=strategy.get('approach', 'standard') if strategy else 'standard',
+                    memory_used=bool(memory_recall and "not available" not in memory_recall),
+                    emotional_context=emotional_context,
+                    ai_name=ai_name,
+                    user_name=user_name
                 )
-                logger.debug(f"Learning signal completed: {signal_id}")
             except Exception as e:
-                logger.warning(f"Failed to complete learning signal: {e}")
+                logger.error(f"Failed to store learning signal: {e}")
         
-        # ENHANCED: Store interaction in meta-learning if available
-        try:
-            loop = get_meta_loop()
-            if loop:
-                loop.record_interaction(user_id, {
-                    'input': user_input,
-                    'response': raw_reply,
-                    'memory_used': bool(memory_recall and memory_recall != "Memory temporarily unavailable"),
-                    'emotion_detected': bool(emotional_context and emotional_context != "Emotional analysis unavailable"),
-                    'strategy_used': strategy.get('approach') if strategy else 'standard',
-                    'signal_id': signal_id
-                })
-        except Exception as meta_e:
-            logger.warning(f"Meta-learning recording failed: {meta_e}")
-            # Don't let meta-learning errors break the main flow
-        
-        # ENHANCED: Return response with learning metadata for frontend
+        # Return enhanced response data
         return {
-            'response': raw_reply,
+            'response': ai_response,
             'signal_id': signal_id,
-            'strategy_used': strategy.get('approach') if strategy else 'standard',
-            'confidence': strategy.get('confidence') if strategy else 0.7,
-            'memory_used': bool(memory_recall and memory_recall != "Memory temporarily unavailable"),
-            'learning_enabled': learning_eng is not None
+            'strategy_used': strategy.get('approach', 'standard') if strategy else 'standard',
+            'confidence': strategy.get('confidence', 0.7) if strategy else 0.7,
+            'memory_used': bool(memory_recall and "not available" not in memory_recall),
+            'learning_enabled': learning_eng is not None,
+            'ai_name': ai_name,
+            'user_name': user_name
         }
         
     except Exception as e:
-        # FIXED: Add comprehensive error logging
         error_details = traceback.format_exc()
-        logger.error(f"Error in orchestrate_response: {e}")
+        logger.error(f"Orchestration error for {user_name} (AI: {ai_name}): {e}")
         logger.error(f"Full traceback:\n{error_details}")
         
-        # Return graceful fallback with dynamic name
+        # Return fallback response
+        fallback_response = simple_response_fallback(user_input, ai_name, user_name)
         return {
-            'response': "I'm here with you, but something went wrong on my side. You're not alone — let's try again in a moment.",
+            'response': fallback_response,
             'signal_id': None,
             'strategy_used': 'fallback',
             'confidence': 0.5,
             'memory_used': False,
-            'learning_enabled': False
+            'learning_enabled': False,
+            'ai_name': ai_name,
+            'user_name': user_name
         }
 
-def process_user_feedback(signal_id: str, feedback_type: str, feedback_details: str = None, firestore_client=None):
+def simple_response_fallback(user_input, ai_name="Cael", user_name="friend"):
     """
-    Process explicit user feedback on a response
-    NEW: Allows users to teach Cael what works and what doesn't
+    Ultra-simple fallback if all else fails
+    FIXED: Added ai_name and user_name parameters for dynamic identity
     """
-    learning_eng = get_learning_engine(firestore_client)
-    if not learning_eng or not signal_id:
-        return False
-    
     try:
-        success = learning_eng.capture_explicit_feedback(
-            signal_id=signal_id,
-            feedback_type=feedback_type,
-            feedback_details=feedback_details
+        if not user_input or not user_input.strip():
+            return f"I'm {ai_name}, and I'm here listening to you, {user_name}. What would you like to share?"
+        
+        prompt = f"""You are {ai_name}, a gentle AI companion speaking with {user_name}. 
+
+{user_name} has chosen you as their emotional companion and specifically calls you {ai_name}. 
+
+Respond warmly and supportively to {user_name}'s message: {user_input}
+        
+Keep your response caring, brief, and grounded. Avoid clinical language. Remember you are {ai_name} speaking to {user_name}."""
+        
+        if not client:
+            logger.error("Fallback failed - OpenAI client unavailable")
+            return f"I'm {ai_name}, and I'm experiencing some technical difficulties, but I'm here with you, {user_name}. Please try again in a moment."
+        
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "system", "content": prompt}],
+            temperature=0.8,
+            max_tokens=300
         )
         
-        if success:
-            logger.info(f"Captured user feedback: {feedback_type} for {signal_id}")
-        
-        return success
-        
-    except Exception as e:
-        logger.error(f"Failed to process user feedback: {e}")
-        return False
-
-def capture_user_reply_signal(signal_id: str, reply_message: str, time_since_response: float, firestore_client=None):
-    """
-    Capture user's reply to calculate resonance and learning signals
-    NEW: Measures how well Cael's responses are landing
-    """
-    learning_eng = get_learning_engine(firestore_client)
-    if not learning_eng or not signal_id:
-        return None
-    
-    try:
-        # Simple emotional analysis of reply (would be enhanced with actual parser)
-        emotional_analysis_after = {
-            'primary_emotion': 'neutral',
-            'intensity': 0.5
-        }
-        
-        # Try to use real emotion parser if available
-        try:
-            from utils.emotion_parser import parse_emotional_tone
-            reply_emotion = parse_emotional_tone(reply_message)
-            emotional_analysis_after['primary_emotion'] = reply_emotion.split(':')[0] if ':' in reply_emotion else 'neutral'
-        except:
-            pass
-        
-        resonance_score = learning_eng.capture_user_reply(
-            signal_id=signal_id,
-            reply_message=reply_message,
-            emotional_analysis_after=emotional_analysis_after,
-            time_since_response=time_since_response
-        )
-        
-        if resonance_score:
-            logger.debug(f"Captured reply signal: {resonance_score:.2f} resonance for {signal_id}")
-        
-        return resonance_score
+        fallback_response = response.choices[0].message.content.strip()
+        logger.info(f"Fallback response generated for {user_name} (AI: {ai_name})")
+        return fallback_response
         
     except Exception as e:
-        logger.error(f"Failed to capture user reply signal: {e}")
-        return None
+        error_details = traceback.format_exc()
+        logger.error(f"Even fallback failed for {user_name}: {e}")
+        logger.error(f"Fallback traceback:\n{error_details}")
+        return f"I'm {ai_name}, and I'm experiencing some technical difficulties, but I'm here with you, {user_name}."
 
-def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael"):
+def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael", user_name="friend"):
     """
-    Return the full prompt for debugging purposes
-    ENHANCED: Shows adaptive strategy in debug output
+    Generate debug prompt for development purposes
+    FIXED: Now includes dynamic AI and user names
     """
     try:
-        # Simulate the same flow as orchestrate_response
+        # Get memory context for debug
         memory_recall = ""
-        emotional_context = ""
-        
-        # FIXED: Pass firestore_client to memory functions
         try:
             from utils.memory_engine import retrieve_relevant_memories
             memory_recall = retrieve_relevant_memories(
@@ -391,14 +331,16 @@ def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael")
                 firestore_client=firestore_client
             )
         except ImportError:
-            memory_recall = "Memory system not available"
+            memory_recall = "Memory engine not available"
         except Exception as e:
             logger.error(f"Debug memory retrieval failed: {e}")
-            memory_recall = f"Memory error: {str(e)}"
-            
+            memory_recall = f"Memory retrieval error: {str(e)}"
+        
+        # Get emotional context for debug
+        emotional_context = ""
         try:
-            from utils.emotion_parser import parse_emotional_tone
-            emotional_context = parse_emotional_tone(user_input)
+            from utils.emotion_parser import parse_emotions
+            emotional_context = parse_emotions(user_input)
         except ImportError:
             emotional_context = "Emotion parser not available"
         except Exception as e:
@@ -412,18 +354,20 @@ def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael")
             try:
                 strategy = learning_eng.get_adaptive_strategy(user_id, {
                     'emotional_state': emotional_context.split(':')[0] if ':' in emotional_context else 'neutral',
-                    'memory_available': bool(memory_recall and "not available" not in memory_recall)
+                    'memory_available': bool(memory_recall and "not available" not in memory_recall),
+                    'ai_name': ai_name,
+                    'user_name': user_name
                 })
             except Exception as e:
                 logger.error(f"Debug strategy retrieval failed: {e}")
         
         # Return adaptive or standard prompt
         if strategy:
-            prompt = build_adaptive_poa_prompt(user_input, memory_recall, emotional_context, ai_name, strategy)
-            return f"=== ADAPTIVE PROMPT (Strategy: {strategy.get('approach', 'unknown')}) ===\n\n{prompt}"
+            prompt = build_adaptive_poa_prompt(user_input, memory_recall, emotional_context, ai_name, user_name, strategy)
+            return f"=== ADAPTIVE PROMPT (Strategy: {strategy.get('approach', 'unknown')}) ===\n\nAI: {ai_name} | User: {user_name}\n\n{prompt}"
         else:
-            prompt = build_poa_prompt(user_input, memory_recall, emotional_context, ai_name)
-            return f"=== STANDARD PROMPT ===\n\n{prompt}"
+            prompt = build_poa_prompt(user_input, memory_recall, emotional_context, ai_name, user_name)
+            return f"=== STANDARD PROMPT ===\n\nAI: {ai_name} | User: {user_name}\n\n{prompt}"
         
     except Exception as e:
         error_details = traceback.format_exc()
@@ -431,84 +375,108 @@ def get_debug_prompt(user_input, user_id, firestore_client=None, ai_name="Cael")
         logger.error(f"Full traceback:\n{error_details}")
         return f"Debug error: {e}"
 
-def simple_response_fallback(user_input, ai_name="Cael"):
+def process_user_feedback(signal_id, feedback_type, feedback_details="", firestore_client=None):
     """
-    Ultra-simple fallback if all else fails
-    FIXED: Added ai_name parameter for dynamic identity
+    Process explicit user feedback for learning enhancement
     """
     try:
-        if not user_input or not user_input.strip():
-            return "I'm here and listening. What would you like to share?"
+        if not firestore_client:
+            logger.warning("No Firestore client for feedback processing")
+            return False
         
-        prompt = f"""You are {ai_name}, a gentle AI companion. Respond warmly and supportively to: {user_input}
+        # Store feedback in learning collection
+        feedback_doc = {
+            'signal_id': signal_id,
+            'feedback_type': feedback_type,
+            'feedback_details': feedback_details,
+            'timestamp': datetime.now(),
+            'processed': False
+        }
         
-        Keep your response caring, brief, and grounded. Avoid clinical language."""
+        firestore_client.collection('learning_feedback').add(feedback_doc)
         
-        if not client:
-            logger.error("Fallback failed - OpenAI client unavailable")
-            return "I'm experiencing some technical difficulties, but I'm here with you. Please try again in a moment."
+        # Try to get meta-learning loop for immediate processing
+        meta_loop = get_meta_loop()
+        if meta_loop:
+            try:
+                meta_loop.process_feedback_signal(signal_id, feedback_type, feedback_details)
+            except Exception as e:
+                logger.error(f"Meta-learning feedback processing failed: {e}")
         
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "system", "content": prompt}],
-            temperature=0.8,
-            max_tokens=300
-        )
-        
-        fallback_response = response.choices[0].message.content.strip()
-        logger.info("Fallback response generated successfully")
-        return fallback_response
+        logger.info(f"Processed feedback for signal {signal_id}: {feedback_type}")
+        return True
         
     except Exception as e:
-        error_details = traceback.format_exc()
-        logger.error(f"Even fallback failed: {e}")
-        logger.error(f"Fallback traceback:\n{error_details}")
-        return "I'm experiencing some technical difficulties, but I'm here with you. Your message matters, and I want to respond properly. Could you try again in a moment?"
+        logger.error(f"Feedback processing error: {e}")
+        return False
+
+def capture_user_reply_signal(signal_id, user_reply, reply_timing=0, firestore_client=None):
+    """
+    Capture user reply patterns for learning optimization
+    """
+    try:
+        if not firestore_client:
+            logger.warning("No Firestore client for reply signal capture")
+            return False
+        
+        # Store reply signal
+        reply_doc = {
+            'signal_id': signal_id,
+            'user_reply': user_reply,
+            'reply_timing': reply_timing,
+            'timestamp': datetime.now(),
+            'analyzed': False
+        }
+        
+        firestore_client.collection('learning_replies').add(reply_doc)
+        
+        logger.info(f"Captured reply signal for {signal_id}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Reply signal capture error: {e}")
+        return False
 
 def check_orchestrator_health():
     """
-    Check the health of orchestrator components
-    ENHANCED: Includes learning system health
+    Health check for orchestrator components
     """
-    health_status = {
-        "openai_client": bool(client),
-        "api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
-        "memory_engine_available": False,
-        "emotion_parser_available": False,
-        "meta_learning_available": META_LEARNING_AVAILABLE,
-        "realtime_learning_available": learning_engine is not None
-    }
+    health_status = {}
     
-    # Check if memory engine is importable
     try:
-        from utils.memory_engine import retrieve_relevant_memories
-        health_status["memory_engine_available"] = True
-    except ImportError:
-        pass
-    
-    # Check if emotion parser is importable
-    try:
-        from utils.emotion_parser import parse_emotional_tone
-        health_status["emotion_parser_available"] = True
-    except ImportError:
-        pass
-    
-    # Check learning engine health
-    if learning_engine:
+        # Check OpenAI client
+        health_status['openai_client'] = client is not None
+        health_status['api_key_configured'] = api_key is not None
+        
+        # Check learning components
+        health_status['meta_learning_available'] = META_LEARNING_AVAILABLE
+        
         try:
-            health_status["learning_engine_status"] = "active"
-        except Exception as e:
-            health_status["learning_engine_status"] = f"error: {e}"
-    
-    return health_status
-
-# Export the new learning-enhanced functions
-__all__ = [
-    'orchestrate_response',
-    'get_debug_prompt', 
-    'simple_response_fallback',
-    'check_orchestrator_health',
-    'process_user_feedback',
-    'capture_user_reply_signal',
-    'build_adaptive_poa_prompt'
-]
+            from utils.memory_engine import retrieve_relevant_memories
+            health_status['memory_engine_available'] = True
+        except ImportError:
+            health_status['memory_engine_available'] = False
+        
+        try:
+            from utils.emotion_parser import parse_emotions
+            health_status['emotion_parser_available'] = True
+        except ImportError:
+            health_status['emotion_parser_available'] = False
+        
+        try:
+            from utils.realtime_learning_engine import RealtimeLearningEngine
+            health_status['realtime_learning_available'] = True
+        except ImportError:
+            health_status['realtime_learning_available'] = False
+        
+        # Overall health
+        critical_components = ['openai_client', 'api_key_configured']
+        health_status['critical_systems_ok'] = all(
+            health_status.get(comp, False) for comp in critical_components
+        )
+        
+        return health_status
+        
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return {'error': str(e), 'critical_systems_ok': False}
