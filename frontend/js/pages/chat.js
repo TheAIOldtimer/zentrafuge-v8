@@ -49,6 +49,49 @@ class ZentrafugeChat {
             
             // Load user preferences and AI name from Firestore
             const db = firebase.firestore();
+            const userDoc = await db.collection("users").document(user.uid).get();
+            
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                
+                // Get user's display name (your structure uses 'name')
+                this.userName = userData.name || user.displayName || user.email.split('@')[0] || 'friend';
+                
+                // Get AI name (your structure uses 'ai_name' directly)
+                this.aiName = userData.ai_name || 'Cael';
+                
+                // Map your Firestore structure to preferences format
+                this.userPreferences = {
+                    ai_name: this.aiName,
+                    communication_style: userData.communication_style || 'direct_feedback',
+                    emotional_pacing: userData.emotional_pacing || 'gentle',
+                    effective_support: userData.effective_support || [],
+                    sources_of_meaning: userData.sources_of_meaning || [],
+                    isVeteran: userData.isVeteran || false,
+                    language: userData.language || 'en'
+                };
+                
+                console.log(`✅ Loaded user data - User: ${this.userName}, AI: ${this.aiName}`);
+                console.log('📄 User preferences:', this.userPreferences);
+                
+                // Update welcome message if already shown
+                this.updateWelcomeMessage();
+            } else {
+                console.log('📄 No user document found, using defaults');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error loading user data:', error);
+        }
+    }if (!user) {
+                console.warn('⚠️ No authenticated user found');
+                return;
+            }
+            
+            this.currentUser = user;
+            
+            // Load user preferences and AI name from Firestore
+            const db = firebase.firestore();
             const userDoc = await db.collection("users").doc(user.uid).get();
             
             if (userDoc.exists) {
