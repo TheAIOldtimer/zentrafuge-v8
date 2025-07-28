@@ -39,10 +39,20 @@
     <div class="preferences-container">
       <div class="preferences-header">
         <h2>🎯 AI Communication Preferences</h2>
-        <p>Customize how Cael interacts with you. These settings help create a more personalized and comfortable experience.</p>
+        <p>Customize how your companion interacts with you. These settings help create a more personalized and comfortable experience.</p>
       </div>
 
       <div class="preferences-grid">
+        <!-- AI Companion Name -->
+        <div class="preference-group">
+          <label for="ai-name">
+            <span class="preference-icon">🤖</span>
+            <strong>Companion Name</strong>
+          </label>
+          <input type="text" id="ai-name" class="preference-input" value="Cael" maxlength="50" />
+          <small class="preference-description">What would you like to call your AI companion?</small>
+        </div>
+
         <!-- Language Style -->
         <div class="preference-group">
           <label for="language-style">
@@ -55,7 +65,7 @@
             <option value="formal">Formal & Professional</option>
             <option value="casual">Casual & Friendly</option>
           </select>
-          <small class="preference-description">How would you like Cael to communicate with you?</small>
+          <small class="preference-description">How would you like your companion to communicate with you?</small>
         </div>
 
         <!-- Response Length -->
@@ -83,7 +93,7 @@
             <option value="always">Always acknowledge my service</option>
             <option value="never">Keep conversations general</option>
           </select>
-          <small class="preference-description">How should Cael handle military context?</small>
+          <small class="preference-description">How should your companion handle military context?</small>
         </div>
 
         <!-- Emotional Pacing -->
@@ -109,253 +119,303 @@
           <select id="memory-usage" class="preference-select">
             <option value="contextual">Reference past conversations naturally</option>
             <option value="minimal">Keep conversations fresh</option>
-            <option value="detailed">Remember everything we discuss</option>
+            <option value="detailed">Remember everything important</option>
           </select>
-          <small class="preference-description">How should Cael use conversation history?</small>
+          <small class="preference-description">How should your companion use conversation history?</small>
         </div>
 
-        <!-- Session Preferences -->
+        <!-- Session Reminders -->
         <div class="preference-group">
           <label for="session-reminders">
-            <span class="preference-icon">⏰</span>
-            <strong>Session Reminders</strong>
+            <span class="preference-icon">🔔</span>
+            <strong>Check-in Reminders</strong>
           </label>
           <select id="session-reminders" class="preference-select">
-            <option value="gentle">Gentle check-ins after long chats</option>
-            <option value="none">No time reminders</option>
-            <option value="regular">Regular pause suggestions</option>
+            <option value="gentle">Gentle occasional check-ins</option>
+            <option value="regular">Regular wellness reminders</option>
+            <option value="minimal">Only when I reach out</option>
           </select>
-          <small class="preference-description">Should Cael remind you to take breaks?</small>
+          <small class="preference-description">How often should your companion check in with you?</small>
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="preferences-actions">
-        <button id="save-preferences" class="save-btn">
-          Save Preferences
+        <button onclick="saveUserPreferences()" class="btn btn-primary">
+          💾 Save Preferences
         </button>
-        <button id="reset-preferences" class="reset-btn">
-          Reset to Defaults
+        <button onclick="testCurrentPreferences()" class="btn btn-secondary">
+          🧪 Test Settings
         </button>
-        <button id="test-preferences" class="test-btn">
-          Test Current Settings
+        <button onclick="resetUserPreferences()" class="btn btn-outline">
+          🔄 Reset to Defaults
         </button>
       </div>
 
-      <!-- Status Message -->
-      <div id="preferences-status" class="preferences-status" style="display: none;">
-        <span id="status-message"></span>
-      </div>
+      <div id="preferences-status" class="status-message"></div>
     </div>
   </div>
 
-  <!-- Firebase v8 scripts and required scripts -->
-  <!-- CORRECT script loading order -->
-<!-- 1. Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  <!-- Loading and error states -->
+  <div id="error-state" style="display: none;">
+    <div class="error-container">
+      <h2>⚠️ Access Required</h2>
+      <p>Please log in to customize your preferences.</p>
+      <button onclick="window.location.href='index.html'" class="btn btn-primary">
+        Go to Login
+      </button>
+    </div>
+  </div>
 
-<!-- 2. Firebase Configuration -->
-<script src="firebases-init.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 
-<!-- 3. Debug script (TEMPORARY) -->
-<script>
-console.log('🔍 DEBUG: Starting authentication debug...');
+  <!-- App Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/preferences.js"></script>
 
-if (typeof firebase === 'undefined') {
-    console.error('❌ Firebase not loaded');
-} else {
-    console.log('✅ Firebase loaded');
-}
+  <script>
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        console.log('🔧 Preferences page loading...');
+        
+        // Initialize Firebase
+        const firebaseConfig = window.firebaseConfig || DEFAULT_FIREBASE_CONFIG;
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Check authentication
+        firebase.auth().onAuthStateChanged(async function(user) {
+          const authLoading = document.getElementById('auth-loading');
+          const mainHeader = document.getElementById('main-header');
+          const preferences = document.getElementById('preferences');
+          const errorState = document.getElementById('error-state');
+          
+          if (user && user.emailVerified) {
+            console.log('✅ User authenticated:', user.email);
+            
+            // Update user info
+            const userInfo = document.getElementById('user-info');
+            userInfo.textContent = `Welcome, ${user.displayName || user.email}`;
+            
+            // Load user preferences
+            await loadUserPreferences();
+            loadPreferencesIntoForm();
+            
+            // Show main interface
+            authLoading.style.display = 'none';
+            mainHeader.style.display = 'flex';
+            preferences.style.display = 'block';
+            
+          } else if (user && !user.emailVerified) {
+            console.log('⚠️ User not verified');
+            authLoading.style.display = 'none';
+            errorState.style.display = 'block';
+            errorState.querySelector('p').textContent = 'Please verify your email before accessing preferences.';
+            
+          } else {
+            console.log('❌ User not authenticated');
+            authLoading.style.display = 'none';
+            errorState.style.display = 'block';
+          }
+        });
+        
+      } catch (error) {
+        console.error('❌ Preferences page initialization error:', error);
+        document.getElementById('auth-loading').style.display = 'none';
+        document.getElementById('error-state').style.display = 'block';
+      }
+    });
 
-// Track auth listener registrations
-let listenerCount = 0;
-const originalOnAuthStateChanged = firebase.auth().onAuthStateChanged;
-firebase.auth().onAuthStateChanged = function(...args) {
-    listenerCount++;
-    console.warn(`🚨 Auth listener #${listenerCount} being registered!`);
-    if (listenerCount > 1) {
-        console.error('❌ MULTIPLE AUTH LISTENERS DETECTED - THIS CAUSES THE LOOP!');
-        console.trace('Multiple listener trace:');
+    // Handle logout
+    async function handleLogout() {
+      try {
+        await firebase.auth().signOut();
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('❌ Logout error:', error);
+      }
     }
-    return originalOnAuthStateChanged.apply(this, args);
-};
-</script>
 
-<!-- 4. Military knowledge scripts -->
-<script src="utils/military_knowledge/uk_military_data.js"></script>
-<script src="utils/military_knowledge/us_military_data.js"></script>
-<script src="utils/military_knowledge/ca_military_data.js"></script>
-<script src="utils/military_knowledge/au_military_data.js"></script>
-<script src="utils/military_knowledge/nz_military_data.js"></script>
+    // Show charts modal (placeholder)
+    function showChartsModal() {
+      alert('📊 Charts feature coming soon!');
+    }
+  </script>
 
-<!-- 5. Your modular scripts -->
-<script type="module" src="js/auth.js"></script>
-<script type="module" src="js/main.js"></script>
-<script type="module" src="js/preferences.js"></script>
+  <style>
+    .preference-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s ease;
+      background: #fff;
+    }
+
+    .preference-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .preference-input:invalid {
+      border-color: #dc3545;
+    }
+
+    .preferences-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .preference-group {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+    }
+
+    .preference-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #495057;
+    }
+
+    .preference-icon {
+      font-size: 1.2rem;
+    }
+
+    .preference-select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .preference-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .preference-description {
+      display: block;
+      margin-top: 0.5rem;
+      color: #6c757d;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .preferences-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0056b3;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #545b62;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary-color);
+      border: 2px solid var(--primary-color);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .status-message {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .status-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .status-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .status-message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+      display: block;
+    }
+
+    .error-container {
+      text-align: center;
+      padding: 3rem;
+      max-width: 500px;
+      margin: 2rem auto;
+    }
+
+    .error-container h2 {
+      color: #dc3545;
+      margin-bottom: 1rem;
+    }
+
+    .error-container p {
+      color: #6c757d;
+      margin-bottom: 2rem;
+    }
+  </style>
 </body>
 </html>
-
-<style>
-.preferences-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.preferences-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.preferences-header h2 {
-  color: #0055aa;
-  margin-bottom: 0.5rem;
-}
-
-.preferences-header p {
-  color: #666;
-  font-size: 1rem;
-  margin: 0;
-}
-
-.preferences-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.preference-group {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  transition: box-shadow 0.2s ease;
-}
-
-.preference-group:hover {
-  box-shadow: 0 2px 8px rgba(0, 85, 170, 0.1);
-}
-
-.preference-group label {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.preference-icon {
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-}
-
-.preference-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  background: white;
-  transition: border-color 0.2s ease;
-}
-
-.preference-select:focus {
-  outline: none;
-  border-color: #0055aa;
-  box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
-}
-
-.preference-description {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #666;
-  font-style: italic;
-}
-
-.preferences-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.save-btn, .reset-btn, .test-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-}
-
-.save-btn {
-  background: #0055aa;
-  color: white;
-}
-
-.save-btn:hover {
-  background: #004494;
-  transform: translateY(-1px);
-}
-
-.reset-btn {
-  background: #6c757d;
-  color: white;
-}
-
-.reset-btn:hover {
-  background: #5a6268;
-}
-
-.test-btn {
-  background: #28a745;
-  color: white;
-}
-
-.test-btn:hover {
-  background: #218838;
-}
-
-.preferences-status {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 6px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.preferences-status.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.preferences-status.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-@media (max-width: 768px) {
-  .preferences-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .preferences-actions {
-    flex-direction: column;
-  }
-  
-  .save-btn, .reset-btn, .test-btn {
-    width: 100%;
-  }
-}
-</style>
