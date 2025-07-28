@@ -31,7 +31,7 @@ meta_loop = None  # Will be created lazily when first needed
 
 def get_meta_loop():
     """Get meta-learning loop instance, created lazily"""
-    global meta_loop
+    global meta_loop, META_LEARNING_AVAILABLE
     if meta_loop is None and META_LEARNING_AVAILABLE:
         try:
             from utils.meta_feedback_loop import MetaFeedbackLoop
@@ -39,7 +39,6 @@ def get_meta_loop():
             logger.info("Meta-learning loop initialized")
         except Exception as e:
             logger.warning(f"Meta-learning loop initialization failed: {e}")
-            global META_LEARNING_AVAILABLE
             META_LEARNING_AVAILABLE = False
     return meta_loop
 
