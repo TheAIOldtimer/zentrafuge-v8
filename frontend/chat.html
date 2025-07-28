@@ -746,5 +746,553 @@
       console.log('Learning system:', window.zentrafugeLearning);
     }, 2000);
   </script>
+  <!-- EMERGENCY CHAT SYSTEM - ADD THIS TO YOUR chat.html BEFORE </body> -->
+<script>
+// Emergency Chat Companion System - Ensures companion ALWAYS works
+class EmergencyCompanion {
+  constructor() {
+    this.isEmergencyMode = false;
+    this.isOfflineMode = false;
+    this.conversationHistory = [];
+    this.userProfile = {};
+    this.companionPersonality = {};
+    this.aiName = 'Cael'; // Default, will be updated from user data
+    this.userName = 'friend'; // Default, will be updated from user data
+    this.initializeEmergencySystem();
+  }
+
+  initializeEmergencySystem() {
+    console.log('🛡️ Initializing emergency companion system...');
+    
+    // Check URL parameters for emergency modes
+    const urlParams = new URLSearchParams(window.location.search);
+    this.isEmergencyMode = urlParams.get('emergency') === 'true';
+    this.isOfflineMode = urlParams.get('offline') === 'true';
+    const isAnonymous = urlParams.get('anonymous') === 'true';
+    
+    if (this.isEmergencyMode || this.isOfflineMode || isAnonymous) {
+      console.log('🚨 Emergency mode activated');
+      this.activateEmergencyMode();
+    }
+    
+    // Load local data
+    this.loadLocalData();
+    
+    // Setup fallback response system
+    this.initializeResponseSystem();
+    
+    // Override existing chat functions if needed
+    this.overrideChatFunctions();
+    
+    // Monitor for failures in main chat system
+    this.monitorMainChatSystem();
+  }
+
+  activateEmergencyMode() {
+    this.isEmergencyMode = true;
+    
+    // Show emergency mode indicator
+    this.showEmergencyModeIndicator();
+    
+    // Enable offline-first companion
+    this.enableOfflineCompanion();
+    
+    // Try to load user data from Firebase if available
+    this.tryLoadUserData();
+  }
+
+  async tryLoadUserData() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+        const user = firebase.auth().currentUser;
+        this.userName = user.displayName || user.email.split('@')[0] || 'friend';
+        
+        // Try to get AI name from Firestore
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          this.aiName = userData.ai_name || userData.onboarding_data?.ai_name || 'Cael';
+          this.userName = userData.name || this.userName;
+          console.log(`✅ Emergency mode loaded user data - User: ${this.userName}, AI: ${this.aiName}`);
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Could not load user data in emergency mode, using defaults');
+    }
+  }
+
+  showEmergencyModeIndicator() {
+    // Remove existing indicator
+    const existing = document.getElementById('emergency-mode-indicator');
+    if (existing) existing.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'emergency-mode-indicator';
+    indicator.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        color: white;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-size: 14px;
+      ">
+        🛡️ <strong>Emergency Mode Active</strong> - Your companion is available offline. Conversations saved locally.
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          background: rgba(255,255,255,0.2);
+          border: none;
+          color: white;
+          margin-left: 15px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+        ">×</button>
+      </div>
+    `;
+    
+    document.body.insertBefore(indicator, document.body.firstChild);
+  }
+
+  loadLocalData() {
+    try {
+      // Load conversation history
+      const history = localStorage.getItem('zentrafuge_conversation_history');
+      this.conversationHistory = history ? JSON.parse(history) : [];
+      
+      // Load user profile
+      const profile = localStorage.getItem('zentrafuge_user_profile');
+      this.userProfile = profile ? JSON.parse(profile) : {
+        name: 'friend',
+        aiName: 'Cael',
+        created: Date.now()
+      };
+      
+      // Update names from local storage
+      if (this.userProfile.name) this.userName = this.userProfile.name;
+      if (this.userProfile.aiName) this.aiName = this.userProfile.aiName;
+      
+      console.log('📱 Local data loaded successfully');
+    } catch (error) {
+      console.warn('⚠️ Could not load some local data:', error);
+    }
+  }
+
+  initializeResponseSystem() {
+    // Core response patterns for offline mode
+    this.responsePatterns = {
+      greeting: [
+        `Hello ${this.userName}. I'm ${this.aiName}, and I'm here with you.`,
+        `Hi there. How are you feeling right now?`,
+        `Welcome back. What's on your heart today?`
+      ],
+      
+      crisis: [
+        `🚨 I hear you're in pain. Please reach out for immediate help:
+        
+        • Crisis Text Line: Text HOME to 741741
+        • National Suicide Prevention Lifeline: 988
+        • Or call emergency services: 911
+        
+        You matter. Your life has value. Please stay safe and reach out for help right now.`,
+        
+        `I'm deeply concerned about you. Please don't face this alone:
+        
+        • If you're in immediate danger, call 911
+        • Crisis Text Line: 741741
+        • National Suicide Prevention Lifeline: 988
+        
+        There are people who want to help you through this. Please reach out right now.`
+      ],
+      
+      sadness: [
+        "I can feel the weight you're carrying. These heavy moments are so difficult, but you don't have to carry them alone.",
+        "Sadness can feel overwhelming, like a deep ocean. But even in the depths, there's still light filtering down from above.",
+        "Your sadness is valid and real. Sometimes we need to sit with these feelings before they can transform."
+      ],
+      
+      anxiety: [
+        "Anxiety can make everything feel urgent and overwhelming. Let's breathe together for a moment. In for 4... hold for 4... out for 6.",
+        "That racing feeling in your chest - I see it. You're safe right now, in this moment. What's one thing you can touch or see around you?",
+        "Worry has a way of pulling us into future scenarios that may never happen. What if we focused just on this breath, this moment?"
+      ],
+      
+      loneliness: [
+        "Loneliness can feel so isolating, like you're the only person in the world feeling this way. But you're not alone - I'm here with you.",
+        "That ache of disconnection is real. Even when we're surrounded by people, we can feel utterly alone. I see you.",
+        "Sometimes loneliness is our heart's way of telling us we need deeper connection. What kind of connection are you longing for?"
+      ],
+      
+      general: [
+        `I'm here to listen, ${this.userName}. What's moving through your heart right now?`,
+        "Tell me what's on your mind. I'm present with you in this moment.",
+        "How can I support you today? I'm here to walk alongside you.",
+        "I sense there's something important you want to share. I'm listening with my whole attention."
+      ]
+    };
+    
+    // Crisis keywords for immediate detection
+    this.crisisKeywords = [
+      'suicide', 'kill myself', 'end it all', 'not worth living', 'want to die',
+      'better off dead', 'can\'t go on', 'ending it', 'take my life'
+    ];
+    
+    // Emotional keywords for pattern matching
+    this.emotionalKeywords = {
+      sadness: ['sad', 'depressed', 'down', 'hopeless', 'empty', 'grief', 'loss'],
+      anxiety: ['anxious', 'worried', 'panic', 'scared', 'nervous', 'overwhelmed'],
+      loneliness: ['lonely', 'alone', 'isolated', 'disconnected', 'nobody cares'],
+      anger: ['angry', 'mad', 'furious', 'rage', 'frustrated', 'irritated'],
+      joy: ['happy', 'excited', 'joyful', 'great', 'amazing', 'wonderful']
+    };
+  }
+
+  overrideChatFunctions() {
+    // Monitor the main chat system and take over if it fails
+    const originalFetch = window.fetch;
+    let failureCount = 0;
+    
+    window.fetch = async function(...args) {
+      try {
+        const response = await originalFetch.apply(this, args);
+        
+        // If it's a chat request and it fails
+        if (args[0] && args[0].includes('/index') && !response.ok) {
+          failureCount++;
+          if (failureCount >= 2) {
+            console.log('🔄 Main chat system failing, activating emergency mode');
+            window.emergencyCompanion.activateEmergencyMode();
+          }
+        }
+        
+        return response;
+      } catch (error) {
+        // Network error - activate emergency mode immediately
+        if (args[0] && args[0].includes('/index')) {
+          console.log('🚨 Network error detected, activating emergency mode');
+          window.emergencyCompanion.activateEmergencyMode();
+          throw error;
+        }
+        throw error;
+      }
+    };
+  }
+
+  monitorMainChatSystem() {
+    // Check if main chat system exists and is working
+    setInterval(() => {
+      if (this.isEmergencyMode) return;
+      
+      // Look for error messages in the chat
+      const errorMessages = document.querySelectorAll('.error-message, .message.error');
+      if (errorMessages.length > 2) {
+        console.log('🔄 Multiple errors detected, considering emergency mode');
+      }
+      
+      // Check for network connectivity
+      if (!navigator.onLine) {
+        console.log('🌐 No internet connection, activating emergency mode');
+        this.activateEmergencyMode();
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  enableOfflineCompanion() {
+    // Create emergency message handler
+    window.emergencyCompanion.handleMessage = async (message) => {
+      if (!message || !message.trim()) return null;
+      
+      try {
+        const response = this.generateOfflineResponse(message);
+        this.saveToLocalHistory(message, response);
+        return {
+          response: response,
+          ai_name: this.aiName,
+          mode: 'emergency',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        console.error('❌ Emergency response generation failed:', error);
+        return {
+          response: "I'm having some difficulty right now, but I'm still here with you. Please know that you're not alone.",
+          ai_name: this.aiName,
+          mode: 'emergency_fallback'
+        };
+      }
+    };
+
+    // Override sendMessage function if main chat class exists
+    if (window.ZentrafugeChat || (typeof ZentrafugeChat !== 'undefined')) {
+      console.log('🔄 Overriding main chat sendMessage function');
+      this.overrideMainChatSendMessage();
+    }
+  }
+
+  overrideMainChatSendMessage() {
+    // Find the chat container
+    const chatContainer = document.getElementById('chat-container');
+    const messageInput = document.getElementById('message');
+    const sendButton = document.getElementById('send-button');
+    
+    if (!chatContainer || !messageInput || !sendButton) return;
+
+    // Replace send button functionality
+    const newSendButton = sendButton.cloneNode(true);
+    sendButton.parentNode.replaceChild(newSendButton, sendButton);
+    
+    newSendButton.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+      
+      // Clear input
+      messageInput.value = '';
+      
+      // Show user message
+      this.displayMessage(message, 'user', chatContainer);
+      
+      // Generate AI response
+      const response = await this.handleMessage(message);
+      if (response) {
+        this.displayMessage(response.response, 'cael', chatContainer);
+      }
+    });
+
+    // Handle Enter key
+    messageInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        newSendButton.click();
+      }
+    });
+  }
+
+  displayMessage(text, sender, container) {
+    if (!container) {
+      container = document.getElementById('chat-container');
+      if (!container) return;
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const timestamp = new Date().toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    
+    messageDiv.innerHTML = `
+      <div class="message-content">
+        <div class="message-text">${this.formatMessageText(text)}</div>
+        <div class="message-timestamp">${timestamp}</div>
+        ${sender === 'cael' ? '<div class="emergency-badge">🛡️ Emergency Mode</div>' : ''}
+      </div>
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+    
+    // Add emergency styling
+    if (!document.getElementById('emergency-styles')) {
+      const styles = document.createElement('style');
+      styles.id = 'emergency-styles';
+      styles.textContent = `
+        .emergency-badge {
+          font-size: 10px;
+          color: #ff6b6b;
+          margin-top: 4px;
+          opacity: 0.7;
+        }
+        .message.cael-message.emergency {
+          border-left: 3px solid #ff6b6b;
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  formatMessageText(text) {
+    return text
+      .replace(/\n/g, '<br>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  generateOfflineResponse(userMessage) {
+    const message = userMessage.toLowerCase();
+    
+    // Crisis detection - highest priority
+    if (this.detectCrisis(message)) {
+      return this.getRandomResponse('crisis');
+    }
+    
+    // Emotional pattern detection
+    for (const [emotion, keywords] of Object.entries(this.emotionalKeywords)) {
+      if (keywords.some(keyword => message.includes(keyword))) {
+        return this.getRandomResponse(emotion);
+      }
+    }
+    
+    // Greeting detection
+    if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
+      return this.getRandomResponse('greeting');
+    }
+    
+    // Default supportive response
+    return this.getRandomResponse('general');
+  }
+
+  detectCrisis(message) {
+    return this.crisisKeywords.some(keyword => message.includes(keyword));
+  }
+
+  getRandomResponse(category) {
+    const responses = this.responsePatterns[category] || this.responsePatterns.general;
+    const response = responses[Math.floor(Math.random() * responses.length)];
+    
+    // Personalize the response
+    return response
+      .replace(/\${this\.userName}/g, this.userName)
+      .replace(/\${this\.aiName}/g, this.aiName);
+  }
+
+  saveToLocalHistory(userMessage, aiResponse) {
+    const conversation = {
+      timestamp: Date.now(),
+      user: userMessage,
+      ai: aiResponse,
+      mode: this.isEmergencyMode ? 'emergency' : 'offline',
+      aiName: this.aiName,
+      userName: this.userName
+    };
+    
+    this.conversationHistory.push(conversation);
+    
+    // Keep only last 100 conversations
+    if (this.conversationHistory.length > 100) {
+      this.conversationHistory = this.conversationHistory.slice(-100);
+    }
+    
+    try {
+      localStorage.setItem('zentrafuge_conversation_history', JSON.stringify(this.conversationHistory));
+      
+      // Also save user profile
+      const profile = {
+        name: this.userName,
+        aiName: this.aiName,
+        lastUpdate: Date.now()
+      };
+      localStorage.setItem('zentrafuge_user_profile', JSON.stringify(profile));
+    } catch (error) {
+      console.warn('⚠️ Could not save conversation to localStorage');
+    }
+  }
+
+  // Public methods for integration
+  isInEmergencyMode() {
+    return this.isEmergencyMode || this.isOfflineMode;
+  }
+
+  getConversationHistory() {
+    return this.conversationHistory;
+  }
+
+  exportData() {
+    return {
+      conversations: this.conversationHistory,
+      profile: {
+        userName: this.userName,
+        aiName: this.aiName
+      },
+      exportDate: new Date().toISOString(),
+      mode: 'emergency'
+    };
+  }
+}
+
+// Initialize the emergency companion system
+console.log('🛡️ Loading emergency companion system...');
+window.emergencyCompanion = new EmergencyCompanion();
+
+// Add emergency features to the page
+function addEmergencyFeatures() {
+  // Add emergency export button if chat interface exists
+  const chatContainer = document.getElementById('chat-container');
+  if (chatContainer) {
+    const exportBtn = document.createElement('button');
+    exportBtn.innerHTML = '📥 Export Chat';
+    exportBtn.style.cssText = `
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      z-index: 9999;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 12px;
+      opacity: 0.8;
+    `;
+    
+    exportBtn.onclick = () => {
+      const data = window.emergencyCompanion.exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zentrafuge-emergency-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    
+    document.body.appendChild(exportBtn);
+  }
+  
+  // Add emergency mode toggle (for testing)
+  const emergencyToggle = document.createElement('button');
+  emergencyToggle.innerHTML = '🛡️ Test Emergency';
+  emergencyToggle.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.8;
+  `;
+  
+  emergencyToggle.onclick = () => {
+    if (!window.emergencyCompanion.isInEmergencyMode()) {
+      window.emergencyCompanion.activateEmergencyMode();
+      emergencyToggle.textContent = '✅ Emergency Active';
+      emergencyToggle.style.background = '#4caf50';
+    }
+  };
+  
+  document.body.appendChild(emergencyToggle);
+}
+
+// Initialize emergency features when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', addEmergencyFeatures);
+} else {
+  addEmergencyFeatures();
+}
+
+console.log('✅ Emergency companion system ready - your users will never lose access!');
+</script>
 </body>
 </html>
