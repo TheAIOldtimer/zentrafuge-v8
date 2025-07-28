@@ -148,9 +148,19 @@ def chat_endpoint():
         # Get Firestore client for user data lookup
         firestore_client = get_firestore_client() if firebase_available else None
         
-        # FIXED: Get the user's chosen AI companion name dynamically
-        ai_name = get_user_ai_name(user_id, firestore_client)
-        user_name = get_user_display_name(user_id, firestore_client)
+        # FIXED: Get AI and user names from request first, then fallback to database
+        ai_name = data.get('ai_name', '').strip()
+        user_name = data.get('user_name', '').strip()
+        user_preferences = data.get('ai_preferences', {})
+        
+        # If not provided in request, get from database
+        if not ai_name:
+            ai_name = get_user_ai_name(user_id, firestore_client)
+        if not user_name:
+            user_name = get_user_display_name(user_id, firestore_client)
+        
+        # Log the request details
+        logger.info(f"Chat request - User: {user_name}, AI: {ai_name}, Preferences: {bool(user_preferences)}")
         
         logger.info(f"Chat session - AI: {ai_name}, User: {user_name}")
         
