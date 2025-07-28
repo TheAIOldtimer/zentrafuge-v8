@@ -54,6 +54,7 @@
       padding: 1rem;
       background: white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
     }
 
     .user-info {
@@ -75,6 +76,237 @@
     .sign-out-btn:hover {
       background: #ff5252;
     }
+
+    /* LEARNING FEATURES - Integrated with existing design */
+    .learning-indicator {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #27ae60;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      font-weight: 500;
+    }
+
+    .learning-indicator.active {
+      opacity: 1;
+    }
+
+    /* Message metadata for learning display */
+    .message-metadata {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .strategy-badge {
+      display: inline-block;
+      background: #34495e;
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      margin-right: 0.5rem;
+    }
+
+    .confidence-indicator {
+      display: inline-block;
+      width: 60px;
+      height: 8px;
+      background: #ecf0f1;
+      border-radius: 4px;
+      overflow: hidden;
+      vertical-align: middle;
+      margin: 0 0.5rem;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%);
+      transition: width 0.3s ease;
+      border-radius: 4px;
+    }
+
+    .feedback-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      justify-content: flex-start;
+    }
+
+    .feedback-btn {
+      background: transparent;
+      border: 1px solid #ddd;
+      padding: 0.25rem 0.5rem;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+      opacity: 0.8;
+    }
+
+    .feedback-btn:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .feedback-btn.perfect {
+      border-color: #27ae60;
+      color: #27ae60;
+    }
+
+    .feedback-btn.perfect:hover,
+    .feedback-btn.perfect.selected {
+      background: #27ae60;
+      color: white;
+    }
+
+    .feedback-btn.helpful {
+      border-color: #3498db;
+      color: #3498db;
+    }
+
+    .feedback-btn.helpful:hover,
+    .feedback-btn.helpful.selected {
+      background: #3498db;
+      color: white;
+    }
+
+    .feedback-btn.not-quite {
+      border-color: #f39c12;
+      color: #f39c12;
+    }
+
+    .feedback-btn.not-quite:hover,
+    .feedback-btn.not-quite.selected {
+      background: #f39c12;
+      color: white;
+    }
+
+    /* Learning stats toggle */
+    .learning-stats-toggle {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.2s ease;
+    }
+
+    .learning-stats-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .learning-stats-panel {
+      position: fixed;
+      bottom: 80px;
+      left: 20px;
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      border: 1px solid #e0e0e0;
+      min-width: 220px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .learning-stats-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    .learning-stats-panel h4 {
+      margin-bottom: 0.75rem;
+      color: #2c3e50;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .stat-label {
+      color: #7f8c8d;
+    }
+
+    .stat-value {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    /* Memory indicator */
+    .memory-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .memory-indicator.active {
+      background: #27ae60;
+    }
+
+    .memory-indicator.inactive {
+      background: #95a5a6;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .learning-stats-toggle {
+        bottom: 10px;
+        left: 10px;
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+      }
+
+      .learning-stats-panel {
+        bottom: 65px;
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+      }
+
+      .strategy-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+      }
+
+      .feedback-buttons {
+        flex-wrap: wrap;
+      }
+
+      .feedback-btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -89,6 +321,10 @@
   
   <header id="main-header" class="header">
     <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo">
+    
+    <!-- Learning Indicator -->
+    <div class="learning-indicator" id="learningIndicator" data-translate="learning_active">🧠 Learning</div>
+    
     <div class="user-info">
       <span id="user-email"></span>
       <button id="sign-out-btn" class="sign-out-btn" data-translate="sign_out">Sign Out</button>
@@ -113,6 +349,35 @@
   <div id="error-message" class="message error-message" style="display: none;"></div>
   <div id="success-message" class="message success-message" style="display: none;"></div>
 
+  <!-- Learning Stats Toggle -->
+  <button class="learning-stats-toggle" id="learningStatsToggle" title="Learning Insights">
+    📊
+  </button>
+
+  <!-- Learning Stats Panel -->
+  <div class="learning-stats-panel" id="learningStatsPanel">
+    <h4 data-translate="learning_insights">Learning Insights</h4>
+    <div class="stat-row">
+      <span class="stat-label" data-translate="current_strategy">Strategy:</span>
+      <span class="stat-value" id="currentStrategy">adaptive</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label" data-translate="confidence_level">Confidence:</span>
+      <span class="stat-value" id="currentConfidence">0.7</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label" data-translate="memory_status">Memory:</span>
+      <span class="stat-value">
+        <span id="memoryStatus">Active</span>
+        <span class="memory-indicator active" id="memoryIndicator"></span>
+      </span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label" data-translate="total_interactions">Interactions:</span>
+      <span class="stat-value" id="totalInteractions">0</span>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -122,7 +387,203 @@
   <!-- Firebase Configuration -->
   <script src="firebase-init.js"></script>
 
-  <!-- Module-based Application with Translation -->
+  <!-- Learning Enhancement Script -->
+  <script>
+    // Global learning state management
+    window.zentrafugeLearning = {
+      currentSignalId: null,
+      lastResponseTime: null,
+      totalInteractions: 0,
+      learningEnabled: false,
+      
+      // Initialize learning features
+      init() {
+        this.setupLearningStatsToggle();
+        this.setupLearningIndicator();
+      },
+      
+      setupLearningStatsToggle() {
+        const toggle = document.getElementById('learningStatsToggle');
+        const panel = document.getElementById('learningStatsPanel');
+        
+        if (toggle && panel) {
+          toggle.addEventListener('click', () => {
+            panel.classList.toggle('visible');
+          });
+          
+          // Close when clicking outside
+          document.addEventListener('click', (e) => {
+            if (!toggle.contains(e.target) && !panel.contains(e.target)) {
+              panel.classList.remove('visible');
+            }
+          });
+        }
+      },
+      
+      setupLearningIndicator() {
+        // Learning indicator will be controlled by chat manager
+      },
+      
+      // Update learning stats display
+      updateStats(responseData) {
+        const strategy = document.getElementById('currentStrategy');
+        const confidence = document.getElementById('currentConfidence');
+        const memoryStatus = document.getElementById('memoryStatus');
+        const memoryIndicator = document.getElementById('memoryIndicator');
+        const totalInteractions = document.getElementById('totalInteractions');
+        
+        if (strategy) strategy.textContent = responseData.strategy_used || 'adaptive';
+        if (confidence) confidence.textContent = (responseData.confidence || 0.7).toFixed(1);
+        
+        if (memoryStatus && memoryIndicator) {
+          if (responseData.memory_used) {
+            memoryStatus.textContent = 'Active';
+            memoryIndicator.className = 'memory-indicator active';
+          } else {
+            memoryStatus.textContent = 'Inactive';
+            memoryIndicator.className = 'memory-indicator inactive';
+          }
+        }
+        
+        if (totalInteractions) {
+          this.totalInteractions++;
+          totalInteractions.textContent = this.totalInteractions;
+        }
+        
+        // Update learning state
+        this.currentSignalId = responseData.signal_id;
+        this.lastResponseTime = Date.now();
+        this.learningEnabled = responseData.learning_enabled;
+      },
+      
+      // Show learning activity
+      showLearningActivity() {
+        const indicator = document.getElementById('learningIndicator');
+        if (indicator) {
+          indicator.classList.add('active');
+          setTimeout(() => {
+            indicator.classList.remove('active');
+          }, 2500);
+        }
+      },
+      
+      // Add learning metadata to message
+      addMessageMetadata(messageElement, responseData) {
+        if (!responseData || !responseData.signal_id) return;
+        
+        const metadataDiv = document.createElement('div');
+        metadataDiv.className = 'message-metadata';
+        
+        // Strategy badge
+        if (responseData.strategy_used) {
+          const strategyBadge = document.createElement('span');
+          strategyBadge.className = 'strategy-badge';
+          strategyBadge.textContent = responseData.strategy_used;
+          metadataDiv.appendChild(strategyBadge);
+        }
+        
+        // Confidence indicator
+        if (responseData.confidence) {
+          const confidenceContainer = document.createElement('span');
+          confidenceContainer.className = 'confidence-indicator';
+          
+          const confidenceFill = document.createElement('span');
+          confidenceFill.className = 'confidence-fill';
+          confidenceFill.style.width = `${responseData.confidence * 100}%`;
+          
+          confidenceContainer.appendChild(confidenceFill);
+          metadataDiv.appendChild(confidenceContainer);
+        }
+        
+        // Memory indicator
+        if (responseData.memory_used !== undefined) {
+          const memoryDot = document.createElement('span');
+          memoryDot.className = `memory-indicator ${responseData.memory_used ? 'active' : 'inactive'}`;
+          memoryDot.title = responseData.memory_used ? 'Memory active' : 'Memory inactive';
+          metadataDiv.appendChild(memoryDot);
+        }
+        
+        // Add feedback buttons if learning enabled
+        if (responseData.learning_enabled && responseData.signal_id) {
+          this.addFeedbackButtons(metadataDiv, responseData.signal_id);
+        }
+        
+        messageElement.appendChild(metadataDiv);
+      },
+      
+      // Add feedback buttons
+      addFeedbackButtons(container, signalId) {
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'feedback-buttons';
+        
+        const feedbackTypes = [
+          { type: 'perfect', label: '✨ Perfect', className: 'perfect' },
+          { type: 'helpful', label: '👍 Helpful', className: 'helpful' },
+          { type: 'not_quite', label: '🤔 Not quite', className: 'not-quite' }
+        ];
+        
+        feedbackTypes.forEach(feedback => {
+          const button = document.createElement('button');
+          button.className = `feedback-btn ${feedback.className}`;
+          button.textContent = feedback.label;
+          button.addEventListener('click', () => {
+            this.handleFeedback(signalId, feedback.type, button, feedbackDiv);
+          });
+          feedbackDiv.appendChild(button);
+        });
+        
+        container.appendChild(feedbackDiv);
+      },
+      
+      // Handle feedback submission
+      async handleFeedback(signalId, feedbackType, button, container) {
+        // Visual feedback
+        container.querySelectorAll('.feedback-btn').forEach(btn => {
+          btn.classList.remove('selected');
+        });
+        button.classList.add('selected');
+        
+        // Send feedback to backend
+        try {
+          await fetch('/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              signal_id: signalId,
+              feedback_type: feedbackType
+            })
+          });
+          
+          this.showLearningActivity();
+        } catch (error) {
+          console.error('Error sending feedback:', error);
+        }
+      },
+      
+      // Capture user reply timing
+      async captureUserReply(replyMessage) {
+        if (!this.currentSignalId || !this.lastResponseTime) return;
+        
+        const timeSinceResponse = (Date.now() - this.lastResponseTime) / 1000;
+        
+        try {
+          await fetch('/capture-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              signal_id: this.currentSignalId,
+              reply_message: replyMessage,
+              time_since_response: timeSinceResponse
+            })
+          });
+        } catch (error) {
+          console.error('Error capturing reply:', error);
+        }
+      }
+    };
+  </script>
+
+  <!-- Module-based Application with Translation and Learning -->
   <script type="module">
     import { authManager } from './js/modules/auth-manager.js';
     import { chatManager } from './js/modules/chat-manager.js';
@@ -131,7 +592,10 @@
     // Initialize application
     async function initApp() {
       try {
-        console.log('🚀 Initializing Zentrafuge chat application...');
+        console.log('🚀 Initializing Zentrafuge chat application with learning...');
+
+        // Initialize learning features
+        window.zentrafugeLearning.init();
 
         // Initialize translation system first
         await translationManager.preloadTranslations();
@@ -171,8 +635,42 @@
           });
         }
 
-        // Initialize chat system
+        // Initialize chat system with learning enhancement
         await chatManager.init();
+        
+        // LEARNING INTEGRATION: Enhance chat manager with learning features
+        if (chatManager.isReady()) {
+          // Override the message sending to capture learning signals
+          const originalSendMessage = chatManager.sendMessage.bind(chatManager);
+          chatManager.sendMessage = async function(message) {
+            // Capture user reply timing for learning
+            await window.zentrafugeLearning.captureUserReply(message);
+            
+            // Send message and get response with learning metadata
+            const response = await originalSendMessage(message);
+            
+            // Update learning stats if response contains learning data
+            if (response && response.signal_id) {
+              window.zentrafugeLearning.updateStats(response);
+              window.zentrafugeLearning.showLearningActivity();
+            }
+            
+            return response;
+          };
+          
+          // Override message display to add learning metadata
+          const originalDisplayMessage = chatManager.displayMessage.bind(chatManager);
+          chatManager.displayMessage = function(sender, message, responseData = null) {
+            const messageElement = originalDisplayMessage(sender, message);
+            
+            // Add learning metadata to Cael's messages
+            if (sender === 'cael' && responseData) {
+              window.zentrafugeLearning.addMessageMetadata(messageElement, responseData);
+            }
+            
+            return messageElement;
+          };
+        }
         
         // Update page language
         await translationManager.updatePageLanguage();
@@ -196,7 +694,7 @@
           document.body.classList.remove('translating');
         });
         
-        console.log('✅ Application initialized successfully');
+        console.log('✅ Application initialized successfully with learning features');
         
       } catch (error) {
         console.error('❌ Application initialization failed:', error);
@@ -210,12 +708,17 @@
       }
     }
 
-    // Enhanced chat message handling with translation
-    chatManager.on('messageExchange', async ({ userMessage, caelMessage }) => {
+    // Enhanced chat message handling with translation and learning
+    chatManager.on('messageExchange', async ({ userMessage, caelMessage, responseData }) => {
       // If user is not using English, we could optionally translate their message back to English for analytics
       const currentLang = translationManager.getCurrentLanguage();
       if (currentLang !== 'en') {
         console.log(`User message in ${currentLang}:`, userMessage.text);
+      }
+      
+      // Log learning data
+      if (responseData && responseData.signal_id) {
+        console.log('🧠 Learning data:', responseData);
       }
     });
 
@@ -240,6 +743,7 @@
       console.log('Translation manager:', translationManager);
       console.log('Auth manager:', authManager);
       console.log('Chat manager:', chatManager);
+      console.log('Learning system:', window.zentrafugeLearning);
     }, 2000);
   </script>
 </body>
