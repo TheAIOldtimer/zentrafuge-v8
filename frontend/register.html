@@ -5,14 +5,14 @@
   <title data-translate="register_page_title">Register – Zentrafuge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
-  
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
-  <!-- Firebase Configuration - FIXED TYPO -->
+  <!-- Firebase Config -->
   <script src="firebase-init.js"></script>
 
   <!-- CSS -->
@@ -38,56 +38,51 @@
   <header>
     <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
   </header>
-  
+
   <div class="form-box">
     <h2 class="form-title" data-translate="form_title">Create Your Account</h2>
-    
+
     <!-- Loading State -->
     <div class="loading" id="loading" style="display: none;">
       <div class="spinner"></div>
       <span>Creating your account...</span>
     </div>
-    
+
     <!-- Message Display -->
     <div class="message" id="message" style="display: none;"></div>
-    
+
     <form id="register-form">
       <input type="text" id="name" data-translate-placeholder="name" placeholder="Name" required />
       <input type="email" id="email" data-translate-placeholder="email" placeholder="Email" required />
       <input type="password" id="password" data-translate-placeholder="password" placeholder="Password (6+ characters)" required />
-      
+
+      <!-- ✅ Veteran Checkbox -->
       <div class="checkbox">
         <input type="checkbox" id="veteran" />
         <label for="veteran" data-translate="veteran_label">I am a military veteran (optional)</label>
       </div>
-      
+
+      <!-- ✅ Terms Checkbox -->
       <div class="checkbox">
         <input type="checkbox" id="terms" required />
         <label for="terms">
-          <span data-translate="terms_text">I agree to the</span> 
+          <span data-translate="terms_text">I agree to the</span>
           <a href="terms.html" target="_blank" data-translate="terms_link">Terms & Conditions</a>
         </label>
       </div>
 
-      <div class="checkbox">
-          <input type="checkbox" id="veteran" />
-          <label for="veteran" data-translate="veteran_label">
-          I am a military veteran (optional)
-          </label>
-     </div>
-
-        <button type="submit" id="register-button" data-translate="register_button">Register</button>
+      <button type="submit" id="register-button" data-translate="register_button">Register</button>
     </form>
-    
+
     <div class="login-link">
-      <span data-translate="login_text">Already have an account?</span> 
+      <span data-translate="login_text">Already have an account?</span>
       <a href="index.html" data-translate="login_link">Login here</a>
     </div>
   </div>
-  
+
   <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
 
-  <!-- Wait for Firebase before loading registration logic -->
+  <!-- Register JS -->
   <script>
     window.addEventListener('firebaseReady', () => {
       console.log('🔥 Firebase ready, loading registration module...');
