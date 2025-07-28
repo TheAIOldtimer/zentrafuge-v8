@@ -1,199 +1,203 @@
-// frontend/js/config/config.js - Application Configuration (SECOND CONFIG FILE - MAKE IDENTICAL)
-export const CONFIG = {
-    // API Configuration - FIXED: Updated to zentrafuge-v8 backend
-    API_BASE_URL: 'https://zentrafuge-v8.onrender.com',
-    API_TIMEOUT: 30000, // 30 seconds
-    API_RETRY_ATTEMPTS: 3,
-    API_RETRY_DELAY: 1000, // 1 second
+// frontend/js/config.js
 
-    // Firebase Configuration - FIXED: Updated to zentrafuge-v8 project
-    FIREBASE_CONFIG: {
-        apiKey: "AIzaSyCYt2SfTJiCh1egk-q30_NLlO0kA4-RH0k",
-        authDomain: "zentrafuge-v8.firebaseapp.com",
-        projectId: "zentrafuge-v8",
-        storageBucket: "zentrafuge-v8.appspot.com",
-        messagingSenderId: "1035979155498",
-        appId: "1:1035979155498:web:502d1bdbfadc116542bb53",
-        measurementId: "G-WZNXDGR0BN"
-    },
+// Backend configuration
+export const BACKEND_URL = 'https://zentrafuge-v8-backend.render.com';
 
-    // UI Configuration
-    UI: {
-        MESSAGE_MAX_LENGTH: 10000,
-        HISTORY_LOAD_LIMIT: 20,
-        AUTO_SCROLL_DELAY: 100,
-        TYPING_INDICATOR_DELAY: 500,
-        STATUS_MESSAGE_DURATION: 5000,
-        ANIMATION_DURATION: 300
-    },
-
-    // Chat Configuration
-    CHAT: {
-        WELCOME_MESSAGE: "Hello! I'm Cael, your emotional companion. I'm here to listen, reflect, and support you on your journey. How are you feeling today?",
-        ERROR_MESSAGE: "I'm having trouble processing your message right now. Please try again.",
-        CONNECTION_ERROR_MESSAGE: "I'm having connection issues. Please check your internet and try again.",
-        TYPING_INDICATORS: ['⏳', '💭', '🤔'],
-        MAX_RETRIES: 3,
-        RETRY_DELAY: 2000
-    },
-
-    // Storage Configuration
-    STORAGE: {
-        KEYS: {
-            LOG_LEVEL: 'zentrafuge_log_level',
-            USER_PREFERENCES: 'zentrafuge_user_preferences',
-            THEME: 'zentrafuge_theme',
-            CHAT_DRAFTS: 'zentrafuge_chat_drafts',
-            ERRORS: 'zentrafuge_errors'
-        },
-        MAX_STORED_ERRORS: 50,
-        MAX_CHAT_DRAFTS: 10
-    },
-
-    // Theme Configuration
-    THEMES: {
-        LIGHT: {
-            name: 'light',
-            primary: '#667eea',
-            secondary: '#764ba2',
-            background: '#ffffff',
-            surface: '#f8f9fa',
-            text: '#333333',
-            textSecondary: '#666666',
-            border: '#e9ecef',
-            success: '#51cf66',
-            warning: '#ff9800',
-            error: '#f44336',
-            info: '#339af0'
-        },
-        DARK: {
-            name: 'dark',
-            primary: '#667eea',
-            secondary: '#764ba2',
-            background: '#1a1a1a',
-            surface: '#2d2d2d',
-            text: '#ffffff',
-            textSecondary: '#cccccc',
-            border: '#404040',
-            success: '#51cf66',
-            warning: '#ff9800',
-            error: '#f44336',
-            info: '#339af0'
-        }
-    },
-
-    // Feature Flags
-    FEATURES: {
-        VOICE_INPUT: false,
-        FILE_UPLOAD: false,
-        MOOD_TRACKING: true,
-        EXPORT_DATA: true,
-        DARK_MODE: true,
-        NOTIFICATIONS: false,
-        ANALYTICS: false,
-        BETA_FEATURES: false
-    },
-
-    // Validation Rules
-    VALIDATION: {
-        EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        PASSWORD_MIN_LENGTH: 6,
-        MESSAGE_MIN_LENGTH: 1,
-        MESSAGE_MAX_LENGTH: 10000,
-        USERNAME_MIN_LENGTH: 3,
-        USERNAME_MAX_LENGTH: 30,
-        DISPLAY_NAME_MAX_LENGTH: 50
-    },
-
-    // Rate Limiting (client-side)
-    RATE_LIMITS: {
-        MESSAGES_PER_MINUTE: 20,
-        API_CALLS_PER_MINUTE: 50,
-        LOGIN_ATTEMPTS_PER_HOUR: 5
-    },
-
-    // Development Configuration
-    DEVELOPMENT: {
-        DEBUG_MODE: window.location.hostname === 'localhost' || window.location.search.includes('debug=true'),
-        MOCK_API: window.location.search.includes('mock=true'),
-        PERFORMANCE_MONITORING: true,
-        CONSOLE_LOGGING: true
-    },
-
-    // Error Tracking
-    ERROR_TRACKING: {
-        ENABLED: true,
-        MAX_STACK_TRACE_LENGTH: 1000,
-        IGNORE_PATTERNS: [
-            'ResizeObserver loop limit exceeded',
-            'Non-Error promise rejection captured',
-            'Network request failed'
-        ]
-    },
-
-    // Accessibility
-    ACCESSIBILITY: {
-        HIGH_CONTRAST_MODE: false,
-        REDUCED_MOTION: false,
-        SCREEN_READER_SUPPORT: true,
-        KEYBOARD_NAVIGATION: true,
-        FOCUS_VISIBLE: true
-    },
-
-    // Security
-    SECURITY: {
-        CSP_ENABLED: true,
-        XSS_PROTECTION: true,
-        IFRAME_PROTECTION: true,
-        SECURE_COOKIES: true,
-        SESSION_TIMEOUT: 24 * 60 * 60 * 1000, // 24 hours
-        IDLE_TIMEOUT: 30 * 60 * 1000 // 30 minutes
-    },
-
-    // Performance
-    PERFORMANCE: {
-        LAZY_LOADING: true,
-        IMAGE_OPTIMIZATION: true,
-        DEBOUNCE_DELAY: 300,
-        THROTTLE_DELAY: 100,
-        VIRTUAL_SCROLLING: false, // Enable for large message lists
-        PRELOAD_ASSETS: true
-    },
-
-    // Monitoring
-    MONITORING: {
-        PERFORMANCE_METRICS: true,
-        ERROR_REPORTING: true,
-        USER_ANALYTICS: false, // Privacy-first approach
-        HEALTH_CHECKS: true,
-        UPTIME_MONITORING: true
-    }
+// Firebase configuration (replace with your actual config)
+export const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
 };
 
-// Environment-specific overrides
-if (CONFIG.DEVELOPMENT.DEBUG_MODE) {
-    CONFIG.UI.ANIMATION_DURATION = 100; // Faster animations in dev
-    CONFIG.CHAT.RETRY_DELAY = 500; // Faster retries in dev
-    CONFIG.API_TIMEOUT = 10000; // Shorter timeout in dev
-    // Override for local development
-    CONFIG.API_BASE_URL = 'http://localhost:5000';
+// User preferences defaults - UPDATED with AI name support
+export const DEFAULT_PREFERENCES = {
+  ai_name: 'Cael',                    // NEW: AI companion name
+  language_style: 'direct',           // direct, warm, formal, casual
+  response_length: 'moderate',        // brief, moderate, detailed
+  military_context: 'auto',           // auto, always, never
+  emotional_pacing: 'gentle',         // gentle, moderate, direct
+  memory_usage: 'contextual',         // contextual, minimal, detailed
+  session_reminders: 'gentle'         // gentle, regular, minimal
+};
+
+// Current user state
+export let currentUser = null;
+export let userPreferences = { ...DEFAULT_PREFERENCES };
+
+// User state management
+export function setCurrentUser(user) {
+  currentUser = user;
+  console.log('👤 Current user set:', user ? user.email : 'None');
 }
 
-// Freeze configuration to prevent accidental modifications
-Object.freeze(CONFIG);
-Object.freeze(CONFIG.FIREBASE_CONFIG);
-Object.freeze(CONFIG.UI);
-Object.freeze(CONFIG.CHAT);
-Object.freeze(CONFIG.STORAGE);
-Object.freeze(CONFIG.THEMES);
-Object.freeze(CONFIG.FEATURES);
-Object.freeze(CONFIG.VALIDATION);
-Object.freeze(CONFIG.RATE_LIMITS);
-Object.freeze(CONFIG.DEVELOPMENT);
-Object.freeze(CONFIG.ERROR_TRACKING);
-Object.freeze(CONFIG.ACCESSIBILITY);
-Object.freeze(CONFIG.SECURITY);
-Object.freeze(CONFIG.PERFORMANCE);
-Object.freeze(CONFIG.MONITORING);
+export function setUserPreferences(preferences) {
+  userPreferences = { ...DEFAULT_PREFERENCES, ...preferences };
+  console.log('⚙️ User preferences updated:', userPreferences);
+}
 
-export default CONFIG;
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export function getUserPreferences() {
+  return userPreferences;
+}
+
+// Chat configuration
+export const CHAT_CONFIG = {
+  maxMessageLength: 2000,
+  maxHistoryItems: 50,
+  autoSaveDelay: 1000,
+  typingIndicatorDelay: 500,
+  retryAttempts: 3,
+  retryDelay: 1000
+};
+
+// API endpoints
+export const API_ENDPOINTS = {
+  CHAT: '/index',
+  FEEDBACK: '/feedback',
+  CAPTURE_REPLY: '/capture-reply',
+  UPDATE_AI_NAME: '/update-ai-name',
+  HEALTH: '/health',
+  LEARNING_STATS: '/learning-stats',
+  DEBUG_PROMPT: '/debug/prompt'
+};
+
+// Validation rules
+export const VALIDATION_RULES = {
+  AI_NAME: {
+    MIN_LENGTH: 1,
+    MAX_LENGTH: 50,
+    PATTERN: /^[a-zA-Z0-9\s\-_']+$/,
+    ERROR_MESSAGES: {
+      REQUIRED: 'AI companion name is required',
+      TOO_LONG: 'Name must be 50 characters or less',
+      INVALID_CHARS: 'Name can only contain letters, numbers, spaces, hyphens, underscores, and apostrophes'
+    }
+  },
+  MESSAGE: {
+    MAX_LENGTH: 2000,
+    ERROR_MESSAGES: {
+      TOO_LONG: 'Message must be 2000 characters or less',
+      EMPTY: 'Message cannot be empty'
+    }
+  }
+};
+
+// Feature flags
+export const FEATURES = {
+  LEARNING_ENABLED: true,
+  MEMORY_ENABLED: true,
+  EMOTION_PARSING: true,
+  ADAPTIVE_RESPONSES: true,
+  USER_FEEDBACK: true,
+  DEBUG_MODE: false,
+  AI_NAME_CUSTOMIZATION: true    // NEW: Enable AI name customization
+};
+
+// UI configuration
+export const UI_CONFIG = {
+  ANIMATION_DURATION: 300,
+  TOAST_DURATION: 3000,
+  LOADING_DELAY: 200,
+  AUTO_SCROLL_DELAY: 100,
+  MESSAGE_FADE_DURATION: 200
+};
+
+// Error messages
+export const ERROR_MESSAGES = {
+  NETWORK_ERROR: 'Network connection failed. Please check your internet connection.',
+  SERVER_ERROR: 'Server error occurred. Please try again later.',
+  AUTH_REQUIRED: 'Please log in to continue.',
+  INVALID_INPUT: 'Invalid input provided.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment.',
+  AI_NAME_UPDATE_FAILED: 'Failed to update AI companion name. Please try again.',
+  PREFERENCES_SAVE_FAILED: 'Failed to save preferences. Please try again.',
+  CHAT_ERROR: 'Failed to send message. Please try again.'
+};
+
+// Success messages
+export const SUCCESS_MESSAGES = {
+  PREFERENCES_SAVED: 'Preferences saved successfully!',
+  AI_NAME_UPDATED: 'AI companion name updated successfully!',
+  FEEDBACK_SUBMITTED: 'Feedback submitted successfully!',
+  ACCOUNT_CREATED: 'Account created successfully!',
+  EMAIL_VERIFIED: 'Email verified successfully!'
+};
+
+// Theme configuration
+export const THEME_CONFIG = {
+  PRIMARY_COLOR: '#007bff',
+  SECONDARY_COLOR: '#6c757d',
+  SUCCESS_COLOR: '#28a745',
+  WARNING_COLOR: '#ffc107',
+  ERROR_COLOR: '#dc3545',
+  INFO_COLOR: '#17a2b8'
+};
+
+// Debug utilities
+export function logConfig() {
+  if (FEATURES.DEBUG_MODE) {
+    console.group('🔧 Zentrafuge Configuration');
+    console.log('Backend URL:', BACKEND_URL);
+    console.log('Default Preferences:', DEFAULT_PREFERENCES);
+    console.log('Current User:', currentUser?.email || 'None');
+    console.log('User Preferences:', userPreferences);
+    console.log('Features:', FEATURES);
+    console.groupEnd();
+  }
+}
+
+// Initialize configuration
+export function initializeConfig() {
+  console.log('⚙️ Initializing Zentrafuge configuration...');
+  
+  // Load saved preferences from localStorage if available
+  try {
+    const savedPreferences = localStorage.getItem('zentrafuge_preferences');
+    if (savedPreferences) {
+      const parsed = JSON.parse(savedPreferences);
+      setUserPreferences(parsed);
+      console.log('💾 Loaded preferences from localStorage');
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to load preferences from localStorage:', error);
+  }
+  
+  // Set up global error handler
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Unhandled promise rejection:', event.reason);
+    if (FEATURES.DEBUG_MODE) {
+      console.error('Stack trace:', event.reason?.stack);
+    }
+  });
+  
+  console.log('✅ Configuration initialized');
+  
+  if (FEATURES.DEBUG_MODE) {
+    logConfig();
+  }
+}
+
+// Auto-initialize when loaded
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', initializeConfig);
+}
+
+// Export for global access
+if (typeof window !== 'undefined') {
+  window.ZentrafugeConfig = {
+    BACKEND_URL,
+    DEFAULT_PREFERENCES,
+    FEATURES,
+    getCurrentUser,
+    getUserPreferences,
+    setCurrentUser,
+    setUserPreferences
+  };
+}
