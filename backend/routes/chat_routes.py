@@ -41,20 +41,27 @@ logger = logging.getLogger(__name__)
 def get_user_ai_name(user_id, firestore_client):
     """
     Retrieve the user's chosen AI companion name from Firestore
-    Falls back to "Cael" if not found or on error
+    UPDATED: Match your actual Firestore structure
     """
     try:
         if not firestore_client or not user_id:
             logger.warning("No firestore client or user_id provided for AI name lookup")
             return "Cael"
         
-        # Try to get AI name from user profile
+        # Get user document
         user_doc = firestore_client.collection("users").document(user_id).get()
         
         if user_doc.exists:
             user_data = user_doc.to_dict()
             
-            # Check onboarding data first
+            # Check for ai_name field directly (your structure)
+            if user_data.get('ai_name'):
+                ai_name = user_data['ai_name'].strip()
+                if ai_name:
+                    logger.info(f"Retrieved AI name from direct field: {ai_name}")
+                    return ai_name
+            
+            # Fallback to other possible locations
             if 'onboarding_data' in user_data and user_data['onboarding_data'].get('ai_name'):
                 ai_name = user_data['onboarding_data']['ai_name'].strip()
                 if ai_name:
@@ -67,20 +74,6 @@ def get_user_ai_name(user_id, firestore_client):
                 if ai_name:
                     logger.info(f"Retrieved AI name from preferences: {ai_name}")
                     return ai_name
-            
-            # Check profile for ai_name
-            if 'profile' in user_data and user_data['profile'].get('ai_name'):
-                ai_name = user_data['profile']['ai_name'].strip()
-                if ai_name:
-                    logger.info(f"Retrieved AI name from profile: {ai_name}")
-                    return ai_name
-            
-            # Check direct ai_name field
-            if user_data.get('ai_name'):
-                ai_name = user_data['ai_name'].strip()
-                if ai_name:
-                    logger.info(f"Retrieved AI name from direct field: {ai_name}")
-                    return ai_name
         
         logger.info(f"No AI name found for user {user_id[:8]}, using default: Cael")
         return "Cael"
@@ -92,7 +85,7 @@ def get_user_ai_name(user_id, firestore_client):
 def get_user_display_name(user_id, firestore_client):
     """
     Retrieve the user's display name from Firestore
-    Falls back to "friend" if not found
+    UPDATED: Match your actual Firestore structure  
     """
     try:
         if not firestore_client or not user_id:
@@ -103,21 +96,53 @@ def get_user_display_name(user_id, firestore_client):
         if user_doc.exists:
             user_data = user_doc.to_dict()
             
-            # Check various possible locations for user name
+            # Check name field directly (your structure)
             if user_data.get('name'):
                 return user_data['name'].strip()
             elif user_data.get('displayName'):
                 return user_data['displayName'].strip()
-            elif 'profile' in user_data and user_data['profile'].get('name'):
-                return user_data['profile']['name'].strip()
-            elif 'onboarding_data' in user_data and user_data['onboarding_data'].get('user_name'):
-                return user_data['onboarding_data']['user_name'].strip()
+            elif user_data.get('email'):
+                # Extract name from email if no display name
+                return user_data['email'].split('@')[0]
         
         return "friend"
         
     except Exception as e:
         logger.error(f"Error retrieving user display name: {e}")
         return "friend"
+
+def get_user_preferences(user_id, firestore_client):
+    """
+    NEW: Get full user preferences from your Firestore structure
+    """
+    try:
+        if not firestore_client or not user_id:
+            return {}
+        
+        user_doc = firestore_client.collection("users").document(user_id).get()
+        
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            
+            # Map your Firestore fields to preferences format
+            preferences = {
+                'ai_name': user_data.get('ai_name', 'Cael'),
+                'communication_style': user_data.get('communication_style', 'direct_feedback'),
+                'emotional_pacing': user_data.get('emotional_pacing', 'gentle'),
+                'effective_support': user_data.get('effective_support', []),
+                'sources_of_meaning': user_data.get('sources_of_meaning', []),
+                'isVeteran': user_data.get('isVeteran', False),
+                'language': user_data.get('language', 'en')
+            }
+            
+            logger.info(f"Retrieved preferences for user {user_id[:8]}: {preferences}")
+            return preferences
+        
+        return {}
+        
+    except Exception as e:
+        logger.error(f"Error retrieving user preferences: {e}")
+        return {}
 
 @chat_bp.route('/index', methods=['POST'])
 def chat_endpoint():
