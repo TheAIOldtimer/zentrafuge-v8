@@ -1,67 +1,111 @@
-# backend/routes/chat_routes.py - Chat Endpoints
+# backend/routes/chat_routes.py
+"""
+Chat Routes for Zentrafuge v8 - ENHANCED WITH LEARNING LOOPS
+Handles chat interactions with real-time learning and feedback capture
+"""
+
 from flask import Blueprint, request, jsonify, g
 import time
 import logging
 from typing import Dict, Any
 
-from controllers.chat_controller import ChatController
-from utils.logger import log_with_context, log_chat_interaction, log_error_with_context
-from utils.validators import validate_chat_request
-from utils.rate_limiter import rate_limit
+# Import the enhanced orchestrator
+from utils.orchestrator import (
+    orchestrate_response, 
+    process_user_feedback, 
+    capture_user_reply_signal,
+    check_orchestrator_health
+)
+
+# Import Firebase client getter
+try:
+    from firebase import get_firestore_client
+    firebase_available = True
+except ImportError:
+    try:
+        from firebase_admin import firestore
+        def get_firestore_client():
+            return firestore.client()
+        firebase_available = True
+    except ImportError:
+        firebase_available = False
+        def get_firestore_client():
+            return None
 
 # Create blueprint
 chat_bp = Blueprint('chat', __name__)
-
-# Initialize controller
-chat_controller = ChatController()
 
 # Get logger
 logger = logging.getLogger(__name__)
 
 @chat_bp.route('/index', methods=['POST'])
-@rate_limit(per_minute=20, per_hour=100)
-@log_with_context({'endpoint': 'chat'})
 def chat_endpoint():
-    """Main chat endpoint for Cael interactions"""
+    """
+    Main chat endpoint with learning integration
+    ENHANCED: Now returns learning metadata and captures signals
+    """
     start_time = time.time()
     
     try:
         # Validate request
-        data = validate_chat_request(request)
-        message = data['message']
-        user_id = data['user_id']
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        message = data.get('message', '').strip()
+        user_id = data.get('user_id', '')
+        
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
         
         # Store user_id in context for logging
         g.user_id = user_id
         
-        # Process chat message
-        response = chat_controller.process_message(
+        # Get Firestore client for learning
+        firestore_client = get_firestore_client() if firebase_available else None
+        
+        # Process chat message with learning enhancement
+        response_data = orchestrate_response(
             user_id=user_id,
-            message=message,
-            request_metadata={
-                'ip_address': request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr),
-                'user_agent': request.headers.get('User-Agent', ''),
-                'timestamp': time.time()
-            }
+            user_input=message,
+            firestore_client=firestore_client,
+            ai_name="Cael"
         )
+        
+        # Handle both old string format and new dict format
+        if isinstance(response_data, str):
+            # Legacy format - convert to new format
+            response_data = {
+                'response': response_data,
+                'signal_id': None,
+                'strategy_used': 'standard',
+                'confidence': 0.7,
+                'memory_used': False,
+                'learning_enabled': False
+            }
         
         # Calculate processing time
         duration = time.time() - start_time
         
-        # Log interaction
-        log_chat_interaction(
-            user_id=user_id,
-            message=message,
-            response=response['response'],
-            duration=duration
-        )
+        # Log the interaction
+        logger.info(f"Chat interaction completed for user {user_id[:8]} in {duration:.3f}s")
+        logger.info(f"Strategy: {response_data.get('strategy_used')}, Confidence: {response_data.get('confidence'):.2f}")
         
+        # Return enhanced response
         return jsonify({
-            'response': response['response'],
+            'response': response_data['response'],
+            'signal_id': response_data.get('signal_id'),
+            'strategy_used': response_data.get('strategy_used', 'standard'),
+            'confidence': response_data.get('confidence', 0.7),
+            'memory_used': response_data.get('memory_used', False),
+            'learning_enabled': response_data.get('learning_enabled', False),
             'metadata': {
                 'processing_time': round(duration, 3),
-                'model_used': response.get('model_used', 'gpt-4'),
-                'tokens_used': response.get('tokens_used', 0)
+                'model_used': 'gpt-4',
+                'timestamp': time.time()
             }
         })
         
@@ -70,149 +114,309 @@ def chat_endpoint():
         return jsonify({'error': 'Invalid request format'}), 400
         
     except Exception as e:
-        log_error_with_context(e, {
-            'endpoint': 'chat',
-            'user_id': getattr(g, 'user_id', 'unknown'),
-            'message_length': len(request.get_json().get('message', '')) if request.get_json() else 0
-        })
+        logger.error(f"Chat endpoint error: {str(e)}", exc_info=True)
         
         return jsonify({
             'error': 'Internal server error',
-            'message': 'I\'m having trouble processing your message right now. Please try again.'
+            'response': "I'm having trouble processing your message right now. Please try again in a moment.",
+            'signal_id': None,
+            'strategy_used': 'error',
+            'confidence': 0.5,
+            'memory_used': False,
+            'learning_enabled': False
         }), 500
 
-@chat_bp.route('/history', methods=['GET'])
-@rate_limit(per_minute=10, per_hour=50)
-@log_with_context({'endpoint': 'history'})
-def get_chat_history():
-    """Get user's chat history"""
+@chat_bp.route('/feedback', methods=['POST'])
+def feedback_endpoint():
+    """
+    Capture explicit user feedback on responses
+    NEW: Allows users to teach Cael what works and what doesn't
+    """
     try:
-        user_id = request.args.get('user_id')
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
         
-        if not user_id:
-            return jsonify({'error': 'user_id parameter required'}), 400
+        signal_id = data.get('signal_id', '').strip()
+        feedback_type = data.get('feedback_type', '').strip()
+        feedback_details = data.get('feedback_details', '').strip()
         
-        # Store user_id in context
-        g.user_id = user_id
+        if not signal_id:
+            return jsonify({'error': 'Signal ID is required'}), 400
         
-        # Get pagination parameters
-        limit = min(int(request.args.get('limit', 20)), 100)  # Max 100 messages
-        offset = int(request.args.get('offset', 0))
+        if not feedback_type:
+            return jsonify({'error': 'Feedback type is required'}), 400
         
-        # Retrieve history
-        history = chat_controller.get_chat_history(
-            user_id=user_id,
-            limit=limit,
-            offset=offset
+        # Validate feedback type
+        valid_feedback_types = ['perfect', 'helpful', 'not_quite', 'unhelpful']
+        if feedback_type not in valid_feedback_types:
+            return jsonify({'error': f'Invalid feedback type. Must be one of: {valid_feedback_types}'}), 400
+        
+        # Get Firestore client
+        firestore_client = get_firestore_client() if firebase_available else None
+        
+        # Process the feedback
+        success = process_user_feedback(
+            signal_id=signal_id,
+            feedback_type=feedback_type,
+            feedback_details=feedback_details if feedback_details else None,
+            firestore_client=firestore_client
         )
         
+        if success:
+            logger.info(f"Feedback captured: {feedback_type} for signal {signal_id}")
+            return jsonify({
+                'success': True,
+                'message': 'Feedback received - thank you for helping me learn!'
+            })
+        else:
+            logger.warning(f"Failed to capture feedback for signal {signal_id}")
+            return jsonify({
+                'success': False,
+                'message': 'Feedback received but could not be stored'
+            })
+        
+    except Exception as e:
+        logger.error(f"Feedback endpoint error: {str(e)}", exc_info=True)
         return jsonify({
-            'history': history,
-            'pagination': {
-                'limit': limit,
-                'offset': offset,
-                'total': len(history)
+            'error': 'Failed to process feedback',
+            'success': False
+        }), 500
+
+@chat_bp.route('/capture-reply', methods=['POST'])
+def capture_reply_endpoint():
+    """
+    Capture user reply signals for resonance calculation
+    NEW: Measures how well Cael's responses are landing
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        signal_id = data.get('signal_id', '').strip()
+        reply_message = data.get('reply_message', '').strip()
+        time_since_response = data.get('time_since_response', 0)
+        
+        if not signal_id:
+            return jsonify({'error': 'Signal ID is required'}), 400
+        
+        if not reply_message:
+            return jsonify({'error': 'Reply message is required'}), 400
+        
+        # Get Firestore client
+        firestore_client = get_firestore_client() if firebase_available else None
+        
+        # Capture the reply signal
+        resonance_score = capture_user_reply_signal(
+            signal_id=signal_id,
+            reply_message=reply_message,
+            time_since_response=float(time_since_response),
+            firestore_client=firestore_client
+        )
+        
+        if resonance_score is not None:
+            logger.debug(f"Reply signal captured: {resonance_score:.2f} resonance for {signal_id}")
+            return jsonify({
+                'success': True,
+                'resonance_score': round(resonance_score, 3),
+                'message': 'Reply signal captured successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Reply signal could not be processed'
+            })
+        
+    except Exception as e:
+        logger.error(f"Capture reply endpoint error: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'Failed to capture reply signal',
+            'success': False
+        }), 500
+
+@chat_bp.route('/health', methods=['GET'])
+def health_endpoint():
+    """
+    Health check endpoint with learning system status
+    ENHANCED: Includes learning system health information
+    """
+    try:
+        # Get orchestrator health
+        health_status = check_orchestrator_health()
+        
+        # Add additional health checks
+        health_status.update({
+            'firebase_available': firebase_available,
+            'routes_loaded': True,
+            'timestamp': time.time(),
+            'version': '8.0.0-learning'
+        })
+        
+        # Determine overall status
+        critical_systems = ['openai_client', 'api_key_configured']
+        all_critical_ok = all(health_status.get(system, False) for system in critical_systems)
+        
+        overall_status = 'healthy' if all_critical_ok else 'degraded'
+        
+        return jsonify({
+            'status': overall_status,
+            'systems': health_status,
+            'learning_features': {
+                'real_time_adaptation': health_status.get('realtime_learning_available', False),
+                'meta_learning': health_status.get('meta_learning_available', False),
+                'memory_engine': health_status.get('memory_engine_available', False),
+                'emotion_parsing': health_status.get('emotion_parser_available', False),
+                'user_feedback': True,
+                'adaptive_prompts': True
             }
         })
         
     except Exception as e:
-        log_error_with_context(e, {
-            'endpoint': 'history',
-            'user_id': request.args.get('user_id', 'unknown')
-        })
-        
-        return jsonify({'error': 'Failed to retrieve chat history'}), 500
+        logger.error(f"Health check error: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': time.time()
+        }), 500
 
-@chat_bp.route('/context', methods=['GET'])
-@rate_limit(per_minute=5, per_hour=25)
-@log_with_context({'endpoint': 'context'})
-def get_user_context():
-    """Get user's emotional and memory context"""
+@chat_bp.route('/learning-stats/<user_id>', methods=['GET'])
+def learning_stats_endpoint(user_id):
+    """
+    Get learning statistics for a specific user
+    NEW: Provides insights into user's interaction patterns and growth
+    """
     try:
-        user_id = request.args.get('user_id')
-        
         if not user_id:
-            return jsonify({'error': 'user_id parameter required'}), 400
+            return jsonify({'error': 'User ID is required'}), 400
         
-        g.user_id = user_id
+        # Get Firestore client
+        firestore_client = get_firestore_client() if firebase_available else None
         
-        # Get context data
-        context = chat_controller.get_user_context(user_id)
+        if not firestore_client:
+            return jsonify({
+                'error': 'Learning statistics not available - Firebase not configured',
+                'user_id': user_id,
+                'stats': {}
+            }), 503
         
-        return jsonify(context)
+        # Try to get learning engine to fetch stats
+        try:
+            from utils.realtime_learning_engine import RealtimeLearningEngine
+            learning_engine = RealtimeLearningEngine(firestore_client)
+            
+            # Get user patterns and growth data
+            patterns = learning_engine.get_user_patterns(user_id)
+            
+            # Basic stats calculation
+            stats = {
+                'user_id': user_id,
+                'total_interactions': patterns.get('interaction_count', 0),
+                'emotional_patterns': len(patterns.get('emotional_patterns', [])),
+                'learning_enabled': True,
+                'last_updated': patterns.get('generated_at'),
+                'growth_indicators': {
+                    'engagement_trend': 'stable',  # Would be calculated from actual data
+                    'emotional_stability': 'improving',
+                    'conversation_depth': 'moderate'
+                }
+            }
+            
+            return jsonify({
+                'success': True,
+                'stats': stats,
+                'patterns': patterns
+            })
+            
+        except ImportError:
+            return jsonify({
+                'error': 'Learning engine not available',
+                'user_id': user_id,
+                'stats': {}
+            }), 503
         
     except Exception as e:
-        log_error_with_context(e, {
-            'endpoint': 'context',
-            'user_id': request.args.get('user_id', 'unknown')
-        })
-        
-        return jsonify({'error': 'Failed to retrieve user context'}), 500
+        logger.error(f"Learning stats error: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'Failed to retrieve learning statistics',
+            'user_id': user_id,
+            'stats': {}
+        }), 500
 
-@chat_bp.route('/mood', methods=['POST'])
-@rate_limit(per_minute=10, per_hour=30)
-@log_with_context({'endpoint': 'mood'})
-def record_mood():
-    """Record user's current mood"""
+@chat_bp.route('/debug/prompt', methods=['POST'])
+def debug_prompt_endpoint():
+    """
+    Debug endpoint to view the generated prompt
+    Useful for testing and development
+    """
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
         
-        if not data or 'user_id' not in data or 'mood' not in data:
-            return jsonify({'error': 'user_id and mood required'}), 400
+        message = data.get('message', '').strip()
+        user_id = data.get('user_id', 'debug_user')
         
-        user_id = data['user_id']
-        mood = data['mood']
-        notes = data.get('notes', '')
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
         
-        g.user_id = user_id
+        # Get Firestore client
+        firestore_client = get_firestore_client() if firebase_available else None
         
-        # Record mood
-        result = chat_controller.record_mood(
+        # Get the debug prompt
+        from utils.orchestrator import get_debug_prompt
+        debug_prompt = get_debug_prompt(
+            user_input=message,
             user_id=user_id,
-            mood=mood,
-            notes=notes
+            firestore_client=firestore_client,
+            ai_name="Cael"
         )
         
         return jsonify({
-            'status': 'success',
-            'message': 'Mood recorded successfully',
-            'mood_id': result.get('mood_id')
-        })
-        
-    except Exception as e:
-        log_error_with_context(e, {
-            'endpoint': 'mood',
-            'user_id': data.get('user_id', 'unknown') if 'data' in locals() else 'unknown'
-        })
-        
-        return jsonify({'error': 'Failed to record mood'}), 500
-
-@chat_bp.route('/export', methods=['GET'])
-@rate_limit(per_minute=2, per_hour=5)
-@log_with_context({'endpoint': 'export'})
-def export_user_data():
-    """Export user's data (GDPR compliance)"""
-    try:
-        user_id = request.args.get('user_id')
-        
-        if not user_id:
-            return jsonify({'error': 'user_id parameter required'}), 400
-        
-        g.user_id = user_id
-        
-        # Export all user data
-        export_data = chat_controller.export_user_data(user_id)
-        
-        return jsonify({
-            'export_timestamp': time.time(),
+            'success': True,
+            'prompt': debug_prompt,
             'user_id': user_id,
-            'data': export_data
+            'message': message,
+            'timestamp': time.time()
         })
         
     except Exception as e:
-        log_error_with_context(e, {
-            'endpoint': 'export',
-            'user_id': request.args.get('user_id', 'unknown')
-        })
-        
-        return jsonify({'error': 'Failed to export user data'}), 500
+        logger.error(f"Debug prompt error: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'Failed to generate debug prompt',
+            'details': str(e)
+        }), 500
+
+# Error handlers for the blueprint
+
+@chat_bp.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'error': 'Endpoint not found',
+        'available_endpoints': [
+            'POST /index - Main chat endpoint',
+            'POST /feedback - Submit feedback on responses',
+            'POST /capture-reply - Capture reply signals',
+            'GET /health - Health check',
+            'GET /learning-stats/<user_id> - Learning statistics',
+            'POST /debug/prompt - Debug prompt generation'
+        ]
+    }), 404
+
+@chat_bp.errorhandler(429)
+def rate_limit_exceeded(error):
+    return jsonify({
+        'error': 'Rate limit exceeded',
+        'message': 'Please wait a moment before sending another message'
+    }), 429
+
+@chat_bp.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error in chat routes: {error}")
+    return jsonify({
+        'error': 'Internal server error',
+        'message': "I'm experiencing some difficulties. Please try again in a moment."
+    }), 500
+
+# Export the blueprint
+__all__ = ['chat_bp']
