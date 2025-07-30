@@ -103,7 +103,7 @@ export class AuthManager extends EventEmitter {
                     emailVerified: user.emailVerified,
                     created_at: firebase.firestore.FieldValue.serverTimestamp(),
                     last_active: firebase.firestore.FieldValue.serverTimestamp(),
-                    onboarding_complete: false
+                    onboardingcomplete: false
                 });
                 this.logger.info('User document created');
             }
@@ -281,7 +281,7 @@ export class AuthManager extends EventEmitter {
     async checkOnboardingStatus(uid) {
         try {
             const doc = await firebase.firestore().collection('users').doc(uid).get();
-            return doc.exists && doc.data().onboarding_complete === true;
+            return doc.exists && doc.data().onboardingcomplete === true;
         } catch (err) {
             this.logger.error('Failed to check onboarding status:', err);
             return false;
