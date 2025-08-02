@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zentrafuge × Cael</title>
 
-  <!-- Modular CSS (corrected paths) -->
+  <!-- Modular CSS with correct paths -->
   <link rel="stylesheet" href="css/core/reset.css" />
   <link rel="stylesheet" href="css/core/variables.css" />
   <link rel="stylesheet" href="css/core/typography.css" />
@@ -17,10 +17,24 @@
 </head>
 <body>
   <!-- Loading Screen -->
-  <div id="auth-loading" class="loading-spinner">Loading...</div>
+  <div id="auth-loading" class="loading-spinner" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 9999;
+  ">
+    <div>🔄 Loading...</div>
+  </div>
 
   <!-- Header -->
-  <header id="main-header" class="header">
+  <header id="main-header" class="header" style="display: none;">
     <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
     <div class="user-info">
       <span id="user-email"></span>
@@ -29,22 +43,23 @@
   </header>
 
   <!-- Main Chat Interface -->
-  <main class="chat-main">
+  <main class="chat-main" style="display: none;">
     <div id="chat-container" class="chat-container">
-      <div id="chat" class="chat-messages"></div>
+      <!-- Fixed: Changed from chat-messages to match JS selector -->
+      <div id="chat-container" class="chat-messages"></div>
     </div>
 
     <!-- Chat Input -->
     <div class="chat-input-container">
       <form id="chat-form" class="chat-form">
-        <input 
+        <textarea 
           id="message"
-          type="text"
           placeholder="Ask Cael something..."
           autocomplete="off"
           class="chat-input"
-        />
-        <button id="send-button" type="submit" class="button">Send</button>
+          rows="1"
+        ></textarea>
+        <button id="send-button" type="submit" class="button">➤</button>
       </form>
     </div>
   </main>
@@ -59,7 +74,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <!-- Firebase Config -->
-  <script src="js/firebase-init.js"></script>
+  <script src="firebase-init.js"></script>
 
   <!-- Emergency Mode -->
   <script>
@@ -100,29 +115,142 @@
 
   <!-- Main Chat Logic -->
   <script src="js/pages/chat.js"></script>
-  <script>
-    // Safe Firebase-auth-aware initialization
-    window.addEventListener('load', () => {
-      const waitForFirebase = () => {
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-          firebase.auth().onAuthStateChanged((user) => {
-            if (user && user.emailVerified) {
-              console.log('✅ Firebase auth confirmed, launching chat...');
-              const chat = new ZentrafugeChat();
-              chat.init();
-            } else {
-              console.warn('❌ Not signed in or email not verified, redirecting...');
-              window.location.href = 'login.html';
-            }
-          });
-        } else {
-          console.warn('⏳ Waiting for Firebase to load...');
-          setTimeout(waitForFirebase, 300);
-        }
-      };
 
-      waitForFirebase();
+  <!-- Initialization Script -->
+  <script>
+    console.log('🚀 Starting chat page initialization...');
+    
+    // Global error handler
+    window.addEventListener('error', (e) => {
+      console.error('❌ Global error:', e.error);
     });
+
+    // Wait for DOM and Firebase to be ready
+    function initializeChat() {
+      console.log('🔍 Checking Firebase availability...');
+      
+      // Check if Firebase is loaded
+      if (typeof firebase === 'undefined') {
+        console.error('❌ Firebase not loaded');
+        showError('Firebase failed to load. Please refresh the page.');
+        return;
+      }
+
+      // Check if auth is available
+      if (!firebase.auth) {
+        console.error('❌ Firebase Auth not available');
+        showError('Firebase Auth failed to load. Please refresh the page.');
+        return;
+      }
+
+      console.log('✅ Firebase is ready, setting up auth listener...');
+
+      // Set up auth state listener
+      firebase.auth().onAuthStateChanged((user) => {
+        console.log('🔐 Auth state changed:', user ? 'Logged in' : 'Not logged in');
+        
+        if (user) {
+          console.log('👤 User found:', user.email);
+          console.log('📧 Email verified:', user.emailVerified);
+          
+          if (user.emailVerified) {
+            console.log('✅ User authenticated and verified, initializing chat...');
+            hideLoading();
+            showMainInterface();
+            initializeChatInterface();
+          } else {
+            console.warn('❌ Email not verified, redirecting to login...');
+            showError('Please verify your email before accessing the chat.');
+            setTimeout(() => {
+              window.location.href = 'login.html';
+            }, 2000);
+          }
+        } else {
+          console.log('❌ No user found, redirecting to login...');
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 1000);
+        }
+      });
+    }
+
+    function initializeChatInterface() {
+      try {
+        console.log('🚀 Initializing ZentrafugeChat...');
+        
+        // Check if class exists
+        if (typeof ZentrafugeChat === 'undefined') {
+          throw new Error('ZentrafugeChat class not found');
+        }
+        
+        const chat = new ZentrafugeChat();
+        const success = chat.init();
+        
+        if (success) {
+          console.log('✅ Chat initialized successfully');
+          setupSignOut();
+          updateUserInfo();
+        } else {
+          throw new Error('Chat initialization failed');
+        }
+      } catch (error) {
+        console.error('❌ Error initializing chat:', error);
+        showError('Failed to initialize chat. Please refresh the page.');
+      }
+    }
+
+    function hideLoading() {
+      const loadingDiv = document.getElementById('auth-loading');
+      if (loadingDiv) {
+        loadingDiv.style.display = 'none';
+      }
+    }
+
+    function showMainInterface() {
+      const header = document.getElementById('main-header');
+      const main = document.querySelector('.chat-main');
+      
+      if (header) header.style.display = 'block';
+      if (main) main.style.display = 'block';
+    }
+
+    function setupSignOut() {
+      const signOutBtn = document.getElementById('sign-out-btn');
+      if (signOutBtn) {
+        signOutBtn.addEventListener('click', () => {
+          console.log('🚪 Signing out...');
+          firebase.auth().signOut().then(() => {
+            window.location.href = 'login.html';
+          }).catch((error) => {
+            console.error('❌ Sign out error:', error);
+          });
+        });
+      }
+    }
+
+    function updateUserInfo() {
+      const user = firebase.auth().currentUser;
+      const userEmailSpan = document.getElementById('user-email');
+      
+      if (user && userEmailSpan) {
+        userEmailSpan.textContent = user.email;
+      }
+    }
+
+    function showError(message) {
+      const loadingDiv = document.getElementById('auth-loading');
+      if (loadingDiv) {
+        loadingDiv.innerHTML = `<div style="color: #ff6b6b;">❌ ${message}</div>`;
+      }
+      console.error('🚨 Error:', message);
+    }
+
+    // Start initialization when DOM is loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeChat);
+    } else {
+      initializeChat();
+    }
   </script>
 </body>
 </html>
