@@ -1,1 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zentrafuge × Cael</title>
 
+  <!-- Modular CSS (corrected paths) -->
+  <link rel="stylesheet" href="/frontend/css/core/reset.css" />
+  <link rel="stylesheet" href="/frontend/css/core/variables.css" />
+  <link rel="stylesheet" href="/frontend/css/core/typography.css" />
+  <link rel="stylesheet" href="/frontend/css/components/buttons.css" />
+  <link rel="stylesheet" href="/frontend/css/components/forms.css" />
+  <link rel="stylesheet" href="/frontend/css/components/messages.css" />
+  <link rel="stylesheet" href="/frontend/css/components/loading.css" />
+  <link rel="stylesheet" href="/frontend/css/pages/chat.css" />
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="auth-loading" class="loading-spinner">Loading...</div>
+
+  <!-- Header -->
+  <header id="main-header" class="header">
+    <img src="/frontend/assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
+    <div class="user-info">
+      <span id="user-email"></span>
+      <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Main Chat Interface -->
+  <main class="chat-main">
+    <div id="chat-container" class="chat-container">
+      <div id="chat" class="chat-messages"></div>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input-container">
+      <form id="chat-form" class="chat-form">
+        <input 
+          id="message"
+          type="text"
+          placeholder="Ask Cael something..."
+          autocomplete="off"
+          class="chat-input"
+        />
+        <button id="send-button" type="submit" class="button">Send</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Status Messages -->
+  <div id="error-message" class="message error-message" style="display: none;"></div>
+  <div id="success-message" class="message success-message" style="display: none;"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase Configuration -->
+  <script src="/frontend/firebase-init.js"></script>
+
+  <!-- Emergency Mode (offline fallback) -->
+  <script>
+    class EmergencyCompanion {
+      constructor() {
+        this.isEmergencyMode = false;
+        this.checkEmergencyMode();
+      }
+
+      checkEmergencyMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        this.isEmergencyMode = urlParams.get('emergency') === 'true' || 
+                               urlParams.get('offline') === 'true';
+
+        if (this.isEmergencyMode) {
+          this.activateEmergencyMode();
+        }
+      }
+
+      activateEmergencyMode() {
+        console.log('🚨 Emergency mode activated');
+        this.showEmergencyIndicator();
+      }
+
+      showEmergencyIndicator() {
+        const indicator = document.createElement('div');
+        indicator.style.cssText = `
+          position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+          background: #ff6b6b; color: white; padding: 12px; text-align: center;
+        `;
+        indicator.innerHTML = '🛡️ Emergency Mode Active - Your companion is available offline';
+        document.body.insertBefore(indicator, document.body.firstChild);
+      }
+    }
+
+    window.emergencyCompanion = new EmergencyCompanion();
+  </script>
+
+  <!-- Main Chat Logic -->
+  <script src="/frontend/js/pages/chat.js"></script>
+</body>
+</html>
