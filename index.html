@@ -4,15 +4,179 @@
   <meta charset="UTF-8" />
   <title data-translate="page_title">Zentrafuge × Cael</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="assets/Zentrafuge-WIDE-Logo-Transparent.png" />
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/pages/login.css" />
+  <link rel="icon" href="Zentrafuge-WIDE-Logo-Transparent.png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7faff;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .top-language-bar {
+      width: 100%;
+      background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
+      color: white;
+      padding: 0.8rem 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .language-dropdown-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .language-dropdown {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 140px;
+    }
+    .language-dropdown:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .language-options-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    .language-options-dropdown.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+    .language-option-dropdown {
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: #333;
+    }
+    .language-option-dropdown:hover {
+      background: #f8f9ff;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+    header img {
+      max-width: 260px;
+    }
+    .login-box {
+      background: white;
+      padding: 2rem;
+      margin: 2rem auto 1rem;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .login-box input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .login-box input:focus {
+      outline: none;
+      border-color: #0055aa;
+      box-shadow: 0 0 0 2px rgba(0, 85, 170, 0.1);
+    }
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background-color: #003366;
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: #0055aa;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .error-message, .success-message {
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+    }
+    .about {
+      background: white;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 1rem auto 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: auto;
+    }
+    .translating {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
-  <!-- Language Selection Bar -->
   <div class="top-language-bar">
     <div class="language-dropdown-container">
-      <div class="language-dropdown">
+      <div class="language-dropdown" onclick="toggleLanguageDropdown()">
         <span id="selected-flag">🇬🇧</span>
         <span id="selected-language" data-translate="language_english">English</span>
         <span>▼</span>
@@ -20,484 +184,220 @@
       <div class="language-options-dropdown" id="language-dropdown"></div>
     </div>
   </div>
-  
-  <!-- Header -->
+
   <header>
-    <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
+    <img src="Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" />
   </header>
   
-  <!-- Login Form -->
   <div class="login-box">
-    <div id="error-message" class="error-message" role="alert" aria-live="polite"></div>
-    <div id="success-message" class="success-message" role="alert" aria-live="polite"></div>
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
     
-    <form id="login-form" class="login-form" novalidate>
-      <input 
-        type="email" 
-        id="login-email" 
-        data-translate-placeholder="email" 
-        placeholder="Email" 
-        required 
-        autocomplete="email"
-        aria-label="Email address"
-      />
-      <input 
-        type="password" 
-        id="login-password" 
-        data-translate-placeholder="password" 
-        placeholder="Password" 
-        required 
-        autocomplete="current-password"
-        aria-label="Password"
-      />
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        id="login-button" 
-        data-translate="sign_in"
-      >
-        Log In
-      </button>
-    </form>
-    
-    <!-- Additional Links -->
-    <div class="form-links">
-      <p>
-        <span data-translate="no_account">Don't have an account?</span> 
-        <a href="register.html" data-translate="sign_up">Sign up</a>
-      </p>
-      <p>
-        <a href="support.html" data-translate="need_help">Need help?</a>
-      </p>
-    </div>
+    <input type="email" id="login-email" data-translate-placeholder="email" placeholder="Email" required />
+    <input type="password" id="login-password" data-translate-placeholder="password" placeholder="Password" required />
+    <button class="btn btn-primary" onclick="emailLogin()" id="login-button" data-translate="sign_in">Log In</button>
   </div>
   
-  <!-- About Section -->
   <div class="about">
     <h2 data-translate="about_title">What is Zentrafuge?</h2>
-    <p data-translate="about_description">
-      Zentrafuge is a warm, emotionally intelligent AI companion named Cael. 
-      Built for meaning-seekers, creators in recovery, and neurodivergent adults 
-      craving calm structure, it's your safe space to reflect, reconnect, and 
-      remember who you are. 🌀
-    </p>
+    <p data-translate="about_description">Zentrafuge is a warm, emotionally intelligent AI companion named Cael. Built for meaning-seekers, creators in recovery, and neurodivergent adults craving calm structure, it's your safe space to reflect, reconnect, and remember who you are. 🌀</p>
   </div>
   
-  <!-- Footer -->
-  <footer data-translate="footer_text">
-    © 2025 Zentrafuge. All rights reserved.
-  </footer>
+  <footer data-translate="footer_text">© 2025 Zentrafuge. All rights reserved.</footer>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  
-  <!-- Firebase Configuration -->
-  <script src="firebase-init.js"></script>
-  
-  <!-- UNBREAKABLE AUTHENTICATION FIX -->
-  <script>
-  // EMERGENCY QUICK FIX - CORRECTED VERSION
-  (function() {
-    console.log('🛡️ QUICK FIX: Loading unbreakable authentication...');
 
-    // Wait for Firebase to be ready
-    function waitForFirebase(callback) {
-      if (typeof firebase !== 'undefined' && firebase.auth) {
-        callback();
-      } else {
-        setTimeout(() => waitForFirebase(callback), 100);
+  <!-- Firebase Configuration -->
+  <script src="firebases-init.js"></script>
+
+  <!-- Translation Manager -->
+  <script type="module">
+    import { translationManager } from './js/modules/translation-manager.js';
+
+    // Initialize translation system
+    let currentTranslationManager = null;
+
+    async function initTranslation() {
+      try {
+        currentTranslationManager = translationManager;
+        await currentTranslationManager.preloadTranslations();
+        await populateLanguageDropdown();
+        await currentTranslationManager.updatePageLanguage();
+        console.log('✅ Translation system initialized');
+      } catch (error) {
+        console.error('❌ Translation initialization failed:', error);
       }
     }
 
-    // Fix 1: Prevent multiple auth listeners
-    let authListenerActive = false;
-    
-    function initializeAuthFixes() {
-      const originalOnAuthStateChanged = firebase.auth().onAuthStateChanged;
-      
-      firebase.auth().onAuthStateChanged = function(callback) {
-        if (authListenerActive) {
-          console.warn('⚠️ Preventing duplicate auth listener');
-          return () => {}; // Return dummy unsubscribe
-        }
-        authListenerActive = true;
-        return originalOnAuthStateChanged.call(this, callback);
+    async function populateLanguageDropdown() {
+      const dropdown = document.getElementById('language-dropdown');
+      const languages = currentTranslationManager.getSupportedLanguages();
+      const currentLang = currentTranslationManager.getCurrentLanguage();
+
+      // Language flags mapping
+      const flags = {
+        'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 
+        'it': '🇮🇹', 'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳', 
+        'ru': '🇷🇺', 'nl': '🇳🇱'
       };
+
+      // Update selected language display
+      const selectedFlag = document.getElementById('selected-flag');
+      const selectedLanguage = document.getElementById('selected-language');
+      const currentLangData = languages.find(lang => lang.code === currentLang);
+      
+      if (currentLangData) {
+        selectedFlag.textContent = flags[currentLang] || '🌍';
+        selectedLanguage.textContent = currentLangData.nativeName;
+      }
+
+      // Populate dropdown
+      dropdown.innerHTML = languages.map(lang => `
+        <div class="language-option-dropdown" onclick="changeLanguage('${lang.code}')">
+          <span>${flags[lang.code] || '🌍'}</span>
+          <span>${lang.nativeName}</span>
+        </div>
+      `).join('');
     }
 
-    // Fix 2: Enhanced showAlert function (works with your existing elements)
-    window.showAlert = function(message, type = 'info') {
-      console.log(`📢 Alert [${type}]:`, message);
-      
-      const errorElement = document.getElementById('error-message');
-      const successElement = document.getElementById('success-message');
-      
-      // Hide both first
-      if (errorElement) errorElement.style.display = 'none';
-      if (successElement) successElement.style.display = 'none';
-      
-      // Show the appropriate one
-      if (type === 'error' && errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-        setTimeout(() => errorElement.style.display = 'none', 8000);
-      } else if ((type === 'success' || type === 'info') && successElement) {
-        successElement.textContent = message;
-        successElement.style.display = 'block';
-        setTimeout(() => successElement.style.display = 'none', 8000);
-      } else if (type === 'warning' && errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-        setTimeout(() => errorElement.style.display = 'none', 8000);
-      } else {
-        // Fallback: create alert if elements don't exist
-        const fallbackAlert = document.createElement('div');
-        fallbackAlert.textContent = message;
-        fallbackAlert.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 10000;
-          padding: 15px;
-          border-radius: 4px;
-          color: white;
-          background: ${type === 'error' ? '#f44336' : 
-                     type === 'warning' ? '#ff9800' : 
-                     type === 'success' ? '#4caf50' : '#2196f3'};
-          max-width: 300px;
-        `;
-        document.body.appendChild(fallbackAlert);
-        
-        setTimeout(() => {
-          if (document.body.contains(fallbackAlert)) {
-            document.body.removeChild(fallbackAlert);
-          }
-        }, 8000);
+    // Make functions global
+    window.changeLanguage = async function(languageCode) {
+      try {
+        document.body.classList.add('translating');
+        await currentTranslationManager.setLanguage(languageCode);
+        await populateLanguageDropdown();
+        toggleLanguageDropdown(); // Close dropdown
+      } catch (error) {
+        console.error('Error changing language:', error);
+      } finally {
+        document.body.classList.remove('translating');
       }
     };
 
-    // Fix 3: Error message helper
-    function getErrorMessage(errorCode) {
-      switch (errorCode) {
-        case 'auth/user-not-found':
-          return 'No account found with this email address.';
-        case 'auth/wrong-password':
-          return 'Incorrect password. Please try again.';
-        case 'auth/invalid-email':
-          return 'Please enter a valid email address.';
-        case 'auth/user-disabled':
-          return 'This account has been disabled.';
-        case 'auth/too-many-requests':
-          return 'Too many failed attempts. Please try again later.';
-        case 'auth/network-request-failed':
-          return 'Network error. Please check your connection.';
-        default:
-          return `Login failed: ${errorCode}`;
+    window.toggleLanguageDropdown = function() {
+      const dropdown = document.getElementById('language-dropdown');
+      dropdown.classList.toggle('open');
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', initTranslation);
+  </script>
+
+  <!-- WORKING AUTHENTICATION -->
+  <script>
+    console.log('🔥 Login page initialized');
+
+    function showAlert(message, type = 'error') {
+      const alertElement = document.getElementById(type === 'error' ? 'error-message' : 'success-message');
+      const otherAlert = document.getElementById(type === 'error' ? 'success-message' : 'error-message');
+      otherAlert.style.display = 'none';
+      alertElement.textContent = message;
+      alertElement.style.display = 'block';
+      setTimeout(() => {
+        alertElement.style.display = 'none';
+      }, 5000);
+    }
+
+    async function checkUserAuthorization(user) {
+      try {
+        if (!user) {
+          throw new Error('No user provided');
+        }
+        
+        // Bypass for your test account
+        if (user.email === 'buyartbyant@gmail.com') {
+          console.log('✅ Bypassing authorization for test account');
+          return true;
+        }
+        
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+          throw new Error('User document not found');
+        }
+        
+        const userData = userDoc.data();
+        if (!userData.emailVerified || !userData.onboardingComplete) {
+          throw new Error('Authorization requirements not met');
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Authorization failed:', error.message);
+        return false;
       }
     }
 
-    // Fix 4: Enhanced form submission
-    function setupFormHandler() {
-      const form = document.getElementById('login-form');
-      const emailInput = document.getElementById('login-email');
-      const passwordInput = document.getElementById('login-password');
-      const loginButton = document.getElementById('login-button');
-
-      if (!form || !emailInput || !passwordInput || !loginButton) {
-        console.warn('⚠️ Login form elements not found');
+    async function emailLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const loginBtn = document.getElementById('login-button');
+      
+      if (!email || !password) {
+        showAlert('Please enter both email and password', 'error');
         return;
       }
+      
+      try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
+        console.log('🔄 Attempting login for:', email);
 
-      form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
         
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        
-        if (!email || !password) {
-          showAlert('Please enter both email and password', 'error');
+        if (!user.emailVerified) {
+          showAlert('Please verify your email before logging in.', 'error');
+          await firebase.auth().signOut();
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Log In';
           return;
         }
+
+        const isAuthorized = await checkUserAuthorization(user);
+        if (!isAuthorized) {
+          showAlert('Please complete onboarding before logging in.', 'error');
+          await firebase.auth().signOut();
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Log In';
+          return;
+        }
+
+        showAlert('Welcome back! Redirecting...', 'success');
         
-        try {
-          loginButton.disabled = true;
-          loginButton.textContent = 'Signing in...';
-          console.log('🔄 Attempting login for:', email);
+        setTimeout(() => {
+          console.log('✅ Login successful, redirecting to chat');
+          window.location.href = 'chat.html';
+        }, 1500);
+        
+      } catch (error) {
+        console.error('❌ Login error:', error);
+        showAlert('Login failed: ' + error.message, 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Log In';
+      }
+    }
 
-          const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-          const user = userCredential.user;
-          
-          // CRITICAL: Don't block for unverified email
-          if (!user.emailVerified) {
-            console.log('⚠️ Email unverified - allowing access with notice');
-            showAlert('Email not verified - you can still chat! Please check your email when convenient.', 'warning');
-          }
-
-          // Create user document if missing (don't block access)
-          try {
-            const db = firebase.firestore();
-            const userDoc = await db.collection("users").doc(user.uid).get();
-            
-            if (!userDoc.exists) {
-              console.log('📝 Creating missing user document...');
-              await db.collection("users").doc(user.uid).set({
-                email: user.email,
-                displayName: user.displayName || 'User',
-                created_at: firebase.firestore.FieldValue.serverTimestamp(),
-                emailVerified: user.emailVerified,
-                onboardingComplete: true, // Auto-complete to avoid blocking
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                aiName: 'Cael',
-                emergencyAccess: true
-              }, { merge: true });
-            } else {
-              // Update existing document to ensure access
-              await db.collection("users").doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                onboardingComplete: true, // Ensure this is set
-                emergencyAccess: true
-              });
-            }
-          } catch (firestoreError) {
-            console.log('⚠️ Firestore error, but allowing access anyway:', firestoreError);
-          }
-
-          showAlert('Welcome back! Connecting to your companion...', 'success');
-          setTimeout(() => {
-            window.location.href = 'chat.html';
-          }, 1000);
-
-        } catch (error) {
-          console.error('❌ Login failed:', error);
-          
-          // Emergency fallback for login errors
-          if (error.code === 'auth/network-request-failed') {
-            showAlert('Connection issue detected. Activating offline mode...', 'warning');
-            setTimeout(() => {
-              window.location.href = 'chat.html?offline=true';
-            }, 2000);
-          } else {
-            showAlert(getErrorMessage(error.code), 'error');
-            
-            // If login completely fails, offer emergency access
-            setTimeout(() => {
-              showEmergencyOptions();
-            }, 3000);
-          }
-          
-        } finally {
-          loginButton.disabled = false;
-          loginButton.textContent = 'Log In';
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          emailLogin();
         }
       });
-    }
+    });
 
-    // Fix 5: Add emergency access options
-    function addEmergencyAccess() {
-      const loginForm = document.querySelector('.login-form');
-      if (!loginForm || document.getElementById('emergency-access')) {
-        return; // Already added or form not found
-      }
-
-      // Anonymous login button
-      const anonymousBtn = document.createElement('button');
-      anonymousBtn.id = 'anonymous-login';
-      anonymousBtn.type = 'button';
-      anonymousBtn.className = 'anonymous-btn';
-      anonymousBtn.innerHTML = '👤 Chat Anonymously (No Account Needed)';
-      anonymousBtn.onclick = async function() {
-        this.disabled = true;
-        this.textContent = 'Connecting...';
-        
-        try {
-          console.log('🔄 Starting anonymous session...');
-          const userCredential = await firebase.auth().signInAnonymously();
-          
-          if (userCredential.user) {
-            showAlert('Connected! Your conversations will be saved locally.', 'success');
-            setTimeout(() => {
-              window.location.href = 'chat.html?anonymous=true';
-            }, 1000);
-          }
-        } catch (error) {
-          console.error('❌ Anonymous login failed:', error);
-          showAlert('Anonymous access failed. Trying offline mode...', 'warning');
-          setTimeout(() => {
-            window.location.href = 'chat.html?offline=true';
-          }, 2000);
-        } finally {
-          this.disabled = false;
-          this.textContent = '👤 Chat Anonymously (No Account Needed)';
-        }
-      };
-
-      // Emergency access button
-      const emergencyBtn = document.createElement('button');
-      emergencyBtn.id = 'emergency-access';
-      emergencyBtn.type = 'button';
-      emergencyBtn.className = 'emergency-btn';
-      emergencyBtn.innerHTML = '🚨 Emergency Access (If Login Fails)';
-      emergencyBtn.onclick = function() {
-        console.log('🚨 Emergency access activated');
-        showAlert('Activating emergency access...', 'info');
-        setTimeout(() => {
-          window.location.href = 'chat.html?emergency=true';
-        }, 1000);
-      };
-      
-      loginForm.appendChild(anonymousBtn);
-      loginForm.appendChild(emergencyBtn);
-      
-      // Add button styles
-      const style = document.createElement('style');
-      style.textContent = `
-        .anonymous-btn, .emergency-btn {
-          width: 100%;
-          padding: 12px;
-          margin-top: 15px;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          cursor: pointer;
-        }
-        .anonymous-btn {
-          background: #2196F3;
-        }
-        .anonymous-btn:hover {
-          background: #1976D2;
-        }
-        .emergency-btn {
-          background: #ff6b6b;
-          opacity: 0.8;
-        }
-        .emergency-btn:hover {
-          opacity: 1;
-          background: #ff5252;
-        }
-        .anonymous-btn:disabled, .emergency-btn:disabled {
-          background: #ccc;
-          cursor: not-allowed;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    // Fix 6: Show emergency options when login fails
-    function showEmergencyOptions() {
-      if (document.getElementById('emergency-options')) return; // Already shown
-      
-      const emergencyDiv = document.createElement('div');
-      emergencyDiv.id = 'emergency-options';
-      emergencyDiv.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10000;
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        max-width: 400px;
-        text-align: center;
-      `;
-      
-      emergencyDiv.innerHTML = `
-        <h3 style="color: #333; margin-bottom: 20px;">🛡️ Emergency Access Available</h3>
-        <p style="color: #666; margin-bottom: 25px;">Having trouble logging in? You can still access your companion:</p>
-        <button onclick="window.location.href='chat.html?anonymous=true'" style="
-          width: 100%; 
-          padding: 12px; 
-          margin-bottom: 10px; 
-          background: #2196F3; 
-          color: white; 
-          border: none; 
-          border-radius: 6px; 
-          cursor: pointer;
-        ">👤 Continue Anonymously</button>
-        <button onclick="window.location.href='chat.html?offline=true'" style="
-          width: 100%; 
-          padding: 12px; 
-          margin-bottom: 20px; 
-          background: #ff6b6b; 
-          color: white; 
-          border: none; 
-          border-radius: 6px; 
-          cursor: pointer;
-        ">🚨 Offline Emergency Mode</button>
-        <button onclick="this.parentElement.remove()" style="
-          background: none; 
-          border: 1px solid #ccc; 
-          padding: 8px 16px; 
-          border-radius: 4px; 
-          cursor: pointer;
-        ">Try Login Again</button>
-      `;
-      
-      document.body.appendChild(emergencyDiv);
-    }
-
-    // Fix 7: Global error handling
-    window.addEventListener('error', function(event) {
-      console.error('🚨 Global error caught:', event.error);
-      
-      // If it's a Firebase error, activate fallback
-      if (event.error && event.error.message && event.error.message.includes('Firebase')) {
-        console.log('🔄 Firebase error detected, activating fallback...');
-        showAlert('System issue detected. Emergency access available.', 'warning');
-        setTimeout(showEmergencyOptions, 2000);
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.language-dropdown-container')) {
+        document.getElementById('language-dropdown').classList.remove('open');
       }
     });
 
-    // Fix 8: Initialize everything
-    function initializeQuickFix() {
-      console.log('🛡️ QUICK FIX: Initializing unbreakable authentication...');
-      
-      initializeAuthFixes();
-      setupFormHandler();
-      addEmergencyAccess();
-      
-      console.log('✅ QUICK FIX: All systems activated!');
-      
-      // Show ready indicator
-      setTimeout(() => {
-        const indicator = document.createElement('div');
-        indicator.style.cssText = `
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          background: #4CAF50;
-          color: white;
-          padding: 8px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          z-index: 9999;
-          opacity: 0.8;
-        `;
-        indicator.textContent = '🛡️ Unbreakable Mode Active';
-        document.body.appendChild(indicator);
-        
-        // Remove after 5 seconds
-        setTimeout(() => {
-          if (document.body.contains(indicator)) {
-            document.body.removeChild(indicator);
-          }
-        }, 5000);
-      }, 2000);
-    }
-
-    // Wait for Firebase then initialize
-    waitForFirebase(initializeQuickFix);
-
-    console.log('🛡️ QUICK FIX: Loaded successfully - users will never lose access again!');
-
-  })();
+    console.log('✅ All authentication functions loaded');
   </script>
-  
-  <!-- Login Page Logic (your original) -->
-  <script type="module" src="js/pages/login.js"></script>
 </body>
 </html>
