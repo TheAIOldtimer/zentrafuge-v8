@@ -1,62 +1,57 @@
 [build]
-  publish = "."
-  command = ""
-
-[[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
+  publish = "."  # Root directory, so it includes root-level index.html
 
 [[redirects]]
   from = "/chat.html"
-  to = "/chat.html"
+  to = "/frontend/chat.html"
   status = 200
 
 [[redirects]]
   from = "/login.html"
-  to = "/login.html"
+  to = "/frontend/login.html"
   status = 200
 
 [[redirects]]
   from = "/register.html"
-  to = "/register.html"
+  to = "/frontend/register.html"
   status = 200
 
 [[redirects]]
-  from = "/pages/faq.html"
-  to = "/pages/faq.html"
+  from = "/faq.html"
+  to = "/frontend/pages/faq.html"
   status = 200
 
 [[redirects]]
-  from = "/pages/support.html"
-  to = "/pages/support.html"
+  from = "/support.html"
+  to = "/frontend/pages/support.html"
   status = 200
 
 [[redirects]]
   from = "/js/*"
-  to = "/js/:splat"
+  to = "/frontend/js/:splat"
   status = 200
 
 [[redirects]]
   from = "/css/*"
-  to = "/css/:splat"
+  to = "/frontend/css/:splat"
   status = 200
 
 [[redirects]]
   from = "/assets/*"
-  to = "/assets/:splat"
+  to = "/frontend/assets/:splat"
   status = 200
 
 [[redirects]]
   from = "/translations/*"
-  to = "/translations/:splat"
+  to = "/frontend/translations/:splat"
   status = 200
 
 [[redirects]]
   from = "/firebase-init.js"
-  to = "/firebase-init.js"
+  to = "/frontend/firebase-init.js"
   status = 200
 
+# Catch-all fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
