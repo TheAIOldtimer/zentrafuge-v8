@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zentrafuge × Cael</title>
-  
-  <!-- Modular CSS -->
-  <link rel="stylesheet" href="css/core/reset.css">
-  <link rel="stylesheet" href="css/core/variables.css">
-  <link rel="stylesheet" href="css/core/typography.css">
-  <link rel="stylesheet" href="css/components/buttons.css">
-  <link rel="stylesheet" href="css/components/forms.css">
-  <link rel="stylesheet" href="css/components/messages.css">
-  <link rel="stylesheet" href="css/components/loading.css">
-  <link rel="stylesheet" href="css/pages/chat.css">
+
+  <!-- Modular CSS (with frontend prefix) -->
+  <link rel="stylesheet" href="frontend/css/core/reset.css" />
+  <link rel="stylesheet" href="frontend/css/core/variables.css" />
+  <link rel="stylesheet" href="frontend/css/core/typography.css" />
+  <link rel="stylesheet" href="frontend/css/components/buttons.css" />
+  <link rel="stylesheet" href="frontend/css/components/forms.css" />
+  <link rel="stylesheet" href="frontend/css/components/messages.css" />
+  <link rel="stylesheet" href="frontend/css/components/loading.css" />
+  <link rel="stylesheet" href="frontend/css/pages/chat.css" />
 </head>
 <body>
   <!-- Loading Screen -->
   <div id="auth-loading" class="loading-spinner">Loading...</div>
-  
+
   <!-- Header -->
   <header id="main-header" class="header">
-    <img src="assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo">
+    <img src="frontend/assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
     <div class="user-info">
       <span id="user-email"></span>
       <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
@@ -30,21 +30,20 @@
 
   <!-- Main Chat Interface -->
   <main class="chat-main">
-    <!-- Messages Container - THIS IS THE KEY ELEMENT YOUR JS NEEDS -->
     <div id="chat-container" class="chat-container">
       <div id="chat" class="chat-messages"></div>
     </div>
-    
+
     <!-- Chat Input -->
     <div class="chat-input-container">
       <form id="chat-form" class="chat-form">
         <input 
-          id="message" 
-          type="text" 
-          placeholder="Ask Cael something..." 
-          autocomplete="off" 
+          id="message"
+          type="text"
+          placeholder="Ask Cael something..."
+          autocomplete="off"
           class="chat-input"
-        >
+        />
         <button id="send-button" type="submit" class="button">Send</button>
       </form>
     </div>
@@ -60,11 +59,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <!-- Firebase Configuration -->
-  <script src="firebase-init.js"></script>
+  <script src="frontend/firebase-init.js"></script>
 
-  <!-- Emergency Companion System -->
+  <!-- Emergency Mode (offline fallback) -->
   <script>
-    // Only the essential emergency system - not the full chat logic
     class EmergencyCompanion {
       constructor() {
         this.isEmergencyMode = false;
@@ -74,8 +72,8 @@
       checkEmergencyMode() {
         const urlParams = new URLSearchParams(window.location.search);
         this.isEmergencyMode = urlParams.get('emergency') === 'true' || 
-                              urlParams.get('offline') === 'true';
-        
+                               urlParams.get('offline') === 'true';
+
         if (this.isEmergencyMode) {
           this.activateEmergencyMode();
         }
@@ -100,7 +98,7 @@
     window.emergencyCompanion = new EmergencyCompanion();
   </script>
 
-  <!-- Your Existing Chat Logic -->
-  <script src="js/pages/chat.js"></script>
+  <!-- Main Chat Logic -->
+  <script src="frontend/js/pages/chat.js"></script>
 </body>
 </html>
