@@ -29,6 +29,9 @@ except Exception as e:
     print(f"❌ Firebase initialization failed: {e}")
     print("⚠️  Continuing without Firebase - some features may be limited")
 
+import sys
+sys.path.append('backend')
+
 # Import only existing route modules AFTER Firebase initialization
 try:
     from routes.chat_routes import chat_bp
