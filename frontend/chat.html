@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zentrafuge × Cael</title>
 
-  <!-- Modular CSS (with frontend prefix) -->
-  <link rel="stylesheet" href="frontend/css/core/reset.css" />
-  <link rel="stylesheet" href="frontend/css/core/variables.css" />
-  <link rel="stylesheet" href="frontend/css/core/typography.css" />
-  <link rel="stylesheet" href="frontend/css/components/buttons.css" />
-  <link rel="stylesheet" href="frontend/css/components/forms.css" />
-  <link rel="stylesheet" href="frontend/css/components/messages.css" />
-  <link rel="stylesheet" href="frontend/css/components/loading.css" />
-  <link rel="stylesheet" href="frontend/css/pages/chat.css" />
+  <!-- Modular CSS (corrected paths) -->
+  <link rel="stylesheet" href="/frontend/css/core/reset.css" />
+  <link rel="stylesheet" href="/frontend/css/core/variables.css" />
+  <link rel="stylesheet" href="/frontend/css/core/typography.css" />
+  <link rel="stylesheet" href="/frontend/css/components/buttons.css" />
+  <link rel="stylesheet" href="/frontend/css/components/forms.css" />
+  <link rel="stylesheet" href="/frontend/css/components/messages.css" />
+  <link rel="stylesheet" href="/frontend/css/components/loading.css" />
+  <link rel="stylesheet" href="/frontend/css/pages/chat.css" />
 </head>
 <body>
   <!-- Loading Screen -->
@@ -21,7 +21,7 @@
 
   <!-- Header -->
   <header id="main-header" class="header">
-    <img src="frontend/assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
+    <img src="/frontend/assets/Zentrafuge-WIDE-Logo-Transparent.png" alt="Zentrafuge Logo" class="logo" />
     <div class="user-info">
       <span id="user-email"></span>
       <button id="sign-out-btn" class="sign-out-btn">Sign Out</button>
@@ -59,7 +59,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <!-- Firebase Configuration -->
-  <script src="frontend/firebase-init.js"></script>
+  <script src="/frontend/firebase-init.js"></script>
 
   <!-- Emergency Mode (offline fallback) -->
   <script>
@@ -99,6 +99,6 @@
   </script>
 
   <!-- Main Chat Logic -->
-  <script src="frontend/js/pages/chat.js"></script>
+  <script src="/frontend/js/pages/chat.js"></script>
 </body>
 </html>
