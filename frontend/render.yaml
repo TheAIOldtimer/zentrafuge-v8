@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: zentrafuge-v8-backend
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app -b 0.0.0.0:$PORT
-    plan: free
-
