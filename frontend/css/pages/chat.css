@@ -17,3 +17,119 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Add to css/pages/chat.css */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.logo {
+  height: 40px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sign-out-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-main {
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-input-container {
+  padding: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+}
+
+.message {
+  margin-bottom: 1rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.message.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message-content {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 80%;
+}
+
+.user-message .message-content {
+  background: #007bff;
+  color: white;
+  margin-left: auto;
+}
+
+.cael-message .message-content {
+  background: #f8f9fa;
+  color: #333;
+}
+
+.message-timestamp {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+.typing-indicator .typing-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.typing-indicator .typing-dots span {
+  width: 4px;
+  height: 4px;
+  background: #666;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator .typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator .typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
