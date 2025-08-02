@@ -58,7 +58,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Firebase Configuration -->
+  <!-- Firebase Config -->
   <script src="js/firebase-init.js"></script>
 
   <!-- Emergency Mode -->
@@ -100,5 +100,29 @@
 
   <!-- Main Chat Logic -->
   <script src="js/pages/chat.js"></script>
+  <script>
+    // Safe Firebase-auth-aware initialization
+    window.addEventListener('load', () => {
+      const waitForFirebase = () => {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user && user.emailVerified) {
+              console.log('✅ Firebase auth confirmed, launching chat...');
+              const chat = new ZentrafugeChat();
+              chat.init();
+            } else {
+              console.warn('❌ Not signed in or email not verified, redirecting...');
+              window.location.href = 'login.html';
+            }
+          });
+        } else {
+          console.warn('⏳ Waiting for Firebase to load...');
+          setTimeout(waitForFirebase, 300);
+        }
+      };
+
+      waitForFirebase();
+    });
+  </script>
 </body>
 </html>
