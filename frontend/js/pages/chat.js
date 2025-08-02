@@ -1,8 +1,8 @@
-// frontend/js/pages/chat.js - FIXED TO SEND AI NAME AND USER PREFERENCES
+// frontend/js/pages/chat.js - FIXED FOR PROPER INITIALIZATION
 
 class ZentrafugeChat {
     constructor() {
-        this.backend_url = 'https://zentrafuge-v8-backend.render.com'; // Updated URL
+        this.backend_url = 'https://zentrafuge-v8-backend.render.com';
         this.messageInput = null;
         this.sendButton = null;
         this.chatContainer = null;
@@ -11,79 +11,68 @@ class ZentrafugeChat {
         this.userPreferences = null;
         this.currentUser = null;
         
-        // FIXED: Track AI and user names
+        // Track AI and user names
         this.aiName = 'Cael';  // Default fallback
         this.userName = 'friend';  // Default fallback
+        
+        console.log('🎯 ZentrafugeChat constructor called');
     }
 
     // Initialize chat interface
     init() {
-        this.messageInput = document.getElementById('message');
-        this.sendButton = document.getElementById('send-button');
-        this.chatContainer = document.getElementById('chat-container');
+        console.log('🚀 Initializing ZentrafugeChat...');
         
-        if (!this.messageInput || !this.sendButton || !this.chatContainer) {
-            console.error('❌ Required chat elements not found');
-            return false;
-        }
-
-        this.setupEventListeners();
-        this.loadUserData(); // FIXED: Load user data including AI name
-        this.showWelcomeMessage();
-        this.loadChatHistory();
-        
-        console.log('✅ Zentrafuge Chat initialized');
-        return true;
-    }
-
-    // FIXED: Load user data including AI name and preferences
-    async loadUserData() {
         try {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                console.warn('⚠️ No authenticated user found');
-                return;
+            // Check DOM elements
+            this.messageInput = document.getElementById('message');
+            this.sendButton = document.getElementById('send-button');
+            this.chatContainer = document.getElementById('chat-container');
+            
+            if (!this.messageInput) {
+                console.error('❌ Message input not found');
+                return false;
             }
             
-            this.currentUser = user;
-            
-            // Load user preferences and AI name from Firestore
-            const db = firebase.firestore();
-            const userDoc = await db.collection("users").document(user.uid).get();
-            
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                
-                // Get user's display name (your structure uses 'name')
-                this.userName = userData.name || user.displayName || user.email.split('@')[0] || 'friend';
-                
-                // Get AI name (your structure uses 'ai_name' directly)
-                this.aiName = userData.ai_name || 'Cael';
-                
-                // Map your Firestore structure to preferences format
-                this.userPreferences = {
-                    ai_name: this.aiName,
-                    communication_style: userData.communication_style || 'direct_feedback',
-                    emotional_pacing: userData.emotional_pacing || 'gentle',
-                    effective_support: userData.effective_support || [],
-                    sources_of_meaning: userData.sources_of_meaning || [],
-                    isVeteran: userData.isVeteran || false,
-                    language: userData.language || 'en'
-                };
-                
-                console.log(`✅ Loaded user data - User: ${this.userName}, AI: ${this.aiName}`);
-                console.log('📄 User preferences:', this.userPreferences);
-                
-                // Update welcome message if already shown
-                this.updateWelcomeMessage();
-            } else {
-                console.log('📄 No user document found, using defaults');
+            if (!this.sendButton) {
+                console.error('❌ Send button not found');
+                return false;
             }
+            
+            if (!this.chatContainer) {
+                console.error('❌ Chat container not found');
+                return false;
+            }
+
+            console.log('✅ DOM elements found');
+
+            // Setup event listeners
+            this.setupEventListeners();
+            
+            // Load user data and initialize chat
+            this.loadUserData().then(() => {
+                this.showWelcomeMessage();
+                this.loadChatHistory();
+            }).catch(error => {
+                console.error('❌ Error during initialization:', error);
+                this.showWelcomeMessage(); // Still show welcome even if user data fails
+            });
+            
+            console.log('✅ Zentrafuge Chat initialized successfully');
+            return true;
             
         } catch (error) {
-            console.error('❌ Error loading user data:', error);
+            console.error('❌ Error initializing chat:', error);
+            return false;
         }
-    }if (!user) {
+    }
+
+    // Load user data including AI name and preferences
+    async loadUserData() {
+        try {
+            console.log('📊 Loading user data...');
+            
+            const user = firebase.auth().currentUser;
+            if (!user) {
                 console.warn('⚠️ No authenticated user found');
                 return;
             }
@@ -96,6 +85,7 @@ class ZentrafugeChat {
             
             if (userDoc.exists) {
                 const userData = userDoc.data();
+                console.log('📄 User document found:', userData);
                 
                 // Get user's display name
                 this.userName = userData.name || user.displayName || user.email.split('@')[0] || 'friend';
@@ -113,13 +103,17 @@ class ZentrafugeChat {
                     this.aiName = 'Cael'; // Default fallback
                 }
                 
-                // Load full preferences
+                // Load full preferences - handle both old and new structure
                 this.userPreferences = {
                     ai_name: this.aiName,
-                    language_style: userData.ai_preferences?.language_style || 'direct',
+                    communication_style: userData.communication_style || userData.ai_preferences?.language_style || 'direct',
+                    emotional_pacing: userData.emotional_pacing || userData.ai_preferences?.emotional_pacing || 'gentle',
+                    effective_support: userData.effective_support || [],
+                    sources_of_meaning: userData.sources_of_meaning || [],
+                    isVeteran: userData.isVeteran || false,
+                    language: userData.language || 'en',
                     response_length: userData.ai_preferences?.response_length || 'moderate',
                     military_context: userData.ai_preferences?.military_context || 'auto',
-                    emotional_pacing: userData.ai_preferences?.emotional_pacing || 'gentle',
                     memory_usage: userData.ai_preferences?.memory_usage || 'contextual',
                     session_reminders: userData.ai_preferences?.session_reminders || 'gentle'
                 };
@@ -140,43 +134,56 @@ class ZentrafugeChat {
 
     // Setup event listeners
     setupEventListeners() {
-        // Send message on form submit
-        const form = document.querySelector('.chat-form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
+        console.log('🎧 Setting up event listeners...');
+        
+        try {
+            // Send message on form submit
+            const form = document.getElementById('chat-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+            }
+
+            // Send message on button click
+            this.sendButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.sendMessage();
             });
+
+            // Send message on Enter key (but allow Shift+Enter for new lines)
+            this.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            // Auto-resize input
+            this.messageInput.addEventListener('input', () => {
+                this.autoResizeInput();
+            });
+            
+            console.log('✅ Event listeners set up');
+            
+        } catch (error) {
+            console.error('❌ Error setting up event listeners:', error);
         }
-
-        // Send message on button click
-        this.sendButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.sendMessage();
-        });
-
-        // Send message on Enter key
-        this.messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-
-        // Auto-resize input
-        this.messageInput.addEventListener('input', () => {
-            this.autoResizeInput();
-        });
     }
 
     // Auto-resize input field
     autoResizeInput() {
-        this.messageInput.style.height = 'auto';
-        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+        if (this.messageInput.tagName === 'TEXTAREA') {
+            this.messageInput.style.height = 'auto';
+            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+        }
     }
 
-    // FIXED: Show welcome message with correct AI name
+    // Show welcome message with correct AI name
     showWelcomeMessage() {
+        console.log('👋 Showing welcome message...');
+        
         const welcomeMessage = {
             text: `Hello${this.userName !== 'friend' ? ` ${this.userName}` : ''}! I'm ${this.aiName}, your emotional companion. How are you feeling today?`,
             sender: 'cael',
@@ -187,17 +194,20 @@ class ZentrafugeChat {
         this.displayMessage(welcomeMessage);
     }
 
-    // FIXED: Update welcome message when user data loads
+    // Update welcome message when user data loads
     updateWelcomeMessage() {
         const welcomeMessages = this.chatContainer.querySelectorAll('.message.cael-message');
         if (welcomeMessages.length > 0) {
             const latestWelcome = welcomeMessages[welcomeMessages.length - 1];
             if (latestWelcome.classList.contains('welcome-message') || 
-                latestWelcome.querySelector('.message-text').textContent.includes("I'm")) {
+                latestWelcome.querySelector('.message-text')?.textContent.includes("I'm")) {
                 
                 const newText = `Hello${this.userName !== 'friend' ? ` ${this.userName}` : ''}! I'm ${this.aiName}, your emotional companion. How are you feeling today?`;
-                latestWelcome.querySelector('.message-text').textContent = newText;
-                console.log('🔄 Updated welcome message with correct names');
+                const textElement = latestWelcome.querySelector('.message-text');
+                if (textElement) {
+                    textElement.textContent = newText;
+                    console.log('🔄 Updated welcome message with correct names');
+                }
             }
         }
     }
@@ -209,6 +219,8 @@ class ZentrafugeChat {
         if (!messageText || this.isLoading) {
             return;
         }
+
+        console.log('📤 Sending message:', messageText);
 
         // Clear input and resize
         this.messageInput.value = '';
@@ -227,7 +239,7 @@ class ZentrafugeChat {
         this.setLoadingState(true);
 
         try {
-            // FIXED: Send to backend with AI name and preferences
+            // Send to backend with AI name and preferences
             const response = await this.sendToBackend(messageText);
             
             // Show AI companion's response
@@ -276,7 +288,7 @@ class ZentrafugeChat {
         }
     }
 
-    // FIXED: Send message to backend with AI name and preferences
+    // Send message to backend with AI name and preferences
     async sendToBackend(message) {
         const userId = this.currentUser?.uid;
         
@@ -286,13 +298,13 @@ class ZentrafugeChat {
 
         console.log(`📤 Sending message to ${this.aiName} for ${this.userName}`);
         
-        // FIXED: Include AI name and user preferences in request
+        // Include AI name and user preferences in request
         const requestData = {
             message: message,
             user_id: userId,
-            ai_name: this.aiName,  // FIXED: Send AI name
-            user_name: this.userName,  // FIXED: Send user name
-            ai_preferences: this.userPreferences  // FIXED: Send preferences
+            ai_name: this.aiName,
+            user_name: this.userName,
+            ai_preferences: this.userPreferences
         };
 
         console.log('📤 Request data:', requestData);
@@ -461,6 +473,8 @@ class ZentrafugeChat {
     // Load chat history
     async loadChatHistory() {
         try {
+            console.log('📜 Loading chat history...');
+            
             const userId = this.currentUser?.uid;
             if (!userId) return;
 
@@ -524,14 +538,28 @@ class ZentrafugeChat {
         statusDiv.className = `status-message ${type}`;
         statusDiv.textContent = message;
         
+        // Add styles
+        statusDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#ff6b6b' : '#4ecdc4'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        
         document.body.appendChild(statusDiv);
         
         setTimeout(() => {
-            statusDiv.classList.add('fade-in');
+            statusDiv.style.opacity = '1';
         }, 10);
 
         setTimeout(() => {
-            statusDiv.classList.add('fade-out');
+            statusDiv.style.opacity = '0';
             setTimeout(() => {
                 if (statusDiv.parentNode) {
                     statusDiv.parentNode.removeChild(statusDiv);
@@ -541,22 +569,5 @@ class ZentrafugeChat {
     }
 }
 
-// Initialize chat when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for Firebase auth to initialize
-    firebase.auth().onAuthStateChanged(function(user) {
-        if (user && user.emailVerified) {
-            console.log('✅ User authenticated, initializing chat...');
-            const chat = new ZentrafugeChat();
-            chat.init();
-        } else {
-            console.log('❌ User not authenticated, redirecting...');
-            window.location.href = 'index.html';
-        }
-    });
-});
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ZentrafugeChat;
-}
+// Export class for global use
+window.ZentrafugeChat = ZentrafugeChat;
