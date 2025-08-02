@@ -1,5 +1,7 @@
 [build]
-  publish = "."  # Root directory, so it includes root-level index.html
+  publish = "."  # Root directory, index.html lives here
+
+# === Page Redirects ===
 
 [[redirects]]
   from = "/chat.html"
@@ -26,6 +28,8 @@
   to = "/frontend/pages/support.html"
   status = 200
 
+# === Static Assets Routing ===
+
 [[redirects]]
   from = "/js/*"
   to = "/frontend/js/:splat"
@@ -51,8 +55,16 @@
   to = "/frontend/firebase-init.js"
   status = 200
 
-# Catch-all fallback
+# === MIME Type Fix for Firebase ===
+
+[[headers]]
+  for = "/frontend/firebase-init.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+# === Catch-All Root Redirect ===
+
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/index.html"
   status = 200
