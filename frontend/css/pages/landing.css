@@ -1,0 +1,75 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f7faff;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  text-align: center;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #003366 0%, #0055aa 100%);
+}
+
+.logo {
+  height: 60px;
+}
+
+.donate-button {
+  background: #1eaa00;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.donate-button:hover {
+  background: #168f00;
+}
+
+.landing-main {
+  flex-grow: 1;
+  padding: 3rem 1rem;
+}
+
+.landing-main h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.landing-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.landing-btn {
+  background: #003366;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.landing-btn:hover {
+  background: #0055aa;
+}
+
+.landing-footer {
+  background-color: #f0f4f8;
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+}
