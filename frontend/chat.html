@@ -18,8 +18,7 @@
 <body>
   <!-- Loading -->
   <div id="auth-loading" class="loading-spinner" style="
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(255,255,255,0.9);
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; z-index: 9999;">
@@ -47,10 +46,6 @@
       </form>
     </div>
   </main>
-
-  <!-- Messages -->
-  <div id="error-message" class="message error-message" style="display: none;"></div>
-  <div id="success-message" class="message success-message" style="display: none;"></div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -84,7 +79,7 @@
     new EmergencyCompanion();
   </script>
 
-  <!-- Main Chat Logic (loaded only after auth success) -->
+  <!-- Auth + Chat Init -->
   <script>
     console.log('🚀 Initializing chat.html...');
 
@@ -135,10 +130,20 @@
         if (user && user.emailVerified) {
           console.log('✅ Authenticated:', user.email);
           updateUserEmail();
-          hideLoading();
-          showUI();
           setupSignOut();
-          loadChatJS(); // defer loading
+
+          // Securely get token and store temporarily
+          user.getIdToken().then(token => {
+            localStorage.setItem('idToken', token);
+            console.log('🪪 Token stored for backend use');
+            hideLoading();
+            showUI();
+            loadChatJS();
+          }).catch(err => {
+            showError("Failed to retrieve token.");
+            console.error("❌ Token fetch error:", err);
+          });
+
         } else if (user && !user.emailVerified) {
           showError("Please verify your email before continuing.");
           setTimeout(() => window.location.href = 'login.html', 2500);
@@ -149,7 +154,6 @@
       });
     }
 
-    // Wait for DOM and Firebase
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', startChatInit);
     } else {
