@@ -6,7 +6,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Define the core move logging function
 def log_move(user_id, move_name, context=None, trust_effect=0, clarity_effect=0, resonance_effect=0, uncertainty_change=0):
     move_log = {
         "user_id": user_id,
@@ -20,14 +19,9 @@ def log_move(user_id, move_name, context=None, trust_effect=0, clarity_effect=0,
             "uncertainty": uncertainty_change,
         }
     }
-
-    # Optional terminal debug
     logger.info(f"🟩 ZP Move: {move_log['move']} — Effects: {move_log['effects']}")
-
     return move_log
 
-
-# Optional: Save move log to Firestore
 def save_move_to_firestore(move_log):
     try:
         db = firestore.client()
