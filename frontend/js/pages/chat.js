@@ -1,4 +1,4 @@
-// frontend/js/pages/chat.js - FINAL FIXED VERSION
+// frontend/js/pages/chat.js
 
 class ZentrafugeChat {
   constructor() {
@@ -19,7 +19,7 @@ class ZentrafugeChat {
     console.log('🚀 Initializing ZentrafugeChat...');
     this.messageInput = document.getElementById('message');
     this.sendButton = document.getElementById('send-button');
-    this.chatContainer = document.getElementById('chat'); // fixed
+    this.chatContainer = document.getElementById('chat');
 
     if (!this.messageInput || !this.sendButton || !this.chatContainer) {
       console.error('❌ Missing core chat DOM elements');
@@ -184,9 +184,11 @@ class ZentrafugeChat {
     }
   }
 
+  // ✅ TOKEN-FIXED CHAT POST
   async sendToBackend(message) {
     const userId = this.currentUser?.uid;
-    const token = localStorage.getItem('idToken');
+    const token = await this.currentUser.getIdToken(true); // 🔐 refresh-safe
+
     if (!userId || !token) throw new Error('Auth token or user ID missing');
 
     const payload = {
@@ -207,7 +209,6 @@ class ZentrafugeChat {
     });
 
     if (!res.ok) throw new Error(`Backend error: ${res.status}`);
-    localStorage.removeItem('idToken');
     return await res.json();
   }
 
