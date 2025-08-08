@@ -2,7 +2,7 @@
 
 class ZentrafugeChat {
   constructor() {
-    this.backend_url = 'https://zentrafuge-v8-backend.render.com';
+    this.backend_url = 'https://zentrafuge-v8.onrender.com';
     this.messageInput = null;
     this.sendButton = null;
     this.chatContainer = null;
