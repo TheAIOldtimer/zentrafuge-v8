@@ -5,6 +5,9 @@ def detect_move(ai_response: str) -> str:
     Naive keyword-based move detection from AI response.
     Replace with LLM classification later.
     """
+    if not ai_response:
+        return "unknown_move()"
+
     response_lower = ai_response.lower()
 
     if any(kw in response_lower for kw in ["i hear you", "it sounds like", "you might be feeling"]):
@@ -22,10 +25,14 @@ def detect_move(ai_response: str) -> str:
     if any(kw in response_lower for kw in ["you're not alone", "i believe in you", "you've got this"]):
         return "reassure()"
 
-    if any(kw in response_lower for kw in ["let’s reset", "let’s take a step back", "i may have misunderstood"]):
+    if any(kw in response_lower for kw in ["let's reset", "let’s reset", "let's take a step back", "i may have misunderstood"]):
         return "step_back()"
 
-    if any(kw in response_lower for kw in ["how do you want me to respond", "does this feel helpful", "should i change how i support you"]):
+    if any(kw in response_lower for kw in [
+        "how do you want me to show up",
+        "does this feel helpful",
+        "should i change how i support you"
+    ]):
         return "offer_meta_view()"
 
     return "unknown_move()"
